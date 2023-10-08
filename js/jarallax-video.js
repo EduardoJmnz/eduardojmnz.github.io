@@ -1,9 +1,4 @@
-/*!
- * Name    : Video Background Extension for Jarallax
- * Version : 1.0.1
- * Author  : nK <https://nkdev.info>
- * GitHub  : https://github.com/nk-o/jarallax
- */
+
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};

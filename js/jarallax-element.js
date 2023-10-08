@@ -1,9 +1,4 @@
-/*!
- * Name    : Elements Extension for Jarallax
- * Version : 1.0.0
- * Author  : nK <https://nkdev.info>
- * GitHub  : https://github.com/nk-o/jarallax
- */
+
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};

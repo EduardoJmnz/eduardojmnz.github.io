@@ -1,14 +1,4 @@
-/**
- * Swiper 4.5.0
- * Most modern mobile touch slider and framework with hardware accelerated transitions
- * http://www.idangero.us/swiper/
- *
- * Copyright 2014-2019 Vladimir Kharlampidi
- *
- * Released under the MIT License
- *
- * Released on: February 22, 2019
- */
+
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -16,17 +6,7 @@
   (global = global || self, global.Swiper = factory());
 }(this, function () { 'use strict';
 
-  /**
-   * SSR Window 1.0.1
-   * Better handling for window object in SSR environment
-   * https://github.com/nolimits4web/ssr-window
-   *
-   * Copyright 2018, Vladimir Kharlampidi
-   *
-   * Licensed under MIT
-   *
-   * Released on: July 18, 2018
-   */
+  
   var doc = (typeof document === 'undefined') ? {
     body: {},
     addEventListener: function addEventListener() {},

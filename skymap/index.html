@@ -7,7 +7,7 @@
   <style>
     :root { color-scheme: dark; }
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b1020; color:#e8ecff; }
-    .wrap { display: grid; grid-template-columns: 380px 1fr; min-height: 100vh; }
+    .wrap { display: grid; grid-template-columns: 390px 1fr; min-height: 100vh; }
     .panel { padding: 16px; border-right: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.02); overflow:auto; }
     .panel h1 { margin: 0 0 12px; font-size: 18px; }
     .section { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); }
@@ -72,27 +72,25 @@
       <div class="row">
         <label>Fecha y hora (local)</label>
         <input id="dt" type="datetime-local" />
-        <div class="small">Tip: usa una hora nocturna (20:00–23:00) para un mapa más lleno.</div>
+        <div class="small">Tip: usa 20:00–23:00 para un mapa más lleno.</div>
       </div>
 
       <div class="section">
         <div class="row">
           <label>Catálogo de estrellas (opcional, recomendado)</label>
           <input id="catalog" type="file" accept=".csv,.json" />
-          <div class="hint">
-            CSV esperado tipo HYG con columnas: <b>ra</b>, <b>dec</b>, <b>mag</b>. (Si no subes, usamos fallback denso.)
-          </div>
+          <div class="hint">CSV tipo HYG con columnas: <b>ra</b>, <b>dec</b>, <b>mag</b>. (Si no subes, usamos fallback.)</div>
         </div>
 
         <div class="row">
           <label>Máxima magnitud (más alto = más estrellas)</label>
-          <input id="maxMag" type="range" min="2" max="10" step="0.1" value="7.8" />
+          <input id="maxMag" type="range" min="2" max="10" step="0.1" value="8.2" />
           <div class="hint">Valor actual: <span id="maxMagVal"></span></div>
         </div>
 
         <div class="row">
           <label>Fallback stars (si no hay catálogo): cantidad</label>
-          <input id="fallbackCount" type="number" min="1000" max="40000" step="1000" value="18000" />
+          <input id="fallbackCount" type="number" min="1000" max="60000" step="1000" value="24000" />
         </div>
       </div>
 
@@ -106,9 +104,7 @@
           <select id="spotifyResults"></select>
           <button id="spotifyUse">Usar</button>
         </div>
-        <div class="hint">
-          Se inserta el Spotify Code automáticamente en el póster.
-        </div>
+        <div class="hint">Se inserta el Spotify Code automáticamente.</div>
 
         <div class="row">
           <label>Nota inferior (opcional)</label>
@@ -127,27 +123,35 @@
           <div class="check"><input type="checkbox" id="showBorder" checked> <span>Margen/Borde</span></div>
           <div class="check"><input type="checkbox" id="showSpotify" checked> <span>Spotify Code</span></div>
           <div class="check"><input type="checkbox" id="showNote" checked> <span>Nota inferior</span></div>
+          <div class="check"><input type="checkbox" id="showGrid" checked> <span>Grid / Anillos</span></div>
+          <div class="check"><input type="checkbox" id="showGlow" checked> <span>Glow estrellas</span></div>
         </div>
       </div>
 
       <div class="section">
+        <div class="row">
+          <label>Estilo de mapa</label>
+          <select id="stylePreset">
+            <option value="classic_dark" selected>Classic Dark</option>
+            <option value="classic_black">Classic Black</option>
+            <option value="minimal_black">Minimal Black</option>
+            <option value="paper_cream">Paper Cream</option>
+            <option value="blueprint">Blueprint</option>
+            <option value="midnight_blue">Midnight Blue</option>
+            <option value="modern_mono">Modern Mono</option>
+          </select>
+          <div class="hint">Cambia paleta, tipografía, grid, glow, borde y pesos.</div>
+        </div>
+
         <div class="row2">
-          <div class="row">
-            <label>Estilo</label>
-            <select id="theme">
-              <option value="classic" selected>Classic (oscuro)</option>
-              <option value="inverted">Inverted (claro)</option>
-            </select>
-          </div>
           <div class="row">
             <label>Tamaño preview (px)</label>
             <input id="previewSize" type="number" step="50" value="1100" />
           </div>
-        </div>
-
-        <div class="row">
-          <label>Export PNG (px) — póster pro: 6000–9000</label>
-          <input id="exportSize" type="number" step="500" value="7000" />
+          <div class="row">
+            <label>Export PNG (px)</label>
+            <input id="exportSize" type="number" step="500" value="8000" />
+          </div>
         </div>
 
         <div class="btns">
@@ -165,6 +169,6 @@
     </main>
   </div>
 
-  <script type="module" src="./app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

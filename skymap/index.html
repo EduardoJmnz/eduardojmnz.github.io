@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Star Map Pro</title>
 
-  <!-- Google Fonts (opcional; si no cargan, cae a system fonts) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Montserrat:wght@500;600;700;800&family=Inter:wght@500;600;700;800&family=Space+Mono:wght@400;700&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
@@ -13,26 +12,17 @@
   <style>
     :root { color-scheme: dark; }
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b1020; color:#e8ecff; }
-    .wrap { display: grid; grid-template-columns: 420px 1fr; min-height: 100vh; }
-
-    .panel {
-      padding: 16px;
-      border-right: 1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.02);
-      overflow:auto;
-    }
-
+    .wrap { display: grid; grid-template-columns: 430px 1fr; min-height: 100vh; }
+    .panel { padding: 16px; border-right: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.02); overflow:auto; }
     .panel h1 { margin: 0 0 12px; font-size: 18px; }
 
     .section { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); }
     .row { margin: 10px 0; display: grid; gap: 6px; }
     .row2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
     label { font-size: 12px; opacity: .9; }
+
     input, select, button, textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 10px;
+      width: 100%; padding: 10px; border-radius: 10px;
       border: 1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.04);
       color: inherit;
@@ -41,88 +31,35 @@
     textarea { min-height: 72px; resize: vertical; }
     button { cursor: pointer; font-weight: 800; }
     button:hover { background: rgba(255,255,255,.07); }
+
     .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .btnWide { grid-column: 1 / 3; }
-
     .hint { font-size: 12px; opacity: .75; line-height: 1.35; }
     .small { font-size: 12px; opacity: .85; }
 
-    .stage {
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding: 16px;
-      overflow:auto;
-    }
+    .stage { display:flex; align-items:center; justify-content:center; padding: 16px; overflow:auto; }
+    .posterCard { display:flex; flex-direction:column; align-items:center; gap: 12px; width: min(1200px, 95vw); }
+    canvas { width: 100%; height: auto; border-radius: 18px; box-shadow: 0 18px 60px rgba(0,0,0,.35); background: #000; }
 
-    .posterCard {
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap: 12px;
-      width: min(1200px, 95vw);
-    }
+    .err { display:none; margin-top:10px; padding:10px; border-radius:12px; border:1px solid rgba(255,120,120,.45); color:#ffd1d1; background: rgba(255,120,120,.08); font-size: 12px; }
 
-    canvas {
-      width: 100%;
-      height: auto;
-      border-radius: 18px;
-      box-shadow: 0 18px 60px rgba(0,0,0,.35);
-      background: #000;
-    }
-
-    .err {
-      display:none;
-      margin-top:10px;
-      padding:10px;
-      border-radius:12px;
-      border:1px solid rgba(255,120,120,.45);
-      color:#ffd1d1;
-      background: rgba(255,120,120,.08);
-      font-size: 12px;
-    }
-
-    /* Style previews */
-    .styleGrid {
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 8px;
-    }
-
+    /* style previews */
+    .styleGrid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
     .styleBtn {
-      display:flex;
-      gap: 10px;
-      align-items:center;
-      padding: 10px;
-      border-radius: 14px;
+      display:flex; gap: 10px; align-items:center;
+      padding: 10px; border-radius: 14px;
       border: 1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.03);
-      cursor: pointer;
-      user-select: none;
+      cursor: pointer; user-select: none;
     }
-
     .styleBtn:hover { background: rgba(255,255,255,.06); }
-
-    .styleBtn[data-active="true"] {
-      border-color: rgba(232,236,255,.45);
-      box-shadow: 0 0 0 2px rgba(232,236,255,.10) inset;
-    }
-
-    .thumb {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
-      overflow:hidden;
-      flex: 0 0 auto;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.02);
-    }
-
+    .styleBtn[data-active="true"] { border-color: rgba(232,236,255,.45); box-shadow: 0 0 0 2px rgba(232,236,255,.10) inset; }
+    .thumb { width: 52px; height: 52px; border-radius: 14px; overflow:hidden; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.02); }
     .styleMeta { display:flex; flex-direction:column; gap: 2px; }
     .styleName { font-weight: 800; font-size: 13px; }
     .styleDesc { font-size: 11px; opacity: .75; }
 
+    /* toggles */
     .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .check {
       display:flex; gap:10px; align-items:center;
@@ -131,6 +68,22 @@
       font-size: 12px;
     }
     .check input { width:auto; padding:0; margin:0; }
+
+    /* color palette */
+    .palette { display:flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .swatch {
+      width: 38px; height: 38px; border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.10);
+      background: #000;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+    }
+    .swatch[data-active="true"] {
+      border-color: rgba(232,236,255,.75);
+      box-shadow: 0 0 0 3px rgba(232,236,255,.12) inset, 0 10px 25px rgba(0,0,0,.25);
+    }
+    .swatchLabel { font-size: 11px; opacity:.75; margin-top: 6px; }
+    .swatchWrap { display:flex; flex-direction:column; align-items:center; width: 54px; }
   </style>
 </head>
 
@@ -142,7 +95,13 @@
       <div class="section" style="margin-top:0;border-top:none;padding-top:0;">
         <label>Estilos (con preview)</label>
         <div id="styleGrid" class="styleGrid"></div>
-        <div class="hint">Toca un estilo para aplicarlo. Los textos y el mapa se re-renderizan al instante.</div>
+        <div class="hint">Toca un estilo para aplicarlo.</div>
+      </div>
+
+      <div class="section">
+        <label>Color del mapa estelar</label>
+        <div id="mapColorPalette" class="palette"></div>
+        <div class="hint">Esto cambia el fondo del póster y el mapa.</div>
       </div>
 
       <div class="section">
@@ -158,60 +117,76 @@
         </div>
       </div>
 
-      <div class="row">
-        <label>Título</label>
-        <input id="title" value="Nuestra noche" />
-      </div>
-
-      <div class="row">
-        <label>Subtítulo</label>
-        <input id="subtitle" value="Bajo el mismo cielo" />
-      </div>
-
-      <div class="row">
-        <label>Lugar (texto libre)</label>
-        <input id="place" value="Ciudad de México" />
-      </div>
-
-      <div class="row2">
-        <div class="row">
-          <label>Latitud (°)</label>
-          <input id="lat" type="number" step="0.0001" value="19.4326" />
-        </div>
-        <div class="row">
-          <label>Longitud (°) (Oeste negativo)</label>
-          <input id="lon" type="number" step="0.0001" value="-99.1332" />
-        </div>
-      </div>
-
-      <div class="row">
-        <label>Fecha y hora (local)</label>
-        <input id="dt" type="datetime-local" />
-        <div class="small">Tip: usa 20:00–23:00 para un mapa más lleno.</div>
-      </div>
-
       <div class="section">
-        <div class="row">
-          <label>Spotify (buscar y agregar Spotify Code)</label>
-          <div class="row2">
-            <input id="spotifyQuery" placeholder="Ej: Coldplay Yellow" />
-            <button id="spotifySearch">Buscar</button>
-          </div>
-          <div class="row2">
-            <select id="spotifyResults"></select>
-            <button id="spotifyUse">Usar</button>
-          </div>
-          <div class="hint">Se inserta el Spotify Code debajo del mapa (centrado).</div>
+        <label>DISEÑO (Elementos del mapa)</label>
+        <div class="checks">
+          <div class="check"><input type="checkbox" id="showConstellations" checked> <span>Constelaciones</span></div>
+          <div class="check"><input type="checkbox" id="showGrid" checked> <span>Retícula</span></div>
+          <div class="check"><input type="checkbox" id="showGlow" checked> <span>Glow estrellas</span></div>
+          <div class="check"><input type="checkbox" id="showCardinals" checked> <span>N/E/S/O</span></div>
         </div>
 
-        <div class="row">
-          <label>Nota inferior (opcional)</label>
-          <textarea id="note" placeholder="Ej: “27.01.2026” / “Te amo”"></textarea>
+        <div class="row2">
+          <div class="row">
+            <label>Color constelaciones</label>
+            <select id="constellationColor">
+              <option value="auto" selected>Auto</option>
+              <option value="white">Blanco</option>
+              <option value="gray">Gris</option>
+              <option value="gold">Dorado</option>
+              <option value="blue">Azul</option>
+              <option value="red">Rojo</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Color retícula</label>
+            <select id="gridColor">
+              <option value="auto" selected>Auto</option>
+              <option value="white">Blanco</option>
+              <option value="gray">Gris</option>
+              <option value="gold">Dorado</option>
+              <option value="blue">Azul</option>
+              <option value="red">Rojo</option>
+            </select>
+          </div>
         </div>
       </div>
 
       <div class="section">
-        <label>Ajustes: Mostrar / Ocultar</label>
+        <label>TEXTOS (debajo del mapa, centrados)</label>
+
+        <div class="row">
+          <label>Título</label>
+          <input id="title" value="♥ ESTRELLAS DE LA SUERTE ♥" />
+        </div>
+
+        <div class="row">
+          <label>Subtítulo</label>
+          <input id="subtitle" value="" />
+        </div>
+
+        <div class="row">
+          <label>Lugar (texto libre)</label>
+          <input id="place" value="Ciudad de México, México" />
+        </div>
+
+        <div class="row2">
+          <div class="row">
+            <label>Latitud (°)</label>
+            <input id="lat" type="number" step="0.0001" value="19.4194" />
+          </div>
+          <div class="row">
+            <label>Longitud (°)</label>
+            <input id="lon" type="number" step="0.0001" value="-99.1455" />
+          </div>
+        </div>
+
+        <div class="row">
+          <label>Fecha y hora (local)</label>
+          <input id="dt" type="datetime-local" />
+          <div class="small">Pon hora nocturna para más densidad.</div>
+        </div>
+
         <div class="checks">
           <div class="check"><input type="checkbox" id="showTitle" checked> <span>Título</span></div>
           <div class="check"><input type="checkbox" id="showSubtitle" checked> <span>Subtítulo</span></div>
@@ -220,39 +195,46 @@
           <div class="check"><input type="checkbox" id="showCoords" checked> <span>Coordenadas</span></div>
           <div class="check"><input type="checkbox" id="showBorder" checked> <span>Margen/Borde</span></div>
           <div class="check"><input type="checkbox" id="showSpotify" checked> <span>Spotify Code</span></div>
-          <div class="check"><input type="checkbox" id="showNote" checked> <span>Nota inferior</span></div>
-          <div class="check"><input type="checkbox" id="showGrid" checked> <span>Grid / Anillos</span></div>
-          <div class="check"><input type="checkbox" id="showGlow" checked> <span>Glow estrellas</span></div>
-          <div class="check"><input type="checkbox" id="showConstellations" checked> <span>Constelaciones</span></div>
-          <div class="check"><input type="checkbox" id="showCardinals" checked> <span>N/E/S/O</span></div>
+          <div class="check"><input type="checkbox" id="showNote" checked> <span>Nota</span></div>
+        </div>
+
+        <div class="row">
+          <label>Nota inferior (opcional)</label>
+          <textarea id="note" placeholder="Ej: “Te amo”"></textarea>
         </div>
       </div>
 
       <div class="section">
-        <div class="row">
-          <label>Estrellas</label>
-          <div class="hint">
-            Este editor usa un “sky fill” denso (fallback) para verse pro.
-            Puedes ajustar cuántas se dibujan con magnitud máxima.
-          </div>
-        </div>
+        <label>ESTRELLAS</label>
 
         <div class="row">
           <label>Máxima magnitud (más alto = más estrellas)</label>
-          <input id="maxMag" type="range" min="2" max="10" step="0.1" value="8.4" />
+          <input id="maxMag" type="range" min="2" max="10" step="0.1" value="8.6" />
           <div class="hint">Valor actual: <span id="maxMagVal"></span></div>
         </div>
 
         <div class="row">
-          <label>Cantidad de estrellas (fallback)</label>
-          <input id="fallbackCount" type="number" min="3000" max="90000" step="1000" value="36000" />
+          <label>Cantidad de estrellas</label>
+          <input id="fallbackCount" type="number" min="5000" max="120000" step="1000" value="42000" />
+        </div>
+      </div>
+
+      <div class="section">
+        <label>Spotify</label>
+        <div class="row2">
+          <input id="spotifyQuery" placeholder="Buscar canción..." />
+          <button id="spotifySearch">Buscar</button>
+        </div>
+        <div class="row2">
+          <select id="spotifyResults"></select>
+          <button id="spotifyUse">Usar</button>
         </div>
       </div>
 
       <div class="section">
         <div class="row2">
           <div class="row">
-            <label>Tamaño preview (px)</label>
+            <label>Preview (px)</label>
             <input id="previewSize" type="number" step="50" value="1100" />
           </div>
           <div class="row">

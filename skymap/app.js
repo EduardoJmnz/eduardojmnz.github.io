@@ -33,13 +33,12 @@ const FONT_PRESETS = {
     body: "'Space Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
   }
 };
-
 function getFonts() {
   const k = $("fontPreset")?.value || "inter";
   return FONT_PRESETS[k] || FONT_PRESETS.inter;
 }
 
-/* ---------------- Map color palette (como bolitas) ---------------- */
+/* ---------------- Map color palette ---------------- */
 const MAP_COLORS = [
   { key: "black",  name: "Negro",   bg: "#050608" },
   { key: "gray",   name: "Gris",    bg: "#2f3137" },
@@ -51,8 +50,12 @@ const MAP_COLORS = [
   { key: "tan",    name: "Arena",   bg: "#7a543d" },
   { key: "cream",  name: "Crema",   bg: "#fbf2df" }
 ];
+function getMapBg() {
+  const m = MAP_COLORS.find(x => x.key === state.mapBgKey) || MAP_COLORS[0];
+  return m.bg;
+}
 
-/* ---------------- Style presets (líneas, glow, etc.) ---------------- */
+/* ---------------- Style presets ---------------- */
 const STYLE_PRESETS = {
   classic_dark: {
     name: "Classic Dark",
@@ -70,25 +73,11 @@ const STYLE_PRESETS = {
     glowMul: 2.8,
     skyStrokeWidth: 1.7,
     constellationsAlpha: 0.42,
-    constellationsWidth: 1.35
-  },
-  minimal: {
-    name: "Minimal",
-    desc: "Limpio",
-    fg: "#ffffff",
-    faint: "rgba(255,255,255,.50)",
-    faint2: "rgba(255,255,255,.10)",
-    border: "rgba(255,255,255,.14)",
-    cardShadow: "rgba(0,0,0,.40)",
-    borderRadius: 22,
-    gridDash: [9999, 0],
-    gridAlpha: 0.22,
-    ringAlts: [30, 60],
-    glowAlphaMul: 0.0,
-    glowMul: 0.0,
-    skyStrokeWidth: 1.3,
-    constellationsAlpha: 0.28,
-    constellationsWidth: 1.1
+    constellationsWidth: 1.35,
+
+    // text panel look
+    panelFill: "rgba(0,0,0,.25)",
+    panelStroke: "rgba(255,255,255,.10)"
   },
   blueprint: {
     name: "Blueprint",
@@ -106,17 +95,33 @@ const STYLE_PRESETS = {
     glowMul: 2.4,
     skyStrokeWidth: 1.9,
     constellationsAlpha: 0.50,
-    constellationsWidth: 1.45
+    constellationsWidth: 1.45,
+    panelFill: "rgba(0,0,0,.22)",
+    panelStroke: "rgba(219,234,254,.16)"
+  },
+  minimal: {
+    name: "Minimal",
+    desc: "Limpio",
+    fg: "#ffffff",
+    faint: "rgba(255,255,255,.50)",
+    faint2: "rgba(255,255,255,.10)",
+    border: "rgba(255,255,255,.14)",
+    cardShadow: "rgba(0,0,0,.40)",
+    borderRadius: 22,
+    gridDash: [9999, 0],
+    gridAlpha: 0.22,
+    ringAlts: [30, 60],
+    glowAlphaMul: 0.0,
+    glowMul: 0.0,
+    skyStrokeWidth: 1.3,
+    constellationsAlpha: 0.28,
+    constellationsWidth: 1.1,
+    panelFill: "rgba(0,0,0,.18)",
+    panelStroke: "rgba(255,255,255,.08)"
   }
 };
-
 function getStyle() {
   return STYLE_PRESETS[state.styleKey] || STYLE_PRESETS.classic_dark;
-}
-
-function getMapBg() {
-  const m = MAP_COLORS.find(x => x.key === state.mapBgKey) || MAP_COLORS[0];
-  return m.bg;
 }
 
 /* ---------------- Constellations (subset) ---------------- */
@@ -143,7 +148,6 @@ const BRIGHT_STARS = {
   Ruchbah:    { ra: 21.4540,  dec: 60.2353, mag: 2.68 },
   Segin:      { ra: 28.5989,  dec: 63.6701, mag: 3.35 }
 };
-
 const CONSTELLATIONS = [
   { segments: [
     ["Betelgeuse","Bellatrix"],
@@ -170,7 +174,7 @@ const CONSTELLATIONS = [
   ]}
 ];
 
-/* ---------------- Utilities ---------------- */
+/* ---------------- UI helpers ---------------- */
 function showError(e) {
   const box = $("err");
   box.style.display = "block";
@@ -190,11 +194,12 @@ function clampInt(v, a, b) {
 function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
 function setDefaultDatetime() {
   const now = new Date();
-  const local = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}T${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  const local = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}T${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
   $("dt").value = local;
 }
-function fmtDate(date) {
-  return date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+function fmtDateTime(date) {
+  // similar to your screenshot: "07 ene 2026, 01:08 p.m."
+  return date.toLocaleString(undefined, { year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });
 }
 
 /* ---------------- Astro ---------------- */
@@ -228,9 +233,7 @@ function projectAzAlt(azDeg, altDeg, cx, cy, R) {
   return { x: cx + r * Math.sin(a), y: cy - r * Math.cos(a) };
 }
 
-/* ---------------- Crisp canvas (NO pixelation) ----------------
-   - Renderiza internamente con DPR, pero mantiene el tamaño CSS
-*/
+/* ---------------- Crisp canvas (avoid pixelation) ---------------- */
 function setCanvasCrisp(cssPx, style) {
   const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
 
@@ -245,16 +248,14 @@ function setCanvasCrisp(cssPx, style) {
   canvas.width = W;
   canvas.height = H;
 
-  // Dibujaremos en coordenadas CSS usando un scale:
+  // draw in CSS coordinates
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  // Y limpiamos con unidades CSS:
 }
 
-/* ---------------- Stars (points, different sizes) ---------------- */
+/* ---------------- Stars as real points ---------------- */
 function starRadiusFromMag(mag, scale) {
   const t = clamp((3.2 - mag) / 7.0, 0, 1);
-  // más grandes:
-  return (0.9 + t * 3.2) * scale;
+  return (0.9 + t * 3.2) * scale; // bigger points
 }
 function starAlphaFromMag(mag) {
   return clamp((7.4 - mag) / 7.4, 0.09, 1);
@@ -300,7 +301,7 @@ function resolveGridColor(choice, style) {
   return style.faint2; // auto
 }
 
-/* ---------------- Drawing ---------------- */
+/* ---------------- Drawing helpers ---------------- */
 function roundRect(x, y, w, h, r) {
   const rr = Math.min(r, w/2, h/2);
   ctx.beginPath();
@@ -311,7 +312,6 @@ function roundRect(x, y, w, h, r) {
   ctx.arcTo(x, y, x + w, y, rr);
   ctx.closePath();
 }
-
 function fitContain(sw, sh, bw, bh) {
   const sr = sw / sh;
   const br = bw / bh;
@@ -323,6 +323,7 @@ function fitContain(sw, sh, bw, bh) {
   return { dw, dh, dx, dy };
 }
 
+/* ---------------- Config ---------------- */
 function getConfig() {
   const style = getStyle();
   const fonts = getFonts();
@@ -339,32 +340,41 @@ function getConfig() {
   const date = new Date(dtLocal);
   if (Number.isNaN(date.getTime())) throw new Error("Fecha inválida.");
 
-  const maxMag = Number($("maxMag").value);
-  const previewSize = clampInt(Number($("previewSize").value), 700, 2800);
-  const exportSize = clampInt(Number($("exportSize").value), 1600, 24000);
-  const fallbackCount = clampInt(Number($("fallbackCount").value), 5000, 120000);
+  const maxMag = Number($("maxMag")?.value ?? 8.6);
+  const previewSize = clampInt(Number($("previewSize")?.value ?? 1100), 700, 2800);
+  const exportSize = clampInt(Number($("exportSize")?.value ?? 8000), 1600, 24000);
+  const fallbackCount = clampInt(Number($("fallbackCount")?.value ?? 42000), 5000, 140000);
 
   const flags = {
+    showBorder: $("showBorder").checked,
+    showTextPanel: $("showTextPanel").checked,
+
     showTitle: $("showTitle").checked,
     showSubtitle: $("showSubtitle").checked,
     showDate: $("showDate").checked,
     showPlace: $("showPlace").checked,
     showCoords: $("showCoords").checked,
-    showBorder: $("showBorder").checked,
     showSpotify: $("showSpotify").checked,
     showNote: $("showNote").checked,
+
     showGrid: $("showGrid").checked,
     showGlow: $("showGlow").checked,
     showConstellations: $("showConstellations").checked,
     showCardinals: $("showCardinals").checked
   };
 
-  const gridColorChoice = $("gridColor").value;
-  const constColorChoice = $("constellationColor").value;
+  const gridColorChoice = $("gridColor")?.value ?? "auto";
+  const constColorChoice = $("constellationColor")?.value ?? "auto";
 
-  return { style, fonts, title, subtitle, place, note, lat, lon, date, maxMag, previewSize, exportSize, fallbackCount, flags, gridColorChoice, constColorChoice };
+  return {
+    style, fonts, title, subtitle, place, note,
+    lat, lon, date, maxMag,
+    previewSize, exportSize, fallbackCount,
+    flags, gridColorChoice, constColorChoice
+  };
 }
 
+/* ---------------- Constellations draw ---------------- */
 function drawConstellations(cfg, cx, cy, R, scale) {
   const { style, lat, lon, date, constColorChoice } = cfg;
   const lst = localSiderealTimeDeg(date, lon);
@@ -399,6 +409,10 @@ function drawConstellations(cfg, cx, cy, R, scale) {
   ctx.restore();
 }
 
+/* ---------------- Poster layout like your image ----------------
+   - big circle map near top (red zone)
+   - text panel rectangle at bottom (green zone)
+*/
 function drawPoster(cfg, cssW) {
   const { style, fonts, title, subtitle, place, note, lat, lon, date, maxMag, fallbackCount, flags, gridColorChoice } = cfg;
 
@@ -406,40 +420,55 @@ function drawPoster(cfg, cssW) {
   const H = Math.round(cssW * 1.33);
   const scale = W / 1100;
 
-  // ✅ más espacio arriba (como pediste)
+  // Outer frame + vignette
   const MARGIN = Math.round(70 * scale);
-  const TOP_GAP = Math.round(120 * scale); // << antes era menor
-  const BOTTOM_GAP = Math.round(75 * scale);
+  const CORNER_R = Math.round(26 * scale);
 
-  // Map occupies upper area but with more padding
-  const mapAreaH = Math.round(H * 0.62);
-  const diameter = Math.min(W - MARGIN * 2, mapAreaH - TOP_GAP);
+  // Map placement (more space at top)
+  const TOP_GAP = Math.round(140 * scale);      // << more breathing room (like your screenshot)
+  const MAP_AREA_H = Math.round(H * 0.66);      // leave enough space for bottom panel
+  const diameter = Math.min(W - MARGIN * 2, MAP_AREA_H - TOP_GAP);
   const R = diameter / 2;
   const cx = W / 2;
-  const cy = TOP_GAP + R; // << baja el mapa
+  const cy = TOP_GAP + R;
 
-  // Map background color from palette
-  const mapBg = getMapBg();
+  // Bottom text panel geometry (green zone)
+  const PANEL_W = Math.round(W * 0.72);
+  const PANEL_H = Math.round(H * 0.26);
+  const PANEL_X = Math.round(W / 2 - PANEL_W / 2);
+  const PANEL_Y = Math.round(H - MARGIN - PANEL_H);
+  const PANEL_R = Math.round(18 * scale);
+  const PANEL_PAD_X = Math.round(34 * scale);
+  const PANEL_PAD_Y = Math.round(26 * scale);
 
-  // Fondo
-  ctx.fillStyle = mapBg;
+  const bg = getMapBg();
+
+  // Background
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
-  // Marco
+  // soft vignette
+  const grad = ctx.createRadialGradient(W/2, H*0.4, Math.max(10, W*0.15), W/2, H*0.5, W*0.9);
+  grad.addColorStop(0, "rgba(0,0,0,0)");
+  grad.addColorStop(1, "rgba(0,0,0,.55)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  // Outer border frame
   if (flags.showBorder) {
     ctx.strokeStyle = style.border;
     ctx.lineWidth = Math.max(1, 2 * scale);
-    roundRect(MARGIN * 0.60, MARGIN * 0.60, W - MARGIN * 1.20, H - MARGIN * 1.20, 26 * scale);
+    roundRect(MARGIN * 0.60, MARGIN * 0.60, W - MARGIN * 1.20, H - MARGIN * 1.20, CORNER_R);
     ctx.stroke();
   }
 
-  // Clip mapa
+  // --- MAP CLIP ---
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
   ctx.clip();
 
-  // Grid / retícula
+  // grid / retícula
   if (flags.showGrid) {
     ctx.strokeStyle = resolveGridColor(gridColorChoice, style);
     ctx.lineWidth = Math.max(1, 1.15 * scale);
@@ -462,7 +491,7 @@ function drawPoster(cfg, cssW) {
     ctx.globalAlpha = 1;
   }
 
-  // Stars
+  // stars (generated)
   const seed = (Math.floor(date.getTime() / 60000) ^ Math.floor((lat + 90) * 1000) ^ Math.floor((lon + 180) * 1000)) >>> 0;
   if (!state.stars || state.stars.length !== fallbackCount || state._seed !== seed) {
     state.stars = generateFallbackStars(fallbackCount, seed);
@@ -483,7 +512,7 @@ function drawPoster(cfg, cssW) {
 
   const doGlow = flags.showGlow && (style.glowAlphaMul ?? 0) > 0;
 
-  // ⭐ PUNTOS (no imagen) y con DPR ya no pixelan
+  // draw stars as points (NO image)
   for (const s of visible) {
     const p = projectAzAlt(s.azDeg, s.altDeg, cx, cy, R);
     const r = starRadiusFromMag(s.mag, scale);
@@ -505,21 +534,21 @@ function drawPoster(cfg, cssW) {
   }
   ctx.globalAlpha = 1;
 
-  // Constelaciones
+  // constellations
   if (flags.showConstellations) {
     drawConstellations(cfg, cx, cy, R, scale);
   }
 
-  ctx.restore();
+  ctx.restore(); // end map clip
 
-  // outline
+  // map outline
   ctx.strokeStyle = style.faint2;
   ctx.lineWidth = Math.max(1, (style.skyStrokeWidth ?? 1.7) * scale);
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Cardinals
+  // cardinals on map edge
   if (flags.showCardinals) {
     ctx.save();
     ctx.fillStyle = style.faint;
@@ -534,10 +563,21 @@ function drawPoster(cfg, cssW) {
     ctx.restore();
   }
 
-  // ✅ Texto mucho más abajo (casi bottom)
-  // reservamos zona inferior y la “pegamos” hacia abajo
-  const TEXT_BOTTOM_ZONE = H - BOTTOM_GAP - Math.round(220 * scale); // zona de inicio (baja)
-  let y = TEXT_BOTTOM_ZONE;
+  // --- TEXT PANEL (green zone) ---
+  if (flags.showTextPanel) {
+    ctx.save();
+    ctx.fillStyle = style.panelFill || "rgba(0,0,0,.22)";
+    ctx.strokeStyle = style.panelStroke || style.faint2;
+    ctx.lineWidth = Math.max(1, 1.6 * scale);
+    roundRect(PANEL_X, PANEL_Y, PANEL_W, PANEL_H, PANEL_R);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Panel content layout
+  const contentX = PANEL_X + PANEL_W / 2;
+  let y = PANEL_Y + PANEL_PAD_Y;
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -545,15 +585,15 @@ function drawPoster(cfg, cssW) {
   if (flags.showTitle && title) {
     ctx.fillStyle = style.fg;
     ctx.font = `800 ${Math.round(40 * scale)}px ${fonts.title}`;
-    ctx.fillText(title, W/2, y);
-    y += Math.round(34 * scale);
+    ctx.fillText(title, contentX, y + Math.round(18 * scale));
+    y += Math.round(52 * scale);
   }
 
   if (flags.showSubtitle && subtitle) {
     ctx.fillStyle = style.faint;
     ctx.font = `700 ${Math.round(18 * scale)}px ${fonts.body}`;
-    ctx.fillText(subtitle, W/2, y);
-    y += Math.round(28 * scale);
+    ctx.fillText(subtitle, contentX, y);
+    y += Math.round(30 * scale);
   } else {
     y += Math.round(10 * scale);
   }
@@ -562,15 +602,16 @@ function drawPoster(cfg, cssW) {
   ctx.font = `650 ${Math.round(16 * scale)}px ${fonts.body}`;
 
   if (flags.showDate) {
-    ctx.fillText(fmtDate(date), W/2, y);
+    ctx.fillText(fmtDateTime(date), contentX, y);
     y += Math.round(22 * scale);
   }
   if (flags.showPlace && place) {
-    ctx.fillText(place, W/2, y);
+    ctx.fillText(place, contentX, y);
     y += Math.round(22 * scale);
   }
   if (flags.showCoords) {
-    ctx.fillText(`${lat.toFixed(4)}° N, ${Math.abs(lon).toFixed(4)}° ${lon < 0 ? "W" : "E"}`, W/2, y);
+    const coordsLine = `lat ${lat.toFixed(4)}°, lon ${lon.toFixed(4)}°`;
+    ctx.fillText(coordsLine, contentX, y);
     y += Math.round(22 * scale);
   }
 
@@ -578,25 +619,27 @@ function drawPoster(cfg, cssW) {
     y += Math.round(10 * scale);
     ctx.fillStyle = style.fg;
     ctx.font = `800 ${Math.round(18 * scale)}px ${fonts.body}`;
-    ctx.fillText(note, W/2, y);
+    ctx.fillText(note, contentX, y);
     y += Math.round(26 * scale);
+    ctx.fillStyle = style.faint;
+    ctx.font = `650 ${Math.round(16 * scale)}px ${fonts.body}`;
   }
 
-  // Spotify code centered at very bottom
+  // Spotify code centered near bottom of panel
   if (flags.showSpotify && state.spotifyCodeBitmap) {
     const bmp = state.spotifyCodeBitmap;
-    const box = Math.round(170 * scale);
+
+    const box = Math.round(Math.min(PANEL_W * 0.40, 220 * scale));
     const pad = Math.round(12 * scale);
 
-    const bx = Math.round(W/2 - box/2);
-    const by = Math.round(H - BOTTOM_GAP - box - pad * 2);
+    const bx = Math.round(contentX - box / 2);
+    const by = Math.round(PANEL_Y + PANEL_H - PANEL_PAD_Y - box);
 
     ctx.save();
     ctx.fillStyle = "rgba(255,255,255,0.03)";
     ctx.strokeStyle = style.faint2;
     ctx.lineWidth = Math.max(1, 1.2 * scale);
-
-    roundRect(bx - pad, by - pad, box + pad*2, box + pad*2, 18 * scale);
+    roundRect(bx - pad, by - pad, box + pad * 2, box + pad * 2, Math.round(16 * scale));
     ctx.fill();
     ctx.stroke();
 
@@ -612,11 +655,9 @@ function renderPreview() {
   const cfg = getConfig();
   const style = cfg.style;
 
-  // crisp preview
   const cssW = cfg.previewSize;
   setCanvasCrisp(cssW, style);
 
-  // limpiar en unidades CSS
   ctx.clearRect(0, 0, cssW, Math.round(cssW * 1.33));
   drawPoster(cfg, cssW);
 }
@@ -624,13 +665,11 @@ function renderPreview() {
 function exportPNG() {
   clearError();
   const cfg = getConfig();
-  const style = cfg.style;
 
-  // Export: renderizamos a tamaño exacto (sin depender del DPR)
   const W = cfg.exportSize;
   const H = Math.round(W * 1.33);
 
-  // Ajuste directo (sin transform DPR)
+  // export at true resolution
   canvas.style.width = W + "px";
   canvas.width = W;
   canvas.height = H;
@@ -644,7 +683,6 @@ function exportPNG() {
   a.download = "mapa-estelar-pro.png";
   a.click();
 
-  // volver a preview
   setTimeout(() => { try { renderPreview(); } catch (e) { showError(e); } }, 60);
 }
 
@@ -654,8 +692,15 @@ async function spotifySearch(q) {
   if (!r.ok) throw new Error(await r.text());
   return await r.json();
 }
+function isLightColor(hex) {
+  const h = (hex || "").replace("#", "");
+  if (h.length !== 6) return false;
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  return (0.2126*r + 0.7152*g + 0.0722*b) > 170;
+}
 async function loadSpotifyCodeBitmap(uri) {
-  // auto contrast from background
   const bg = getMapBg();
   const isLight = isLightColor(bg);
   const bgHex = isLight ? "FFFFFF" : "000000";
@@ -665,17 +710,10 @@ async function loadSpotifyCodeBitmap(uri) {
 
   const r = await fetch(`/api/spotify/code?uri=${encodeURIComponent(uri)}&bg=${bgHex}&code=${code}&size=${size}&fmt=${fmt}`);
   if (!r.ok) throw new Error(await r.text());
+
   const svgText = await r.text();
   const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
   return await createImageBitmap(blob);
-}
-function isLightColor(hex) {
-  const h = (hex || "").replace("#", "");
-  if (h.length !== 6) return false;
-  const r = parseInt(h.slice(0,2), 16);
-  const g = parseInt(h.slice(2,4), 16);
-  const b = parseInt(h.slice(4,6), 16);
-  return (0.2126*r + 0.7152*g + 0.0722*b) > 170;
 }
 function wireSpotifyUI() {
   $("spotifySearch").addEventListener("click", async () => {
@@ -742,9 +780,9 @@ function drawStyleThumb(canvasEl, style, bg) {
   }
   tctx.globalAlpha = 1;
 }
-
 function buildStyleGrid() {
   const grid = $("styleGrid");
+  if (!grid) return;
   grid.innerHTML = "";
 
   for (const [key, style] of Object.entries(STYLE_PRESETS)) {
@@ -788,6 +826,7 @@ function buildStyleGrid() {
 /* ---------------- Map color palette UI ---------------- */
 function buildMapPalette() {
   const pal = $("mapColorPalette");
+  if (!pal) return;
   pal.innerHTML = "";
 
   for (const c of MAP_COLORS) {
@@ -805,10 +844,10 @@ function buildMapPalette() {
 
     sw.addEventListener("click", () => {
       state.mapBgKey = c.key;
-      // actualizar active
       for (const node of pal.querySelectorAll(".swatch")) node.dataset.active = "false";
       sw.dataset.active = "true";
-      // thumbnails dependen de bg
+
+      // thumbnails depend on bg
       buildStyleGrid();
       renderPreview();
     });
@@ -819,35 +858,60 @@ function buildMapPalette() {
   }
 }
 
+/* ---------------- Tabs UX ---------------- */
+function wireTabs() {
+  const btns = Array.from(document.querySelectorAll(".tabBtn"));
+  const panels = {
+    fields: $("tab-fields"),
+    map: $("tab-map"),
+    text: $("tab-text"),
+    export: $("tab-export")
+  };
+
+  function setTab(tab) {
+    for (const b of btns) b.dataset.active = (b.dataset.tab === tab) ? "true" : "false";
+    for (const [k, p] of Object.entries(panels)) p.dataset.active = (k === tab) ? "true" : "false";
+  }
+
+  for (const b of btns) {
+    b.addEventListener("click", () => setTab(b.dataset.tab));
+  }
+}
+
 /* ---------------- Wiring ---------------- */
 function safeRender() {
   try { renderPreview(); } catch (e) { showError(e); }
 }
 
 function wire() {
-  // defaults
-  const now = new Date();
-  const local = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}T${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
-  $("dt").value = local;
-
+  setDefaultDatetime();
   $("maxMagVal").textContent = $("maxMag").value;
 
+  wireTabs();
   buildMapPalette();
   buildStyleGrid();
   wireSpotifyUI();
 
+  // auto re-render on changes
   const rerenderIds = [
-    "fontPreset",
-    "title","subtitle","place","lat","lon","dt","note",
-    "maxMag","fallbackCount","previewSize",
-    "showTitle","showSubtitle","showDate","showPlace","showCoords","showBorder",
-    "showSpotify","showNote","showGrid","showGlow","showConstellations","showCardinals",
-    "gridColor","constellationColor"
+    // fields
+    "showBorder","showTextPanel",
+    "showTitle","showSubtitle","showDate","showPlace","showCoords","showSpotify","showNote",
+    "showConstellations","showGrid","showGlow","showCardinals",
+
+    // map
+    "maxMag","fallbackCount","gridColor","constellationColor",
+
+    // text
+    "fontPreset","title","subtitle","place","lat","lon","dt","note",
+
+    // export
+    "previewSize"
   ];
+
   for (const id of rerenderIds) {
     const el = $(id);
     if (!el) continue;
-
     el.addEventListener("input", () => {
       if (id === "maxMag") $("maxMagVal").textContent = $("maxMag").value;
       safeRender();
@@ -883,21 +947,25 @@ function wire() {
     $("exportSize").value = "8000";
     $("maxMagVal").textContent = $("maxMag").value;
 
+    $("gridColor").value = "auto";
+    $("constellationColor").value = "auto";
+
+    // fields
+    $("showBorder").checked = true;
+    $("showTextPanel").checked = true;
+
     $("showTitle").checked = true;
     $("showSubtitle").checked = true;
     $("showDate").checked = true;
     $("showPlace").checked = true;
     $("showCoords").checked = true;
-    $("showBorder").checked = true;
     $("showSpotify").checked = true;
     $("showNote").checked = true;
+
     $("showGrid").checked = true;
     $("showGlow").checked = true;
     $("showConstellations").checked = true;
     $("showCardinals").checked = true;
-
-    $("gridColor").value = "auto";
-    $("constellationColor").value = "auto";
 
     $("spotifyQuery").value = "";
     $("spotifyResults").innerHTML = "";

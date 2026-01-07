@@ -1,97 +1,98 @@
-/* Star Map Pro
-   - estilos con thumbnails
-   - fuentes (5)
-   - estrellas más grandes
-   - constelaciones
-   - textos debajo del mapa, centrados
-   - spotify code vía backend
-   - NO modules (compatible con servers con MIME raros)
-*/
-
 const $ = (id) => document.getElementById(id);
 const canvas = $("c");
 const ctx = canvas.getContext("2d", { alpha: false });
 
 const state = {
   styleKey: "classic_dark",
-  stars: null,              // generated fallback stars
-  spotifyCodeBitmap: null,  // ImageBitmap
-  spotifyLabel: ""          // opcional: texto track (no mostramos por defecto)
+  mapBgKey: "black",
+  stars: null,
+  _seed: 0,
+  spotifyCodeBitmap: null
 };
 
-/* -------------------- Fonts (5 presets) -------------------- */
+/* ---------------- Fonts ---------------- */
 const FONT_PRESETS = {
   inter: {
-    name: "Inter",
     title: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial",
     body: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial"
   },
   montserrat: {
-    name: "Montserrat",
     title: "Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial",
     body: "Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial"
   },
   playfair: {
-    name: "Playfair Display",
     title: "'Playfair Display', Georgia, 'Times New Roman', Times, serif",
     body: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial"
   },
   cormorant: {
-    name: "Cormorant Garamond",
     title: "'Cormorant Garamond', Georgia, 'Times New Roman', Times, serif",
     body: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial"
   },
   mono: {
-    name: "Space Mono",
     title: "'Space Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
     body: "'Space Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
   }
 };
 
-/* -------------------- Style presets (para thumbnails + render) -------------------- */
+function getFonts() {
+  const k = $("fontPreset")?.value || "inter";
+  return FONT_PRESETS[k] || FONT_PRESETS.inter;
+}
+
+/* ---------------- Map color palette (como bolitas) ---------------- */
+const MAP_COLORS = [
+  { key: "black",  name: "Negro",   bg: "#050608" },
+  { key: "gray",   name: "Gris",    bg: "#2f3137" },
+  { key: "navy",   name: "Azul",    bg: "#0b1020" },
+  { key: "teal",   name: "Chatham", bg: "#12384a" },
+  { key: "red",    name: "Rojo",    bg: "#4a0f14" },
+  { key: "purple", name: "Morado",  bg: "#3a1b4f" },
+  { key: "olive",  name: "Oliva",   bg: "#3a3f1f" },
+  { key: "tan",    name: "Arena",   bg: "#7a543d" },
+  { key: "cream",  name: "Crema",   bg: "#fbf2df" }
+];
+
+/* ---------------- Style presets (líneas, glow, etc.) ---------------- */
 const STYLE_PRESETS = {
   classic_dark: {
     name: "Classic Dark",
-    desc: "Premium oscuro, glow suave",
-    bg: "#0b1020",
-    fg: "#e8ecff",
-    faint: "rgba(232,236,255,.55)",
-    faint2: "rgba(232,236,255,.18)",
-    border: "rgba(232,236,255,.18)",
-    cardShadow: "rgba(0,0,0,.35)",
+    desc: "Premium oscuro",
+    fg: "#ffffff",
+    faint: "rgba(255,255,255,.58)",
+    faint2: "rgba(255,255,255,.16)",
+    border: "rgba(255,255,255,.18)",
+    cardShadow: "rgba(0,0,0,.40)",
     borderRadius: 18,
     gridDash: [8, 12],
-    gridAlpha: 0.40,
+    gridAlpha: 0.42,
     ringAlts: [15, 30, 45, 60, 75],
-    starGlowAlphaMul: 0.30,
-    starGlowMul: 2.6,
-    skyStrokeWidth: 1.6,
-    constellationsAlpha: 0.38,
-    constellationsWidth: 1.25
+    glowAlphaMul: 0.22,
+    glowMul: 2.8,
+    skyStrokeWidth: 1.7,
+    constellationsAlpha: 0.42,
+    constellationsWidth: 1.35
   },
-  classic_black: {
-    name: "Classic Black",
-    desc: "Negro profundo, alto contraste",
-    bg: "#050608",
+  minimal: {
+    name: "Minimal",
+    desc: "Limpio",
     fg: "#ffffff",
-    faint: "rgba(255,255,255,.55)",
-    faint2: "rgba(255,255,255,.16)",
-    border: "rgba(255,255,255,.12)",
-    cardShadow: "rgba(0,0,0,.45)",
-    borderRadius: 18,
-    gridDash: [6, 12],
-    gridAlpha: 0.34,
-    ringAlts: [15, 30, 45, 60, 75],
-    starGlowAlphaMul: 0.24,
-    starGlowMul: 2.8,
-    skyStrokeWidth: 1.75,
-    constellationsAlpha: 0.34,
-    constellationsWidth: 1.2
+    faint: "rgba(255,255,255,.50)",
+    faint2: "rgba(255,255,255,.10)",
+    border: "rgba(255,255,255,.14)",
+    cardShadow: "rgba(0,0,0,.40)",
+    borderRadius: 22,
+    gridDash: [9999, 0],
+    gridAlpha: 0.22,
+    ringAlts: [30, 60],
+    glowAlphaMul: 0.0,
+    glowMul: 0.0,
+    skyStrokeWidth: 1.3,
+    constellationsAlpha: 0.28,
+    constellationsWidth: 1.1
   },
   blueprint: {
     name: "Blueprint",
-    desc: "Azul técnico, detalle extra",
-    bg: "#081a3a",
+    desc: "Técnico",
     fg: "#dbeafe",
     faint: "rgba(219,234,254,.62)",
     faint2: "rgba(219,234,254,.20)",
@@ -99,70 +100,13 @@ const STYLE_PRESETS = {
     cardShadow: "rgba(0,0,0,.35)",
     borderRadius: 16,
     gridDash: [4, 10],
-    gridAlpha: 0.48,
+    gridAlpha: 0.50,
     ringAlts: [10, 25, 40, 55, 70, 85],
-    starGlowAlphaMul: 0.22,
-    starGlowMul: 2.3,
-    skyStrokeWidth: 1.8,
-    constellationsAlpha: 0.42,
-    constellationsWidth: 1.35
-  },
-  paper_cream: {
-    name: "Paper Cream",
-    desc: "Fondo claro, elegante",
-    bg: "#fbf2df",
-    fg: "#141414",
-    faint: "rgba(20,20,20,.60)",
-    faint2: "rgba(20,20,20,.15)",
-    border: "rgba(20,20,20,.16)",
-    cardShadow: "rgba(0,0,0,.18)",
-    borderRadius: 18,
-    gridDash: [8, 12],
-    gridAlpha: 0.40,
-    ringAlts: [15, 30, 45, 60, 75],
-    starGlowAlphaMul: 0.14,
-    starGlowMul: 1.8,
-    skyStrokeWidth: 1.5,
-    constellationsAlpha: 0.34,
-    constellationsWidth: 1.25
-  },
-  modern_mono: {
-    name: "Modern Mono",
-    desc: "Mono/tech, minimal premium",
-    bg: "#0b0b0c",
-    fg: "#f5f5f5",
-    faint: "rgba(245,245,245,.52)",
-    faint2: "rgba(245,245,245,.14)",
-    border: "rgba(245,245,245,.12)",
-    cardShadow: "rgba(0,0,0,.45)",
-    borderRadius: 18,
-    gridDash: [10, 16],
-    gridAlpha: 0.26,
-    ringAlts: [15, 35, 55, 75],
-    starGlowAlphaMul: 0.18,
-    starGlowMul: 2.2,
-    skyStrokeWidth: 1.4,
-    constellationsAlpha: 0.28,
-    constellationsWidth: 1.1
-  },
-  minimal_black: {
-    name: "Minimal Black",
-    desc: "Limpio, casi sin grid",
-    bg: "#07080a",
-    fg: "#f3f4f6",
-    faint: "rgba(243,244,246,.45)",
-    faint2: "rgba(243,244,246,.10)",
-    border: "rgba(243,244,246,.10)",
-    cardShadow: "rgba(0,0,0,.40)",
-    borderRadius: 22,
-    gridDash: [9999, 0], // sin dash
-    gridAlpha: 0.18,
-    ringAlts: [30, 60],
-    starGlowAlphaMul: 0.0,
-    starGlowMul: 0.0,
-    skyStrokeWidth: 1.2,
-    constellationsAlpha: 0.20,
-    constellationsWidth: 1.0
+    glowAlphaMul: 0.18,
+    glowMul: 2.4,
+    skyStrokeWidth: 1.9,
+    constellationsAlpha: 0.50,
+    constellationsWidth: 1.45
   }
 };
 
@@ -170,11 +114,13 @@ function getStyle() {
   return STYLE_PRESETS[state.styleKey] || STYLE_PRESETS.classic_dark;
 }
 
-/* -------------------- Constellations (subset, looks premium) --------------------
-   RA/Dec degrees + magnitude (roughly)
-*/
+function getMapBg() {
+  const m = MAP_COLORS.find(x => x.key === state.mapBgKey) || MAP_COLORS[0];
+  return m.bg;
+}
+
+/* ---------------- Constellations (subset) ---------------- */
 const BRIGHT_STARS = {
-  // Orion
   Betelgeuse: { ra: 88.7929, dec: 7.4071, mag: 0.50 },
   Bellatrix:  { ra: 81.2828, dec: 6.3497, mag: 1.64 },
   Alnilam:    { ra: 84.0534, dec: -1.2019, mag: 1.69 },
@@ -183,7 +129,6 @@ const BRIGHT_STARS = {
   Rigel:      { ra: 78.6345, dec: -8.2016, mag: 0.12 },
   Saiph:      { ra: 86.9391, dec: -9.6696, mag: 2.06 },
 
-  // Ursa Major (Big Dipper part)
   Dubhe:      { ra: 165.9320, dec: 61.7510, mag: 1.79 },
   Merak:      { ra: 165.4603, dec: 56.3824, mag: 2.37 },
   Phecda:     { ra: 178.4577, dec: 53.6948, mag: 2.44 },
@@ -192,100 +137,48 @@ const BRIGHT_STARS = {
   Mizar:      { ra: 200.9814, dec: 54.9254, mag: 2.23 },
   Alkaid:     { ra: 206.8856, dec: 49.3133, mag: 1.86 },
 
-  // Cassiopeia (W)
   Schedar:    { ra: 10.1260,  dec: 56.5373, mag: 2.24 },
   Caph:       { ra: 2.2945,   dec: 59.1498, mag: 2.28 },
   GammaCas:   { ra: 14.1771,  dec: 60.7167, mag: 2.47 },
   Ruchbah:    { ra: 21.4540,  dec: 60.2353, mag: 2.68 },
-  Segin:      { ra: 28.5989,  dec: 63.6701, mag: 3.35 },
-
-  // Scorpius (partial)
-  Antares:    { ra: 247.3519, dec: -26.4320, mag: 1.06 },
-  Shaula:     { ra: 263.4022, dec: -37.1038, mag: 1.62 },
-  Sargas:     { ra: 263.7333, dec: -42.9978, mag: 1.86 },
-
-  // Lyra
-  Vega:       { ra: 279.2347, dec: 38.7837, mag: 0.03 },
-  Sheliak:    { ra: 281.4156, dec: 33.3627, mag: 3.45 },
-  Sulafat:    { ra: 284.7359, dec: 32.6896, mag: 3.25 },
-
-  // Cygnus (partial)
-  Deneb:      { ra: 310.3579, dec: 45.2803, mag: 1.25 },
-  Sadr:       { ra: 305.5571, dec: 40.2567, mag: 2.23 },
-  Albireo:    { ra: 292.6803, dec: 27.9597, mag: 3.05 }
+  Segin:      { ra: 28.5989,  dec: 63.6701, mag: 3.35 }
 };
 
 const CONSTELLATIONS = [
-  {
-    name: "Orion",
-    segments: [
-      ["Betelgeuse","Bellatrix"],
-      ["Bellatrix","Alnilam"],
-      ["Alnilam","Mintaka"],
-      ["Alnilam","Alnitak"],
-      ["Alnitak","Saiph"],
-      ["Saiph","Rigel"],
-      ["Rigel","Mintaka"],
-      ["Mintaka","Bellatrix"],
-      ["Betelgeuse","Alnitak"],
-      ["Betelgeuse","Saiph"]
-    ]
-  },
-  {
-    name: "Ursa Major",
-    segments: [
-      ["Dubhe","Merak"],
-      ["Merak","Phecda"],
-      ["Phecda","Megrez"],
-      ["Megrez","Alioth"],
-      ["Alioth","Mizar"],
-      ["Mizar","Alkaid"]
-    ]
-  },
-  {
-    name: "Cassiopeia",
-    segments: [
-      ["Caph","Schedar"],
-      ["Schedar","GammaCas"],
-      ["GammaCas","Ruchbah"],
-      ["Ruchbah","Segin"]
-    ]
-  },
-  {
-    name: "Scorpius",
-    segments: [
-      ["Antares","Shaula"],
-      ["Shaula","Sargas"]
-    ]
-  },
-  {
-    name: "Lyra",
-    segments: [
-      ["Vega","Sheliak"],
-      ["Sheliak","Sulafat"],
-      ["Sulafat","Vega"]
-    ]
-  },
-  {
-    name: "Cygnus",
-    segments: [
-      ["Deneb","Sadr"],
-      ["Sadr","Albireo"]
-    ]
-  }
+  { segments: [
+    ["Betelgeuse","Bellatrix"],
+    ["Bellatrix","Alnilam"],
+    ["Alnilam","Mintaka"],
+    ["Alnilam","Alnitak"],
+    ["Alnitak","Saiph"],
+    ["Saiph","Rigel"],
+    ["Rigel","Mintaka"]
+  ]},
+  { segments: [
+    ["Dubhe","Merak"],
+    ["Merak","Phecda"],
+    ["Phecda","Megrez"],
+    ["Megrez","Alioth"],
+    ["Alioth","Mizar"],
+    ["Mizar","Alkaid"]
+  ]},
+  { segments: [
+    ["Caph","Schedar"],
+    ["Schedar","GammaCas"],
+    ["GammaCas","Ruchbah"],
+    ["Ruchbah","Segin"]
+  ]}
 ];
 
-/* -------------------- UI helpers -------------------- */
+/* ---------------- Utilities ---------------- */
 function showError(e) {
   const box = $("err");
-  if (!box) return;
   box.style.display = "block";
   box.textContent = "Error: " + (e?.message || String(e));
   console.error(e);
 }
 function clearError() {
   const box = $("err");
-  if (!box) return;
   box.style.display = "none";
   box.textContent = "";
 }
@@ -301,56 +194,10 @@ function setDefaultDatetime() {
   $("dt").value = local;
 }
 function fmtDate(date) {
-  return date.toLocaleString(undefined, { year: "numeric", month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
 }
 
-/* -------------------- Config -------------------- */
-function getFontPreset() {
-  const k = $("fontPreset")?.value || "inter";
-  return FONT_PRESETS[k] || FONT_PRESETS.inter;
-}
-
-function getConfig() {
-  const style = getStyle();
-  const fonts = getFontPreset();
-
-  const title = $("title").value.trim();
-  const subtitle = $("subtitle").value.trim();
-  const place = $("place").value.trim();
-  const note = $("note").value.trim();
-
-  const lat = Number($("lat").value);
-  const lon = Number($("lon").value);
-
-  const dtLocal = $("dt").value;
-  const date = new Date(dtLocal);
-  if (Number.isNaN(date.getTime())) throw new Error("Fecha inválida.");
-
-  const maxMag = Number($("maxMag").value);
-  const previewSize = clampInt(Number($("previewSize").value), 700, 2800);
-  const exportSize = clampInt(Number($("exportSize").value), 1600, 24000);
-
-  const flags = {
-    showTitle: $("showTitle").checked,
-    showSubtitle: $("showSubtitle").checked,
-    showDate: $("showDate").checked,
-    showPlace: $("showPlace").checked,
-    showCoords: $("showCoords").checked,
-    showBorder: $("showBorder").checked,
-    showSpotify: $("showSpotify").checked,
-    showNote: $("showNote").checked,
-    showGrid: $("showGrid").checked,
-    showGlow: $("showGlow").checked,
-    showConstellations: $("showConstellations").checked,
-    showCardinals: $("showCardinals").checked
-  };
-
-  const fallbackCount = clampInt(Number($("fallbackCount").value), 3000, 120000);
-
-  return { style, fonts, title, subtitle, place, note, lat, lon, date, maxMag, previewSize, exportSize, fallbackCount, flags };
-}
-
-/* -------------------- Astro math -------------------- */
+/* ---------------- Astro ---------------- */
 function deg2rad(d) { return d * Math.PI / 180; }
 function rad2deg(r) { return r * 180 / Math.PI; }
 function wrapDeg(d) { d %= 360; return d < 0 ? d + 360 : d; }
@@ -381,18 +228,37 @@ function projectAzAlt(azDeg, altDeg, cx, cy, R) {
   return { x: cx + r * Math.sin(a), y: cy - r * Math.cos(a) };
 }
 
-/* ⭐ estrellas más grandes */
-function starRadiusFromMag(mag, scale) {
-  // más grande que antes:
-  // base 0.85 + brillo hasta ~3.8 px en preview base (1100)
-  const t = clamp((3.2 - mag) / 7.0, 0, 1);
-  return (0.85 + t * 3.0) * scale;
-}
-function starAlphaFromMag(mag) {
-  return clamp((7.2 - mag) / 7.2, 0.08, 1);
+/* ---------------- Crisp canvas (NO pixelation) ----------------
+   - Renderiza internamente con DPR, pero mantiene el tamaño CSS
+*/
+function setCanvasCrisp(cssPx, style) {
+  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+
+  canvas.style.width = cssPx + "px";
+  canvas.style.height = "auto";
+  canvas.style.borderRadius = (style.borderRadius || 18) + "px";
+  canvas.style.boxShadow = `0 18px 60px ${style.cardShadow || "rgba(0,0,0,.35)"}`;
+
+  const W = Math.round(cssPx * dpr);
+  const H = Math.round(cssPx * 1.33 * dpr);
+
+  canvas.width = W;
+  canvas.height = H;
+
+  // Dibujaremos en coordenadas CSS usando un scale:
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Y limpiamos con unidades CSS:
 }
 
-/* -------------------- Fallback stars (dense & pretty) -------------------- */
+/* ---------------- Stars (points, different sizes) ---------------- */
+function starRadiusFromMag(mag, scale) {
+  const t = clamp((3.2 - mag) / 7.0, 0, 1);
+  // más grandes:
+  return (0.9 + t * 3.2) * scale;
+}
+function starAlphaFromMag(mag) {
+  return clamp((7.4 - mag) / 7.4, 0.09, 1);
+}
 function mulberry32(seed) {
   let t = seed >>> 0;
   return function() {
@@ -402,7 +268,6 @@ function mulberry32(seed) {
     return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
   };
 }
-
 function generateFallbackStars(n, seed = 1337) {
   const rand = mulberry32(seed);
   const stars = [];
@@ -410,17 +275,34 @@ function generateFallbackStars(n, seed = 1337) {
     const raDeg = rand() * 360;
     const u = rand() * 2 - 1;
     const decDeg = rad2deg(Math.asin(u));
-    // muchas estrellas débiles -> look pro
     const r = rand();
-    const mag = 0.6 + Math.pow(r, 0.22) * 9.4; // ~0.6..10
+    const mag = 0.6 + Math.pow(r, 0.22) * 9.4;
     stars.push({ raDeg, decDeg, mag });
   }
   return stars;
 }
 
-/* -------------------- Drawing helpers -------------------- */
-function roundRect(ctx, x, y, w, h, r) {
-  const rr = Math.min(r, w / 2, h / 2);
+/* ---------------- Colors for grid/constellations ---------------- */
+function resolveLineColor(choice, style) {
+  if (choice === "white") return "rgba(255,255,255,.55)";
+  if (choice === "gray")  return "rgba(255,255,255,.30)";
+  if (choice === "gold")  return "rgba(224,186,96,.60)";
+  if (choice === "blue")  return "rgba(120,190,255,.55)";
+  if (choice === "red")   return "rgba(255,120,120,.55)";
+  return style.faint; // auto
+}
+function resolveGridColor(choice, style) {
+  if (choice === "white") return "rgba(255,255,255,.18)";
+  if (choice === "gray")  return "rgba(255,255,255,.10)";
+  if (choice === "gold")  return "rgba(224,186,96,.18)";
+  if (choice === "blue")  return "rgba(120,190,255,.18)";
+  if (choice === "red")   return "rgba(255,120,120,.18)";
+  return style.faint2; // auto
+}
+
+/* ---------------- Drawing ---------------- */
+function roundRect(x, y, w, h, r) {
+  const rr = Math.min(r, w/2, h/2);
   ctx.beginPath();
   ctx.moveTo(x + rr, y);
   ctx.arcTo(x + w, y, x + w, y + h, rr);
@@ -428,24 +310,6 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.arcTo(x, y + h, x, y, rr);
   ctx.arcTo(x, y, x + w, y, rr);
   ctx.closePath();
-}
-
-function setCanvasSize(px, style) {
-  canvas.width = px;
-  canvas.height = Math.round(px * 1.30); // un poco más alto para el texto centrado debajo
-  canvas.style.width = px + "px";
-  canvas.style.height = "auto";
-  canvas.style.borderRadius = (style.borderRadius || 18) + "px";
-  canvas.style.boxShadow = `0 18px 60px ${style.cardShadow || "rgba(0,0,0,.35)"}`;
-}
-
-function isLightColor(hex) {
-  const h = (hex || "").replace("#", "");
-  if (h.length !== 6) return false;
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return (0.2126 * r + 0.7152 * g + 0.0722 * b) > 170;
 }
 
 function fitContain(sw, sh, bw, bh) {
@@ -459,16 +323,57 @@ function fitContain(sw, sh, bw, bh) {
   return { dw, dh, dx, dy };
 }
 
-/* -------------------- Constellations rendering -------------------- */
+function getConfig() {
+  const style = getStyle();
+  const fonts = getFonts();
+
+  const title = $("title").value.trim();
+  const subtitle = $("subtitle").value.trim();
+  const place = $("place").value.trim();
+  const note = $("note").value.trim();
+
+  const lat = Number($("lat").value);
+  const lon = Number($("lon").value);
+
+  const dtLocal = $("dt").value;
+  const date = new Date(dtLocal);
+  if (Number.isNaN(date.getTime())) throw new Error("Fecha inválida.");
+
+  const maxMag = Number($("maxMag").value);
+  const previewSize = clampInt(Number($("previewSize").value), 700, 2800);
+  const exportSize = clampInt(Number($("exportSize").value), 1600, 24000);
+  const fallbackCount = clampInt(Number($("fallbackCount").value), 5000, 120000);
+
+  const flags = {
+    showTitle: $("showTitle").checked,
+    showSubtitle: $("showSubtitle").checked,
+    showDate: $("showDate").checked,
+    showPlace: $("showPlace").checked,
+    showCoords: $("showCoords").checked,
+    showBorder: $("showBorder").checked,
+    showSpotify: $("showSpotify").checked,
+    showNote: $("showNote").checked,
+    showGrid: $("showGrid").checked,
+    showGlow: $("showGlow").checked,
+    showConstellations: $("showConstellations").checked,
+    showCardinals: $("showCardinals").checked
+  };
+
+  const gridColorChoice = $("gridColor").value;
+  const constColorChoice = $("constellationColor").value;
+
+  return { style, fonts, title, subtitle, place, note, lat, lon, date, maxMag, previewSize, exportSize, fallbackCount, flags, gridColorChoice, constColorChoice };
+}
+
 function drawConstellations(cfg, cx, cy, R, scale) {
-  const { style, lat, lon, date } = cfg;
+  const { style, lat, lon, date, constColorChoice } = cfg;
   const lst = localSiderealTimeDeg(date, lon);
   const latRad = deg2rad(lat);
 
   ctx.save();
-  ctx.strokeStyle = style.faint;
-  ctx.globalAlpha = style.constellationsAlpha ?? 0.35;
-  ctx.lineWidth = Math.max(1, (style.constellationsWidth ?? 1.2) * scale);
+  ctx.globalAlpha = style.constellationsAlpha ?? 0.42;
+  ctx.strokeStyle = resolveLineColor(constColorChoice, style);
+  ctx.lineWidth = Math.max(1, (style.constellationsWidth ?? 1.3) * scale);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
@@ -491,50 +396,52 @@ function drawConstellations(cfg, cx, cy, R, scale) {
       ctx.stroke();
     }
   }
-
   ctx.restore();
 }
 
-/* -------------------- Poster render (map top, text centered below) -------------------- */
-function drawPoster(cfg, outPx) {
-  const { style, fonts, title, subtitle, place, note, lat, lon, date, maxMag, fallbackCount, flags } = cfg;
+function drawPoster(cfg, cssW) {
+  const { style, fonts, title, subtitle, place, note, lat, lon, date, maxMag, fallbackCount, flags, gridColorChoice } = cfg;
 
-  const W = outPx;
-  const H = Math.round(outPx * 1.30);
+  const W = cssW;
+  const H = Math.round(cssW * 1.33);
   const scale = W / 1100;
 
-  const margin = Math.round(70 * scale);
-  const topPad = Math.round(70 * scale);
-  const bottomPad = Math.round(70 * scale);
+  // ✅ más espacio arriba (como pediste)
+  const MARGIN = Math.round(70 * scale);
+  const TOP_GAP = Math.round(120 * scale); // << antes era menor
+  const BOTTOM_GAP = Math.round(75 * scale);
 
-  // Área del mapa (círculo)
+  // Map occupies upper area but with more padding
   const mapAreaH = Math.round(H * 0.62);
-  const diameter = Math.min(W - margin * 2, mapAreaH - topPad);
+  const diameter = Math.min(W - MARGIN * 2, mapAreaH - TOP_GAP);
   const R = diameter / 2;
   const cx = W / 2;
-  const cy = topPad + R;
+  const cy = TOP_GAP + R; // << baja el mapa
+
+  // Map background color from palette
+  const mapBg = getMapBg();
 
   // Fondo
-  ctx.fillStyle = style.bg;
+  ctx.fillStyle = mapBg;
   ctx.fillRect(0, 0, W, H);
 
-  // Borde
+  // Marco
   if (flags.showBorder) {
     ctx.strokeStyle = style.border;
     ctx.lineWidth = Math.max(1, 2 * scale);
-    roundRect(ctx, margin * 0.60, margin * 0.60, W - margin * 1.20, H - margin * 1.20, 26 * scale);
+    roundRect(MARGIN * 0.60, MARGIN * 0.60, W - MARGIN * 1.20, H - MARGIN * 1.20, 26 * scale);
     ctx.stroke();
   }
 
-  // Clip al círculo del mapa
+  // Clip mapa
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
   ctx.clip();
 
-  // Grid/anillos
+  // Grid / retícula
   if (flags.showGrid) {
-    ctx.strokeStyle = style.faint2;
+    ctx.strokeStyle = resolveGridColor(gridColorChoice, style);
     ctx.lineWidth = Math.max(1, 1.15 * scale);
 
     const dash = style.gridDash || [8, 12];
@@ -545,7 +452,7 @@ function drawPoster(cfg, outPx) {
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.globalAlpha = style.gridAlpha ?? 0.38;
+    ctx.globalAlpha = style.gridAlpha ?? 0.42;
     const ringAlts = style.ringAlts || [15, 30, 45, 60, 75];
     for (const alt of ringAlts) {
       ctx.beginPath();
@@ -555,7 +462,7 @@ function drawPoster(cfg, outPx) {
     ctx.globalAlpha = 1;
   }
 
-  // Estrellas fallback (seed dependiente de fecha/lugar para consistencia)
+  // Stars
   const seed = (Math.floor(date.getTime() / 60000) ^ Math.floor((lat + 90) * 1000) ^ Math.floor((lon + 180) * 1000)) >>> 0;
   if (!state.stars || state.stars.length !== fallbackCount || state._seed !== seed) {
     state.stars = generateFallbackStars(fallbackCount, seed);
@@ -572,20 +479,21 @@ function drawPoster(cfg, outPx) {
     if (altDeg <= 0) continue;
     visible.push({ azDeg, altDeg, mag: s.mag });
   }
-  visible.sort((a, b) => b.mag - a.mag); // débiles primero
+  visible.sort((a, b) => b.mag - a.mag);
 
-  const doGlow = flags.showGlow && (style.starGlowAlphaMul ?? 0) > 0;
+  const doGlow = flags.showGlow && (style.glowAlphaMul ?? 0) > 0;
 
+  // ⭐ PUNTOS (no imagen) y con DPR ya no pixelan
   for (const s of visible) {
     const p = projectAzAlt(s.azDeg, s.altDeg, cx, cy, R);
     const r = starRadiusFromMag(s.mag, scale);
     const a = starAlphaFromMag(s.mag);
 
     if (doGlow) {
-      ctx.globalAlpha = a * (style.starGlowAlphaMul ?? 0.25);
+      ctx.globalAlpha = a * (style.glowAlphaMul ?? 0.20);
       ctx.fillStyle = style.fg;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, r * (style.starGlowMul ?? 2.4), 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, r * (style.glowMul ?? 2.8), 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -597,31 +505,28 @@ function drawPoster(cfg, outPx) {
   }
   ctx.globalAlpha = 1;
 
-  // Constelaciones por encima (se ven pro)
+  // Constelaciones
   if (flags.showConstellations) {
     drawConstellations(cfg, cx, cy, R, scale);
   }
 
   ctx.restore();
 
-  // Contorno del mapa
+  // outline
   ctx.strokeStyle = style.faint2;
-  ctx.lineWidth = Math.max(1, (style.skyStrokeWidth ?? 1.6) * scale);
+  ctx.lineWidth = Math.max(1, (style.skyStrokeWidth ?? 1.7) * scale);
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Cardinales N/E/S/O
+  // Cardinals
   if (flags.showCardinals) {
     ctx.save();
     ctx.fillStyle = style.faint;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `700 ${Math.round(14 * scale)}px ${fonts.body}`;
-
-    const card = [
-      ["N", 0], ["E", 90], ["S", 180], ["O", 270]
-    ];
+    const card = [["N",0],["E",90],["S",180],["O",270]];
     for (const [lab, azDeg] of card) {
       const p = projectAzAlt(azDeg, 0, cx, cy, R);
       ctx.fillText(lab, p.x, p.y - Math.round(14 * scale));
@@ -629,69 +534,69 @@ function drawPoster(cfg, outPx) {
     ctx.restore();
   }
 
-  /* ----- Texto centrado debajo ----- */
-  const textTop = cy + R + Math.round(45 * scale);
-  let y = textTop;
+  // ✅ Texto mucho más abajo (casi bottom)
+  // reservamos zona inferior y la “pegamos” hacia abajo
+  const TEXT_BOTTOM_ZONE = H - BOTTOM_GAP - Math.round(220 * scale); // zona de inicio (baja)
+  let y = TEXT_BOTTOM_ZONE;
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
   if (flags.showTitle && title) {
     ctx.fillStyle = style.fg;
-    ctx.font = `800 ${Math.round(44 * scale)}px ${fonts.title}`;
-    ctx.fillText(title, W / 2, y);
-    y += Math.round(44 * scale);
+    ctx.font = `800 ${Math.round(40 * scale)}px ${fonts.title}`;
+    ctx.fillText(title, W/2, y);
+    y += Math.round(34 * scale);
   }
 
   if (flags.showSubtitle && subtitle) {
     ctx.fillStyle = style.faint;
     ctx.font = `700 ${Math.round(18 * scale)}px ${fonts.body}`;
-    ctx.fillText(subtitle, W / 2, y);
-    y += Math.round(34 * scale);
+    ctx.fillText(subtitle, W/2, y);
+    y += Math.round(28 * scale);
   } else {
     y += Math.round(10 * scale);
   }
 
-  // Meta lines (fecha/lugar/coords)
   ctx.fillStyle = style.faint;
-  ctx.font = `650 ${Math.round(18 * scale)}px ${fonts.body}`;
+  ctx.font = `650 ${Math.round(16 * scale)}px ${fonts.body}`;
 
-  const metaLines = [];
-  if (flags.showDate) metaLines.push(fmtDate(date));
-  if (flags.showPlace && place) metaLines.push(place);
-  if (flags.showCoords) metaLines.push(`lat ${lat.toFixed(4)}°, lon ${lon.toFixed(4)}°`);
-
-  for (const line of metaLines) {
-    ctx.fillText(line, W / 2, y);
-    y += Math.round(30 * scale);
+  if (flags.showDate) {
+    ctx.fillText(fmtDate(date), W/2, y);
+    y += Math.round(22 * scale);
+  }
+  if (flags.showPlace && place) {
+    ctx.fillText(place, W/2, y);
+    y += Math.round(22 * scale);
+  }
+  if (flags.showCoords) {
+    ctx.fillText(`${lat.toFixed(4)}° N, ${Math.abs(lon).toFixed(4)}° ${lon < 0 ? "W" : "E"}`, W/2, y);
+    y += Math.round(22 * scale);
   }
 
-  // Nota (más fuerte)
   if (flags.showNote && note) {
-    y += Math.round(8 * scale);
+    y += Math.round(10 * scale);
     ctx.fillStyle = style.fg;
-    ctx.font = `800 ${Math.round(20 * scale)}px ${fonts.body}`;
-    ctx.fillText(note, W / 2, y);
-    y += Math.round(38 * scale);
-  } else {
-    y += Math.round(14 * scale);
+    ctx.font = `800 ${Math.round(18 * scale)}px ${fonts.body}`;
+    ctx.fillText(note, W/2, y);
+    y += Math.round(26 * scale);
   }
 
-  // Spotify code centrado abajo
+  // Spotify code centered at very bottom
   if (flags.showSpotify && state.spotifyCodeBitmap) {
     const bmp = state.spotifyCodeBitmap;
-    const box = Math.round(190 * scale);
-    const pad = Math.round(14 * scale);
+    const box = Math.round(170 * scale);
+    const pad = Math.round(12 * scale);
 
-    const bx = Math.round(W / 2 - box / 2);
-    const by = Math.min(H - bottomPad - box - pad * 2, y + Math.round(8 * scale));
+    const bx = Math.round(W/2 - box/2);
+    const by = Math.round(H - BOTTOM_GAP - box - pad * 2);
 
-    // frame
     ctx.save();
     ctx.fillStyle = "rgba(255,255,255,0.03)";
     ctx.strokeStyle = style.faint2;
     ctx.lineWidth = Math.max(1, 1.2 * scale);
-    roundRect(ctx, bx - pad, by - pad, box + pad * 2, box + pad * 2, 18 * scale);
+
+    roundRect(bx - pad, by - pad, box + pad*2, box + pad*2, 18 * scale);
     ctx.fill();
     ctx.stroke();
 
@@ -701,23 +606,37 @@ function drawPoster(cfg, outPx) {
   }
 }
 
-/* -------------------- Render/export -------------------- */
+/* ---------------- Render / Export ---------------- */
 function renderPreview() {
   clearError();
   const cfg = getConfig();
-  setCanvasSize(cfg.previewSize, cfg.style);
-  drawPoster(cfg, cfg.previewSize);
+  const style = cfg.style;
+
+  // crisp preview
+  const cssW = cfg.previewSize;
+  setCanvasCrisp(cssW, style);
+
+  // limpiar en unidades CSS
+  ctx.clearRect(0, 0, cssW, Math.round(cssW * 1.33));
+  drawPoster(cfg, cssW);
 }
 
 function exportPNG() {
   clearError();
   const cfg = getConfig();
+  const style = cfg.style;
 
-  const outW = cfg.exportSize;
-  canvas.width = outW;
-  canvas.height = Math.round(outW * 1.30);
+  // Export: renderizamos a tamaño exacto (sin depender del DPR)
+  const W = cfg.exportSize;
+  const H = Math.round(W * 1.33);
 
-  drawPoster(cfg, outW);
+  // Ajuste directo (sin transform DPR)
+  canvas.style.width = W + "px";
+  canvas.width = W;
+  canvas.height = H;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+  drawPoster(cfg, W);
 
   const url = canvas.toDataURL("image/png");
   const a = document.createElement("a");
@@ -725,31 +644,39 @@ function exportPNG() {
   a.download = "mapa-estelar-pro.png";
   a.click();
 
+  // volver a preview
   setTimeout(() => { try { renderPreview(); } catch (e) { showError(e); } }, 60);
 }
 
-/* -------------------- Spotify integration -------------------- */
+/* ---------------- Spotify ---------------- */
 async function spotifySearch(q) {
   const r = await fetch(`/api/spotify/search?q=${encodeURIComponent(q)}`);
   if (!r.ok) throw new Error(await r.text());
   return await r.json();
 }
-
-async function loadSpotifyCodeBitmap(uri, style) {
-  const bgIsLight = isLightColor(style.bg);
-  const bg = bgIsLight ? "FFFFFF" : "000000";
-  const code = bgIsLight ? "black" : "white";
-  const size = "720"; // más nítido
+async function loadSpotifyCodeBitmap(uri) {
+  // auto contrast from background
+  const bg = getMapBg();
+  const isLight = isLightColor(bg);
+  const bgHex = isLight ? "FFFFFF" : "000000";
+  const code = isLight ? "black" : "white";
+  const size = "720";
   const fmt = "svg";
 
-  const r = await fetch(`/api/spotify/code?uri=${encodeURIComponent(uri)}&bg=${bg}&code=${code}&size=${size}&fmt=${fmt}`);
+  const r = await fetch(`/api/spotify/code?uri=${encodeURIComponent(uri)}&bg=${bgHex}&code=${code}&size=${size}&fmt=${fmt}`);
   if (!r.ok) throw new Error(await r.text());
-
   const svgText = await r.text();
   const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
   return await createImageBitmap(blob);
 }
-
+function isLightColor(hex) {
+  const h = (hex || "").replace("#", "");
+  if (h.length !== 6) return false;
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  return (0.2126*r + 0.7152*g + 0.0722*b) > 170;
+}
 function wireSpotifyUI() {
   $("spotifySearch").addEventListener("click", async () => {
     try {
@@ -783,42 +710,35 @@ function wireSpotifyUI() {
       const uri = $("spotifyResults").value;
       if (!uri) return;
 
-      const style = getStyle();
-      state.spotifyCodeBitmap = await loadSpotifyCodeBitmap(uri, style);
-
+      state.spotifyCodeBitmap = await loadSpotifyCodeBitmap(uri);
       $("showSpotify").checked = true;
       renderPreview();
     } catch (e) { showError(e); }
   });
 }
 
-/* -------------------- Style thumbnails -------------------- */
-function drawStyleThumb(canvasEl, style) {
-  const c = canvasEl;
-  const tctx = c.getContext("2d");
-  const W = c.width = 52;
-  const H = c.height = 52;
+/* ---------------- Style previews ---------------- */
+function drawStyleThumb(canvasEl, style, bg) {
+  const tctx = canvasEl.getContext("2d");
+  const W = canvasEl.width = 52;
+  const H = canvasEl.height = 52;
 
-  tctx.fillStyle = style.bg;
-  tctx.fillRect(0, 0, W, H);
+  tctx.fillStyle = bg;
+  tctx.fillRect(0,0,W,H);
 
-  // circle
   tctx.strokeStyle = style.faint2;
   tctx.lineWidth = 1;
   tctx.beginPath();
-  tctx.arc(W/2, H/2, 18, 0, Math.PI*2);
+  tctx.arc(W/2,H/2,18,0,Math.PI*2);
   tctx.stroke();
 
-  // stars
   tctx.fillStyle = style.fg;
-  for (let i = 0; i < 22; i++) {
-    const x = 8 + Math.random() * (W - 16);
-    const y = 8 + Math.random() * (H - 16);
-    const r = 0.6 + Math.random() * 1.4;
-    tctx.globalAlpha = 0.5 + Math.random() * 0.5;
-    tctx.beginPath();
-    tctx.arc(x, y, r, 0, Math.PI*2);
-    tctx.fill();
+  for (let i=0;i<22;i++){
+    const x = 8 + Math.random()*(W-16);
+    const y = 8 + Math.random()*(H-16);
+    const r = 0.6 + Math.random()*1.6;
+    tctx.globalAlpha = 0.5 + Math.random()*0.5;
+    tctx.beginPath(); tctx.arc(x,y,r,0,Math.PI*2); tctx.fill();
   }
   tctx.globalAlpha = 1;
 }
@@ -836,10 +756,8 @@ function buildStyleGrid() {
     const thumbWrap = document.createElement("div");
     thumbWrap.className = "thumb";
     const tcan = document.createElement("canvas");
-    tcan.style.width = "52px";
-    tcan.style.height = "52px";
     thumbWrap.appendChild(tcan);
-    drawStyleThumb(tcan, style);
+    drawStyleThumb(tcan, style, getMapBg());
 
     const meta = document.createElement("div");
     meta.className = "styleMeta";
@@ -857,7 +775,6 @@ function buildStyleGrid() {
 
     btn.addEventListener("click", () => {
       state.styleKey = key;
-      // refrescar activo
       for (const el of grid.querySelectorAll(".styleBtn")) {
         el.dataset.active = (el.dataset.style === key) ? "true" : "false";
       }
@@ -868,11 +785,54 @@ function buildStyleGrid() {
   }
 }
 
-/* -------------------- Wiring -------------------- */
+/* ---------------- Map color palette UI ---------------- */
+function buildMapPalette() {
+  const pal = $("mapColorPalette");
+  pal.innerHTML = "";
+
+  for (const c of MAP_COLORS) {
+    const wrap = document.createElement("div");
+    wrap.className = "swatchWrap";
+
+    const sw = document.createElement("div");
+    sw.className = "swatch";
+    sw.style.background = c.bg;
+    sw.dataset.active = (c.key === state.mapBgKey) ? "true" : "false";
+
+    const lab = document.createElement("div");
+    lab.className = "swatchLabel";
+    lab.textContent = c.name;
+
+    sw.addEventListener("click", () => {
+      state.mapBgKey = c.key;
+      // actualizar active
+      for (const node of pal.querySelectorAll(".swatch")) node.dataset.active = "false";
+      sw.dataset.active = "true";
+      // thumbnails dependen de bg
+      buildStyleGrid();
+      renderPreview();
+    });
+
+    wrap.appendChild(sw);
+    wrap.appendChild(lab);
+    pal.appendChild(wrap);
+  }
+}
+
+/* ---------------- Wiring ---------------- */
+function safeRender() {
+  try { renderPreview(); } catch (e) { showError(e); }
+}
+
 function wire() {
-  setDefaultDatetime();
+  // defaults
+  const now = new Date();
+  const local = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}T${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  $("dt").value = local;
+
   $("maxMagVal").textContent = $("maxMag").value;
 
+  buildMapPalette();
   buildStyleGrid();
   wireSpotifyUI();
 
@@ -881,12 +841,13 @@ function wire() {
     "title","subtitle","place","lat","lon","dt","note",
     "maxMag","fallbackCount","previewSize",
     "showTitle","showSubtitle","showDate","showPlace","showCoords","showBorder",
-    "showSpotify","showNote","showGrid","showGlow","showConstellations","showCardinals"
+    "showSpotify","showNote","showGrid","showGlow","showConstellations","showCardinals",
+    "gridColor","constellationColor"
   ];
-
   for (const id of rerenderIds) {
     const el = $(id);
     if (!el) continue;
+
     el.addEventListener("input", () => {
       if (id === "maxMag") $("maxMagVal").textContent = $("maxMag").value;
       safeRender();
@@ -899,22 +860,28 @@ function wire() {
 
   $("reset").addEventListener("click", () => {
     state.styleKey = "classic_dark";
+    state.mapBgKey = "black";
+    state.spotifyCodeBitmap = null;
+    state.stars = null;
+
+    buildMapPalette();
     buildStyleGrid();
 
     $("fontPreset").value = "inter";
-    $("title").value = "Nuestra noche";
-    $("subtitle").value = "Bajo el mismo cielo";
-    $("place").value = "Ciudad de México";
-    $("lat").value = "19.4326";
-    $("lon").value = "-99.1332";
+    $("title").value = "♥ ESTRELLAS DE LA SUERTE ♥";
+    $("subtitle").value = "";
+    $("place").value = "Ciudad de México, México";
+    $("lat").value = "19.4194";
+    $("lon").value = "-99.1455";
     $("note").value = "";
 
-    $("maxMag").value = "8.4";
-    $("fallbackCount").value = "36000";
+    setDefaultDatetime();
+
+    $("maxMag").value = "8.6";
+    $("fallbackCount").value = "42000";
     $("previewSize").value = "1100";
     $("exportSize").value = "8000";
-    $("spotifyQuery").value = "";
-    $("spotifyResults").innerHTML = "";
+    $("maxMagVal").textContent = $("maxMag").value;
 
     $("showTitle").checked = true;
     $("showSubtitle").checked = true;
@@ -929,21 +896,16 @@ function wire() {
     $("showConstellations").checked = true;
     $("showCardinals").checked = true;
 
-    setDefaultDatetime();
-    $("maxMagVal").textContent = $("maxMag").value;
+    $("gridColor").value = "auto";
+    $("constellationColor").value = "auto";
 
-    state.spotifyCodeBitmap = null;
-    state.spotifyLabel = "";
-    state.stars = null;
+    $("spotifyQuery").value = "";
+    $("spotifyResults").innerHTML = "";
 
     safeRender();
   });
 
-  safeRender(); // preview al abrir
-}
-
-function safeRender() {
-  try { renderPreview(); } catch (e) { showError(e); }
+  safeRender();
 }
 
 window.addEventListener("DOMContentLoaded", wire);

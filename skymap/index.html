@@ -1,390 +1,282 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Star Map Pro</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Montserrat:wght@500;600;700;800&family=Inter:wght@500;600;700;800&family=Space+Mono:wght@400;700&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
-
+  <title>Sky Poster Editor</title>
+  <link rel="stylesheet" href="./styles.css" />
   <style>
-    :root { color-scheme: dark; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b1020; color:#e8ecff; }
-    .wrap { display: grid; grid-template-columns: 440px 1fr; min-height: 100vh; }
+    :root{
+      --bg:#07080c;
+      --panel:#0f121a;
+      --panel2:#0c0f15;
+      --text:#e9eefc;
+      --muted: rgba(233,238,252,.70);
+      --stroke: rgba(233,238,252,.10);
+      --accent: rgba(124,255,250,.45);
+      --accentFill: rgba(124,255,250,.12);
+    }
 
-    .panel {
-      padding: 16px;
-      border-right: 1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.02);
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
+    #app{
+      height:100%;
+      display:grid;
+      grid-template-columns: 420px 1fr;
+    }
+
+    /* Left */
+    .left{
+      border-right:1px solid var(--stroke);
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
+      display:flex;
+      flex-direction:column;
+      min-width:320px;
+    }
+    .header{ padding:16px 16px 8px 16px; }
+    .brand{ display:flex; align-items:center; gap:10px; }
+    .dot{
+      width:12px;height:12px;border-radius:999px;background:#7CFFFA;
+      box-shadow:0 0 24px rgba(124,255,250,.35);
+    }
+    .brandTitle{ font-weight:800; letter-spacing:.3px; }
+    .brandSub{ font-size:12px; color:var(--muted); margin-top:2px; }
+
+    .tabs{
+      display:flex; flex-wrap:wrap; gap:8px;
+      padding: 8px 16px 12px 16px;
+    }
+    .tab{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      color:var(--text);
+      padding:10px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:13px;
+      user-select:none;
+    }
+    .tab.active{
+      border-color: var(--accent);
+      box-shadow:0 0 0 3px rgba(124,255,250,.10);
+    }
+
+    .panel{
+      padding: 0 16px 16px 16px;
       overflow:auto;
     }
-    .panel h1 { margin: 0 0 10px; font-size: 18px; }
-
-    /* Tabs */
-    .tabs { display:flex; gap: 8px; margin: 10px 0 14px; }
-    .tabBtn{
-      flex:1;
-      padding: 10px 10px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-      color: inherit;
-      cursor:pointer;
-      font-weight: 800;
-      font-size: 12px;
-      text-align:center;
-      user-select:none;
-    }
-    .tabBtn[data-active="true"]{
-      border-color: rgba(232,236,255,.45);
-      background: rgba(232,236,255,.08);
-      box-shadow: 0 0 0 2px rgba(232,236,255,.10) inset;
-    }
-    .tabPanel{ display:none; }
-    .tabPanel[data-active="true"]{ display:block; }
-
-    /* Section title */
-    .tabTitle{
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: .2px;
-      margin: 8px 0 10px;
-      opacity: .95;
-    }
-    .tabSubtitle{
-      font-size: 12px;
-      opacity: .75;
-      line-height: 1.35;
-      margin: 0 0 10px;
-    }
-
-    /* Accordion */
-    details {
-      border: 1px solid rgba(255,255,255,.10);
+    .card{
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      padding:14px;
       background: rgba(255,255,255,.02);
-      border-radius: 14px;
-      padding: 10px 10px;
-      margin: 10px 0;
     }
-    summary {
-      cursor: pointer;
-      font-weight: 850;
-      font-size: 12px;
-      letter-spacing: .2px;
-      opacity: .95;
+    .title{ font-weight:800; margin-bottom:4px; }
+    .sub{ font-size:12px; color:var(--muted); margin-bottom:12px; }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px 14px;
+    }
+    .rowToggle{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 10px;
+      border:1px solid var(--stroke);
+      border-radius:12px;
+      background: rgba(255,255,255,.02);
+    }
+    .formRow{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+    .label{ font-size:12px; color:var(--muted); }
+    .input, .select{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.02);
+      color:var(--text);
+      padding:10px 10px;
+      border-radius:12px;
+      outline:none;
+    }
+    .pill{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px dashed rgba(233,238,252,.18);
+      color:var(--muted);
+      width: fit-content;
+    }
+
+    .navBtns{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:12px;
+    }
+    .btn{
+      border-radius:14px;
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:750;
       user-select:none;
-      list-style:none;
+    }
+    .btn.ghost{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.02);
+      color:var(--text);
+    }
+    .btn.primary{
+      border:1px solid var(--accent);
+      background: var(--accentFill);
+      color:var(--text);
+    }
+
+    /* Right / Preview */
+    .right{
       display:flex;
       align-items:center;
+      justify-content:center;
+      padding:18px;
+      overflow:hidden;
+    }
+    .previewWrap{
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .previewScale{
+      transform: scale(0.5);         /* ✅ preview 50% */
+      transform-origin: center center;
+    }
+
+    /* Poster */
+    .poster{
+      width: 900px;
+      height: 1200px;
+      border-radius: 26px;
+      box-shadow: 0 24px 90px rgba(0,0,0,.55);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .posterInner{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      padding-top:70px;             /* ✅ mapa no pegado al top */
+    }
+
+    .mapCircle{
+      width: 780px;
+      height: 780px;
+      border-radius: 999px;
+      overflow:hidden;
+      position:relative;
+    }
+    canvas#mapCanvas{
+      width:780px;
+      height:780px;
+      display:block;
+    }
+
+    .bottomText{
+      position:absolute;
+      left:80px;
+      right:80px;
+      bottom:64px;                  /* ✅ textos al bottom */
+      padding:0;                    /* ✅ sin borde, sin caja */
+    }
+    .tTitle{
+      font-size:54px;
+      letter-spacing:2px;
+      font-weight:900;
+      margin-bottom:10px;
+    }
+    .tSub{
+      font-size:18px;
+      opacity:.85;
+      margin-bottom:22px;
+    }
+    .meta{
+      display:flex;
       justify-content:space-between;
-      gap: 10px;
+      gap:20px;
+      font-size:14px;
+      opacity:.82;
     }
-    summary::-webkit-details-marker { display: none; }
-    .sumHint { font-weight: 650; font-size: 11px; opacity:.65; }
-
-    .row { margin: 10px 0; display: grid; gap: 6px; }
-    .row2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    label { font-size: 12px; opacity: .9; }
-
-    input, select, button, textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-      color: inherit;
-      box-sizing: border-box;
+    .metaCol{ display:flex; flex-direction:column; gap:6px; }
+    .metaCol.right{ text-align:right; }
+    .metaRow{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-    textarea { min-height: 72px; resize: vertical; }
-    button { cursor: pointer; font-weight: 800; }
-    button:hover { background: rgba(255,255,255,.07); }
 
-    .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .btnWide { grid-column: 1 / 3; }
-
-    .hint { font-size: 12px; opacity: .75; line-height: 1.35; }
-    .small { font-size: 12px; opacity: .85; }
-
-    .stage { display:flex; align-items:center; justify-content:center; padding: 16px; overflow:auto; }
-    .posterCard { display:flex; flex-direction:column; align-items:center; gap: 12px; width: min(1200px, 95vw); }
-    canvas { width: 100%; height: auto; border-radius: 18px; box-shadow: 0 18px 60px rgba(0,0,0,.35); background: #000; }
-
-    .err {
-      display:none;
-      margin-top:10px;
-      padding:10px;
+    .hint{
+      padding:12px;
       border-radius:12px;
-      border:1px solid rgba(255,120,120,.45);
-      color:#ffd1d1;
-      background: rgba(255,120,120,.08);
-      font-size: 12px;
+      border:1px dashed rgba(233,238,252,.18);
+      color:var(--muted);
+      background: rgba(255,255,255,.02);
+      line-height:1.35;
     }
 
-    /* Style previews */
-    .styleGrid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
-    .styleBtn {
-      display:flex; gap: 10px; align-items:center;
-      padding: 10px; border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.03);
-      cursor: pointer; user-select: none;
+    @media (max-width: 980px){
+      #app{ grid-template-columns: 1fr; }
+      .right{ display:none; }
     }
-    .styleBtn:hover { background: rgba(255,255,255,.06); }
-    .styleBtn[data-active="true"] { border-color: rgba(232,236,255,.45); box-shadow: 0 0 0 2px rgba(232,236,255,.10) inset; }
-    .thumb { width: 52px; height: 52px; border-radius: 14px; overflow:hidden; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.02); }
-    .styleMeta { display:flex; flex-direction:column; gap: 2px; }
-    .styleName { font-weight: 800; font-size: 13px; }
-    .styleDesc { font-size: 11px; opacity: .75; }
-
-    /* Toggles */
-    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .check {
-      display:flex; gap:10px; align-items:center;
-      padding: 10px; border: 1px solid rgba(255,255,255,.10);
-      border-radius: 12px; background: rgba(255,255,255,.03);
-      font-size: 12px;
-    }
-    .check input { width:auto; padding:0; margin:0; }
   </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <aside class="panel">
-      <h1>Star Map Pro</h1>
-
-      <div class="tabs">
-        <div class="tabBtn" data-tab="fields" data-active="true">Campos</div>
-        <div class="tabBtn" data-tab="map" data-active="false">Mapa</div>
-        <div class="tabBtn" data-tab="text" data-active="false">Textos</div>
-        <div class="tabBtn" data-tab="export" data-active="false">Exportar</div>
+  <div id="app">
+    <aside class="left">
+      <div class="header">
+        <div class="brand">
+          <div class="dot"></div>
+          <div>
+            <div class="brandTitle">Sky Poster Editor</div>
+            <div class="brandSub">Todo en HTML + JS (un solo archivo)</div>
+          </div>
+        </div>
       </div>
 
-      <!-- TAB: Campos -->
-      <section class="tabPanel" id="tab-fields" data-active="true">
-        <div class="tabTitle">A) Selector de campos que aparecerán</div>
-        <div class="tabSubtitle">Activa/desactiva elementos del póster (mapa, retícula, panel de textos, Spotify, etc.).</div>
+      <div class="tabs" id="tabs"></div>
 
-        <details open>
-          <summary>
-            <span>Campos del póster</span>
-            <span class="sumHint">visibilidad</span>
-          </summary>
-
-          <div class="checks" style="margin-top:10px;">
-            <div class="check"><input type="checkbox" id="showBorder" checked> <span>Marco externo</span></div>
-            <div class="check"><input type="checkbox" id="showTextPanel" checked> <span>Panel de texto</span></div>
-
-            <div class="check"><input type="checkbox" id="showTitle" checked> <span>Título</span></div>
-            <div class="check"><input type="checkbox" id="showSubtitle" checked> <span>Subtítulo</span></div>
-            <div class="check"><input type="checkbox" id="showDate" checked> <span>Fecha</span></div>
-            <div class="check"><input type="checkbox" id="showPlace" checked> <span>Lugar</span></div>
-            <div class="check"><input type="checkbox" id="showCoords" checked> <span>Coordenadas</span></div>
-
-            <div class="check"><input type="checkbox" id="showSpotify" checked> <span>Spotify Code</span></div>
-            <div class="check"><input type="checkbox" id="showNote" checked> <span>Nota</span></div>
-
-            <div class="check"><input type="checkbox" id="showConstellations" checked> <span>Constelaciones</span></div>
-            <div class="check"><input type="checkbox" id="showGrid" checked> <span>Retícula</span></div>
-            <div class="check"><input type="checkbox" id="showGlow" checked> <span>Glow estrellas</span></div>
-            <div class="check"><input type="checkbox" id="showCardinals" checked> <span>N/E/S/O</span></div>
-          </div>
-
-          <div class="hint" style="margin-top:10px;">
-            Tip: “Panel de texto” controla el rectángulo inferior (como tu imagen). Si lo apagas, queda solo el texto.
-          </div>
-        </details>
-      </section>
-
-      <!-- TAB: Mapa -->
-      <section class="tabPanel" id="tab-map" data-active="false">
-        <div class="tabTitle">B) Ediciones del mapa</div>
-        <div class="tabSubtitle">Estilos con preview, magnitud y cantidad de estrellas, y colores de retícula/constelaciones.</div>
-
-        <details open>
-          <summary>
-            <span>Estilos (con preview)</span>
-            <span class="sumHint">look & feel</span>
-          </summary>
-          <div id="styleGrid" class="styleGrid"></div>
-        </details>
-
-        <details>
-          <summary>
-            <span>Retícula y constelaciones</span>
-            <span class="sumHint">colores</span>
-          </summary>
-
-          <div class="row2" style="margin-top:10px;">
-            <div class="row">
-              <label>Color constelaciones</label>
-              <select id="constellationColor">
-                <option value="auto" selected>Auto</option>
-                <option value="white">Blanco</option>
-                <option value="gray">Gris</option>
-                <option value="gold">Dorado</option>
-                <option value="blue">Azul</option>
-                <option value="red">Rojo</option>
-              </select>
-            </div>
-
-            <div class="row">
-              <label>Color retícula</label>
-              <select id="gridColor">
-                <option value="auto" selected>Auto</option>
-                <option value="white">Blanco</option>
-                <option value="gray">Gris</option>
-                <option value="gold">Dorado</option>
-                <option value="blue">Azul</option>
-                <option value="red">Rojo</option>
-              </select>
-            </div>
-          </div>
-        </details>
-
-        <details open>
-          <summary>
-            <span>Estrellas</span>
-            <span class="sumHint">densidad</span>
-          </summary>
-
-          <div class="row">
-            <label>Máxima magnitud (más alto = más estrellas)</label>
-            <input id="maxMag" type="range" min="2" max="10" step="0.1" value="8.6" />
-            <div class="hint">Valor actual: <span id="maxMagVal"></span></div>
-          </div>
-
-          <div class="row">
-            <label>Cantidad de estrellas</label>
-            <input id="fallbackCount" type="number" min="5000" max="140000" step="1000" value="42000" />
-          </div>
-        </details>
-      </section>
-
-      <!-- TAB: Textos -->
-      <section class="tabPanel" id="tab-text" data-active="false">
-        <div class="tabTitle">C) Editor de texto</div>
-        <div class="tabSubtitle">Fuente, título, subtítulo, lugar, coordenadas, fecha/hora y Spotify.</div>
-
-        <details open>
-          <summary>
-            <span>Fuente</span>
-            <span class="sumHint">tipografía</span>
-          </summary>
-          <div class="row" style="margin-top:10px;">
-            <label>Fuente</label>
-            <select id="fontPreset">
-              <option value="inter" selected>Inter (moderna)</option>
-              <option value="montserrat">Montserrat (clean)</option>
-              <option value="playfair">Playfair Display (elegante)</option>
-              <option value="cormorant">Cormorant Garamond (clásica)</option>
-              <option value="mono">Space Mono (tech)</option>
-            </select>
-          </div>
-        </details>
-
-        <details open>
-          <summary>
-            <span>Contenido</span>
-            <span class="sumHint">textos</span>
-          </summary>
-
-          <div class="row">
-            <label>Título</label>
-            <input id="title" value="♥ ESTRELLAS DE LA SUERTE ♥" />
-          </div>
-
-          <div class="row">
-            <label>Subtítulo</label>
-            <input id="subtitle" value="" />
-          </div>
-
-          <div class="row">
-            <label>Lugar</label>
-            <input id="place" value="Ciudad de México, México" />
-          </div>
-
-          <div class="row2">
-            <div class="row">
-              <label>Latitud (°)</label>
-              <input id="lat" type="number" step="0.0001" value="19.4194" />
-            </div>
-            <div class="row">
-              <label>Longitud (°)</label>
-              <input id="lon" type="number" step="0.0001" value="-99.1455" />
-            </div>
-          </div>
-
-          <div class="row">
-            <label>Fecha y hora (local)</label>
-            <input id="dt" type="datetime-local" />
-            <div class="small">Usa hora nocturna para un mapa más lleno.</div>
-          </div>
-
-          <div class="row">
-            <label>Nota (opcional)</label>
-            <textarea id="note" placeholder="Ej: “Te amo”"></textarea>
-          </div>
-        </details>
-
-        <details>
-          <summary>
-            <span>Spotify</span>
-            <span class="sumHint">buscar y aplicar</span>
-          </summary>
-
-          <div class="row2" style="margin-top:10px;">
-            <input id="spotifyQuery" placeholder="Buscar canción..." />
-            <button id="spotifySearch">Buscar</button>
-          </div>
-
-          <div class="row2">
-            <select id="spotifyResults"></select>
-            <button id="spotifyUse">Usar</button>
-          </div>
-
-          <div class="hint">El Spotify Code se coloca dentro del rectángulo inferior.</div>
-        </details>
-      </section>
-
-      <!-- TAB: Exportar -->
-      <section class="tabPanel" id="tab-export" data-active="false">
-        <div class="tabTitle">D) Export section</div>
-        <div class="tabSubtitle">Configuración de preview y exportación en PNG.</div>
-
-        <details open>
-          <summary>
-            <span>Exportación</span>
-            <span class="sumHint">preview y PNG</span>
-          </summary>
-
-          <div class="row2" style="margin-top:10px;">
-            <div class="row">
-              <label>Preview (px)</label>
-              <input id="previewSize" type="number" step="50" value="1100" />
-            </div>
-            <div class="row">
-              <label>Export PNG (px)</label>
-              <input id="exportSize" type="number" step="500" value="8000" />
-            </div>
-          </div>
-
-          <div class="btns">
-            <button id="render">Generar</button>
-            <button id="exportPng">Exportar PNG</button>
-            <button id="reset" class="btnWide">Reset</button>
-          </div>
-
-          <div id="err" class="err"></div>
-        </details>
-      </section>
+      <div class="panel">
+        <div class="card" id="sectionContainer"></div>
+      </div>
     </aside>
 
-    <main class="stage">
-      <div class="posterCard">
-        <canvas id="c"></canvas>
+    <main class="right">
+      <div class="previewWrap">
+        <div class="previewScale">
+          <div class="poster" id="poster">
+            <div class="posterInner">
+              <div class="mapCircle">
+                <canvas id="mapCanvas"></canvas>
+              </div>
+
+              <div class="bottomText" id="bottomText">
+                <div class="tTitle" id="pTitle"></div>
+                <div class="tSub" id="pSubtitle"></div>
+
+                <div class="meta">
+                  <div class="metaCol">
+                    <div class="metaRow" id="pPlace"></div>
+                    <div class="metaRow" id="pCoords"></div>
+                  </div>
+                  <div class="metaCol right">
+                    <div class="metaRow" id="pDatetime"></div>
+                    <div class="metaRow" id="pSpotify"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>

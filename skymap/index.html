@@ -12,17 +12,86 @@
   <style>
     :root { color-scheme: dark; }
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b1020; color:#e8ecff; }
-    .wrap { display: grid; grid-template-columns: 430px 1fr; min-height: 100vh; }
-    .panel { padding: 16px; border-right: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.02); overflow:auto; }
-    .panel h1 { margin: 0 0 12px; font-size: 18px; }
+    .wrap { display: grid; grid-template-columns: 440px 1fr; min-height: 100vh; }
 
-    .section { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); }
+    .panel {
+      padding: 16px;
+      border-right: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      overflow:auto;
+    }
+    .panel h1 { margin: 0 0 10px; font-size: 18px; }
+
+    /* Tabs */
+    .tabs { display:flex; gap: 8px; margin: 10px 0 14px; }
+    .tabBtn{
+      flex:1;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: inherit;
+      cursor:pointer;
+      font-weight: 800;
+      font-size: 12px;
+      text-align:center;
+      user-select:none;
+    }
+    .tabBtn[data-active="true"]{
+      border-color: rgba(232,236,255,.45);
+      background: rgba(232,236,255,.08);
+      box-shadow: 0 0 0 2px rgba(232,236,255,.10) inset;
+    }
+    .tabPanel{ display:none; }
+    .tabPanel[data-active="true"]{ display:block; }
+
+    /* Section title */
+    .tabTitle{
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      margin: 8px 0 10px;
+      opacity: .95;
+    }
+    .tabSubtitle{
+      font-size: 12px;
+      opacity: .75;
+      line-height: 1.35;
+      margin: 0 0 10px;
+    }
+
+    /* Accordion */
+    details {
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.02);
+      border-radius: 14px;
+      padding: 10px 10px;
+      margin: 10px 0;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 850;
+      font-size: 12px;
+      letter-spacing: .2px;
+      opacity: .95;
+      user-select:none;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    .sumHint { font-weight: 650; font-size: 11px; opacity:.65; }
+
     .row { margin: 10px 0; display: grid; gap: 6px; }
     .row2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     label { font-size: 12px; opacity: .9; }
 
     input, select, button, textarea {
-      width: 100%; padding: 10px; border-radius: 10px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
       border: 1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.04);
       color: inherit;
@@ -34,6 +103,7 @@
 
     .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .btnWide { grid-column: 1 / 3; }
+
     .hint { font-size: 12px; opacity: .75; line-height: 1.35; }
     .small { font-size: 12px; opacity: .85; }
 
@@ -41,9 +111,18 @@
     .posterCard { display:flex; flex-direction:column; align-items:center; gap: 12px; width: min(1200px, 95vw); }
     canvas { width: 100%; height: auto; border-radius: 18px; box-shadow: 0 18px 60px rgba(0,0,0,.35); background: #000; }
 
-    .err { display:none; margin-top:10px; padding:10px; border-radius:12px; border:1px solid rgba(255,120,120,.45); color:#ffd1d1; background: rgba(255,120,120,.08); font-size: 12px; }
+    .err {
+      display:none;
+      margin-top:10px;
+      padding:10px;
+      border-radius:12px;
+      border:1px solid rgba(255,120,120,.45);
+      color:#ffd1d1;
+      background: rgba(255,120,120,.08);
+      font-size: 12px;
+    }
 
-    /* style previews */
+    /* Style previews */
     .styleGrid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
     .styleBtn {
       display:flex; gap: 10px; align-items:center;
@@ -59,7 +138,7 @@
     .styleName { font-weight: 800; font-size: 13px; }
     .styleDesc { font-size: 11px; opacity: .75; }
 
-    /* toggles */
+    /* Toggles */
     .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .check {
       display:flex; gap:10px; align-items:center;
@@ -68,22 +147,6 @@
       font-size: 12px;
     }
     .check input { width:auto; padding:0; margin:0; }
-
-    /* color palette */
-    .palette { display:flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
-    .swatch {
-      width: 38px; height: 38px; border-radius: 999px;
-      border: 2px solid rgba(255,255,255,.10);
-      background: #000;
-      cursor: pointer;
-      box-shadow: 0 10px 25px rgba(0,0,0,.25);
-    }
-    .swatch[data-active="true"] {
-      border-color: rgba(232,236,255,.75);
-      box-shadow: 0 0 0 3px rgba(232,236,255,.12) inset, 0 10px 25px rgba(0,0,0,.25);
-    }
-    .swatchLabel { font-size: 11px; opacity:.75; margin-top: 6px; }
-    .swatchWrap { display:flex; flex-direction:column; align-items:center; width: 54px; }
   </style>
 </head>
 
@@ -92,165 +155,231 @@
     <aside class="panel">
       <h1>Star Map Pro</h1>
 
-      <div class="section" style="margin-top:0;border-top:none;padding-top:0;">
-        <label>Estilos (con preview)</label>
-        <div id="styleGrid" class="styleGrid"></div>
-        <div class="hint">Toca un estilo para aplicarlo.</div>
+      <div class="tabs">
+        <div class="tabBtn" data-tab="fields" data-active="true">Campos</div>
+        <div class="tabBtn" data-tab="map" data-active="false">Mapa</div>
+        <div class="tabBtn" data-tab="text" data-active="false">Textos</div>
+        <div class="tabBtn" data-tab="export" data-active="false">Exportar</div>
       </div>
 
-      <div class="section">
-        <label>Color del mapa estelar</label>
-        <div id="mapColorPalette" class="palette"></div>
-        <div class="hint">Esto cambia el fondo del póster y el mapa.</div>
-      </div>
+      <!-- TAB: Campos -->
+      <section class="tabPanel" id="tab-fields" data-active="true">
+        <div class="tabTitle">A) Selector de campos que aparecerán</div>
+        <div class="tabSubtitle">Activa/desactiva elementos del póster (mapa, retícula, panel de textos, Spotify, etc.).</div>
 
-      <div class="section">
-        <div class="row">
-          <label>Fuente</label>
-          <select id="fontPreset">
-            <option value="inter" selected>Inter (moderna)</option>
-            <option value="montserrat">Montserrat (clean)</option>
-            <option value="playfair">Playfair Display (elegante)</option>
-            <option value="cormorant">Cormorant Garamond (clásica)</option>
-            <option value="mono">Space Mono (tech)</option>
-          </select>
-        </div>
-      </div>
+        <details open>
+          <summary>
+            <span>Campos del póster</span>
+            <span class="sumHint">visibilidad</span>
+          </summary>
 
-      <div class="section">
-        <label>DISEÑO (Elementos del mapa)</label>
-        <div class="checks">
-          <div class="check"><input type="checkbox" id="showConstellations" checked> <span>Constelaciones</span></div>
-          <div class="check"><input type="checkbox" id="showGrid" checked> <span>Retícula</span></div>
-          <div class="check"><input type="checkbox" id="showGlow" checked> <span>Glow estrellas</span></div>
-          <div class="check"><input type="checkbox" id="showCardinals" checked> <span>N/E/S/O</span></div>
-        </div>
+          <div class="checks" style="margin-top:10px;">
+            <div class="check"><input type="checkbox" id="showBorder" checked> <span>Marco externo</span></div>
+            <div class="check"><input type="checkbox" id="showTextPanel" checked> <span>Panel de texto</span></div>
 
-        <div class="row2">
+            <div class="check"><input type="checkbox" id="showTitle" checked> <span>Título</span></div>
+            <div class="check"><input type="checkbox" id="showSubtitle" checked> <span>Subtítulo</span></div>
+            <div class="check"><input type="checkbox" id="showDate" checked> <span>Fecha</span></div>
+            <div class="check"><input type="checkbox" id="showPlace" checked> <span>Lugar</span></div>
+            <div class="check"><input type="checkbox" id="showCoords" checked> <span>Coordenadas</span></div>
+
+            <div class="check"><input type="checkbox" id="showSpotify" checked> <span>Spotify Code</span></div>
+            <div class="check"><input type="checkbox" id="showNote" checked> <span>Nota</span></div>
+
+            <div class="check"><input type="checkbox" id="showConstellations" checked> <span>Constelaciones</span></div>
+            <div class="check"><input type="checkbox" id="showGrid" checked> <span>Retícula</span></div>
+            <div class="check"><input type="checkbox" id="showGlow" checked> <span>Glow estrellas</span></div>
+            <div class="check"><input type="checkbox" id="showCardinals" checked> <span>N/E/S/O</span></div>
+          </div>
+
+          <div class="hint" style="margin-top:10px;">
+            Tip: “Panel de texto” controla el rectángulo inferior (como tu imagen). Si lo apagas, queda solo el texto.
+          </div>
+        </details>
+      </section>
+
+      <!-- TAB: Mapa -->
+      <section class="tabPanel" id="tab-map" data-active="false">
+        <div class="tabTitle">B) Ediciones del mapa</div>
+        <div class="tabSubtitle">Estilos con preview, magnitud y cantidad de estrellas, y colores de retícula/constelaciones.</div>
+
+        <details open>
+          <summary>
+            <span>Estilos (con preview)</span>
+            <span class="sumHint">look & feel</span>
+          </summary>
+          <div id="styleGrid" class="styleGrid"></div>
+        </details>
+
+        <details>
+          <summary>
+            <span>Retícula y constelaciones</span>
+            <span class="sumHint">colores</span>
+          </summary>
+
+          <div class="row2" style="margin-top:10px;">
+            <div class="row">
+              <label>Color constelaciones</label>
+              <select id="constellationColor">
+                <option value="auto" selected>Auto</option>
+                <option value="white">Blanco</option>
+                <option value="gray">Gris</option>
+                <option value="gold">Dorado</option>
+                <option value="blue">Azul</option>
+                <option value="red">Rojo</option>
+              </select>
+            </div>
+
+            <div class="row">
+              <label>Color retícula</label>
+              <select id="gridColor">
+                <option value="auto" selected>Auto</option>
+                <option value="white">Blanco</option>
+                <option value="gray">Gris</option>
+                <option value="gold">Dorado</option>
+                <option value="blue">Azul</option>
+                <option value="red">Rojo</option>
+              </select>
+            </div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span>Estrellas</span>
+            <span class="sumHint">densidad</span>
+          </summary>
+
           <div class="row">
-            <label>Color constelaciones</label>
-            <select id="constellationColor">
-              <option value="auto" selected>Auto</option>
-              <option value="white">Blanco</option>
-              <option value="gray">Gris</option>
-              <option value="gold">Dorado</option>
-              <option value="blue">Azul</option>
-              <option value="red">Rojo</option>
+            <label>Máxima magnitud (más alto = más estrellas)</label>
+            <input id="maxMag" type="range" min="2" max="10" step="0.1" value="8.6" />
+            <div class="hint">Valor actual: <span id="maxMagVal"></span></div>
+          </div>
+
+          <div class="row">
+            <label>Cantidad de estrellas</label>
+            <input id="fallbackCount" type="number" min="5000" max="140000" step="1000" value="42000" />
+          </div>
+        </details>
+      </section>
+
+      <!-- TAB: Textos -->
+      <section class="tabPanel" id="tab-text" data-active="false">
+        <div class="tabTitle">C) Editor de texto</div>
+        <div class="tabSubtitle">Fuente, título, subtítulo, lugar, coordenadas, fecha/hora y Spotify.</div>
+
+        <details open>
+          <summary>
+            <span>Fuente</span>
+            <span class="sumHint">tipografía</span>
+          </summary>
+          <div class="row" style="margin-top:10px;">
+            <label>Fuente</label>
+            <select id="fontPreset">
+              <option value="inter" selected>Inter (moderna)</option>
+              <option value="montserrat">Montserrat (clean)</option>
+              <option value="playfair">Playfair Display (elegante)</option>
+              <option value="cormorant">Cormorant Garamond (clásica)</option>
+              <option value="mono">Space Mono (tech)</option>
             </select>
           </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span>Contenido</span>
+            <span class="sumHint">textos</span>
+          </summary>
+
           <div class="row">
-            <label>Color retícula</label>
-            <select id="gridColor">
-              <option value="auto" selected>Auto</option>
-              <option value="white">Blanco</option>
-              <option value="gray">Gris</option>
-              <option value="gold">Dorado</option>
-              <option value="blue">Azul</option>
-              <option value="red">Rojo</option>
-            </select>
+            <label>Título</label>
+            <input id="title" value="♥ ESTRELLAS DE LA SUERTE ♥" />
           </div>
-        </div>
-      </div>
 
-      <div class="section">
-        <label>TEXTOS (debajo del mapa, centrados)</label>
-
-        <div class="row">
-          <label>Título</label>
-          <input id="title" value="♥ ESTRELLAS DE LA SUERTE ♥" />
-        </div>
-
-        <div class="row">
-          <label>Subtítulo</label>
-          <input id="subtitle" value="" />
-        </div>
-
-        <div class="row">
-          <label>Lugar (texto libre)</label>
-          <input id="place" value="Ciudad de México, México" />
-        </div>
-
-        <div class="row2">
           <div class="row">
-            <label>Latitud (°)</label>
-            <input id="lat" type="number" step="0.0001" value="19.4194" />
+            <label>Subtítulo</label>
+            <input id="subtitle" value="" />
           </div>
+
           <div class="row">
-            <label>Longitud (°)</label>
-            <input id="lon" type="number" step="0.0001" value="-99.1455" />
+            <label>Lugar</label>
+            <input id="place" value="Ciudad de México, México" />
           </div>
-        </div>
 
-        <div class="row">
-          <label>Fecha y hora (local)</label>
-          <input id="dt" type="datetime-local" />
-          <div class="small">Pon hora nocturna para más densidad.</div>
-        </div>
+          <div class="row2">
+            <div class="row">
+              <label>Latitud (°)</label>
+              <input id="lat" type="number" step="0.0001" value="19.4194" />
+            </div>
+            <div class="row">
+              <label>Longitud (°)</label>
+              <input id="lon" type="number" step="0.0001" value="-99.1455" />
+            </div>
+          </div>
 
-        <div class="checks">
-          <div class="check"><input type="checkbox" id="showTitle" checked> <span>Título</span></div>
-          <div class="check"><input type="checkbox" id="showSubtitle" checked> <span>Subtítulo</span></div>
-          <div class="check"><input type="checkbox" id="showDate" checked> <span>Fecha</span></div>
-          <div class="check"><input type="checkbox" id="showPlace" checked> <span>Lugar</span></div>
-          <div class="check"><input type="checkbox" id="showCoords" checked> <span>Coordenadas</span></div>
-          <div class="check"><input type="checkbox" id="showBorder" checked> <span>Margen/Borde</span></div>
-          <div class="check"><input type="checkbox" id="showSpotify" checked> <span>Spotify Code</span></div>
-          <div class="check"><input type="checkbox" id="showNote" checked> <span>Nota</span></div>
-        </div>
-
-        <div class="row">
-          <label>Nota inferior (opcional)</label>
-          <textarea id="note" placeholder="Ej: “Te amo”"></textarea>
-        </div>
-      </div>
-
-      <div class="section">
-        <label>ESTRELLAS</label>
-
-        <div class="row">
-          <label>Máxima magnitud (más alto = más estrellas)</label>
-          <input id="maxMag" type="range" min="2" max="10" step="0.1" value="8.6" />
-          <div class="hint">Valor actual: <span id="maxMagVal"></span></div>
-        </div>
-
-        <div class="row">
-          <label>Cantidad de estrellas</label>
-          <input id="fallbackCount" type="number" min="5000" max="120000" step="1000" value="42000" />
-        </div>
-      </div>
-
-      <div class="section">
-        <label>Spotify</label>
-        <div class="row2">
-          <input id="spotifyQuery" placeholder="Buscar canción..." />
-          <button id="spotifySearch">Buscar</button>
-        </div>
-        <div class="row2">
-          <select id="spotifyResults"></select>
-          <button id="spotifyUse">Usar</button>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="row2">
           <div class="row">
-            <label>Preview (px)</label>
-            <input id="previewSize" type="number" step="50" value="1100" />
+            <label>Fecha y hora (local)</label>
+            <input id="dt" type="datetime-local" />
+            <div class="small">Usa hora nocturna para un mapa más lleno.</div>
           </div>
+
           <div class="row">
-            <label>Export PNG (px)</label>
-            <input id="exportSize" type="number" step="500" value="8000" />
+            <label>Nota (opcional)</label>
+            <textarea id="note" placeholder="Ej: “Te amo”"></textarea>
           </div>
-        </div>
+        </details>
 
-        <div class="btns">
-          <button id="render">Generar</button>
-          <button id="exportPng">Exportar PNG</button>
-          <button id="reset" class="btnWide">Reset</button>
-        </div>
+        <details>
+          <summary>
+            <span>Spotify</span>
+            <span class="sumHint">buscar y aplicar</span>
+          </summary>
 
-        <div id="err" class="err"></div>
-      </div>
+          <div class="row2" style="margin-top:10px;">
+            <input id="spotifyQuery" placeholder="Buscar canción..." />
+            <button id="spotifySearch">Buscar</button>
+          </div>
+
+          <div class="row2">
+            <select id="spotifyResults"></select>
+            <button id="spotifyUse">Usar</button>
+          </div>
+
+          <div class="hint">El Spotify Code se coloca dentro del rectángulo inferior.</div>
+        </details>
+      </section>
+
+      <!-- TAB: Exportar -->
+      <section class="tabPanel" id="tab-export" data-active="false">
+        <div class="tabTitle">D) Export section</div>
+        <div class="tabSubtitle">Configuración de preview y exportación en PNG.</div>
+
+        <details open>
+          <summary>
+            <span>Exportación</span>
+            <span class="sumHint">preview y PNG</span>
+          </summary>
+
+          <div class="row2" style="margin-top:10px;">
+            <div class="row">
+              <label>Preview (px)</label>
+              <input id="previewSize" type="number" step="50" value="1100" />
+            </div>
+            <div class="row">
+              <label>Export PNG (px)</label>
+              <input id="exportSize" type="number" step="500" value="8000" />
+            </div>
+          </div>
+
+          <div class="btns">
+            <button id="render">Generar</button>
+            <button id="exportPng">Exportar PNG</button>
+            <button id="reset" class="btnWide">Reset</button>
+          </div>
+
+          <div id="err" class="err"></div>
+        </details>
+      </section>
     </aside>
 
     <main class="stage">

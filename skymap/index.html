@@ -102,7 +102,7 @@
       justify-content:space-between;
       gap:10px;
       margin-top:12px;
-      align-items:center; /* ✅ */
+      align-items:center;
     }
     .btn{
       border-radius:14px;
@@ -111,11 +111,11 @@
       font-weight:750;
       user-select:none;
       white-space:nowrap;
-      min-height:44px;         /* ✅ asegura misma altura */
-      display:inline-flex;     /* ✅ */
-      align-items:center;      /* ✅ */
-      justify-content:center;  /* ✅ */
-      line-height:1;           /* ✅ */
+      min-height:44px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      line-height:1;
     }
     .btn.ghost{
       border:1px solid var(--stroke);
@@ -198,20 +198,21 @@
 
       --mapSize: 780px;
 
-      /* Esto sigue controlando el layout interno (cómo se juntan las cosas) */
+      /* layout */
       --posterPad: 0px;
 
-      /* ✅ Esto controla SOLO la línea guía del “margen” */
-      --posterMarginLine: 0px;
+      /* ✅ line inset and thickness */
+      --posterMarginInset: 90px;        /* 10% default of 900 = 90 */
+      --posterMarginThickness: 2px;
     }
 
-    /* ✅ Línea guía rectangular del margen */
+    /* ✅ margin rectangle line */
     .poster .marginGuide{
       position:absolute;
       pointer-events:none;
-      inset: var(--posterMarginLine);
+      inset: var(--posterMarginInset);
       border-radius: 20px;
-      border: 1px solid rgba(233,238,252,.22); /* ✅ sólida (no dashed) */
+      border: var(--posterMarginThickness) solid rgba(233,238,252,.22);
       opacity: 0;
     }
     .poster.showPosterMargin .marginGuide{ opacity: 1; }
@@ -260,7 +261,7 @@
     }
     .meta{
       display:flex;
-      justify-content:flex-start; /* ✅ una sola columna */
+      justify-content:flex-start;
       gap:20px;
       font-size:14px;
       opacity:.82;

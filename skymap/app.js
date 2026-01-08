@@ -1,9 +1,10 @@
 (() => {
   // ======================
-  // Constants (for “5% poster margin” + “10% map margin”)
+  // Constants
   // ======================
   const POSTER_W = 900;
-  const POSTER_MARGIN_INSET_DEFAULT = Math.round(POSTER_W * 0.05); // ✅ 5% => 45px
+  const POSTER_H = 1200;
+  const POSTER_MARGIN_INSET_DEFAULT = Math.round(POSTER_W * 0.05); // 5% => 45px
 
   // ======================
   // State
@@ -12,7 +13,7 @@
     step: 0,
 
     ui: {
-      zoom: 0.75,     // ✅ default 75%
+      zoom: 0.75,     // default 75%
       minZoom: 0.35,
       maxZoom: 1.25,
       step: 0.1
@@ -42,41 +43,33 @@
       showConstellations: true,
       colorTheme: "mono",
 
-      // ✅ Poster “margin” = rectangle line (inset fixed 5%, slider = thickness)
+      // Poster margin (rectangle): inset fixed 5%, slider = thickness
       posterMarginEnabled: false,
       posterMarginInsetPx: POSTER_MARGIN_INSET_DEFAULT,
       posterMarginThickness: 2,
 
-      // ✅ Map “margin” = circle line (inset fixed 10% of map size, slider = thickness)
+      // Map margin (circle): inset fixed 10% of map size, slider = thickness
       mapCircleMarginEnabled: false,
-      mapCircleInsetPct: 0.10,     // ✅ 10%
+      mapCircleInsetPct: 0.10,     // 10%
       mapCircleMarginThickness: 2,
 
-      // ✅ affects constellation stroke + nodes
+      // affects constellation stroke + nodes
       constellationSize: 2.0,
 
       seed: 12345,
     },
   };
 
-  // ✅ Removed "a) Campos" — fields moved to Texto tab
+  // ✅ Sections renamed
   const STEPS = [
-    { key: "b", label: "b) Mapa" },
-    { key: "c", label: "c) Texto" },
-    { key: "d", label: "d) Export" },
+    { key: "design", label: "Diseño" },
+    { key: "content", label: "Contenido" },
+    { key: "export", label: "Export" },
   ];
 
   const MAP_STYLES = [
     { id: "minimal", name: "Minimalista" },
     { id: "classic", name: "Clásico" },
-  ];
-
-  const COLOR_THEMES = [
-    // circles UI (value must match colorsFor())
-    { id: "mono", name: "Mono", dot: "#FFFFFF" },
-    { id: "blue", name: "Azul", dot: "#9bc1ff" },
-    { id: "warm", name: "Cálido", dot: "#F6E7C9" },
-    { id: "neon", name: "Neón", dot: "#7CFFFA" },
   ];
 
   const FONT_PRESETS = [
@@ -135,6 +128,14 @@
     return base; // mono
   }
 
+  const COLOR_THEMES = [
+    // ✅ circle matches poster background color exactly
+    { id: "mono", name: "Mono" },
+    { id: "blue", name: "Azul" },
+    { id: "warm", name: "Cálido" },
+    { id: "neon", name: "Neón" },
+  ];
+
   // ======================
   // Zoom
   // ======================
@@ -158,7 +159,7 @@
   }
 
   // ======================
-  // Layout + Style defaults
+  // Layout + defaults
   // ======================
   function setPosterLayout(){
     if (state.map.styleId === "classic") $poster.classList.add("classic");
@@ -166,8 +167,7 @@
   }
 
   function setDefaultsByStyle(styleId){
-    // Classic: poster margin line ON by default (5% inset)
-    // Minimal: poster margin line OFF by default
+    // Classic: poster margin ON by default
     if (styleId === "classic") {
       state.map.posterMarginEnabled = true;
       state.map.posterMarginInsetPx = POSTER_MARGIN_INSET_DEFAULT;
@@ -178,7 +178,7 @@
   }
 
   function setMapSizeFromPosterPad(){
-    // mantenemos la lógica de juntar elementos (aprobado)
+    // keep your compact layout logic
     const base = 780;
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
     const size = clamp(base - Math.round(pad * 0.6), 640, 780);
@@ -186,7 +186,6 @@
   }
 
   function applyPosterMarginLine(){
-    // inset fijo (5%), grosor variable
     const inset = state.map.posterMarginEnabled ? state.map.posterMarginInsetPx : POSTER_MARGIN_INSET_DEFAULT;
     const thick = clamp(state.map.posterMarginThickness, 1, 10);
 
@@ -198,7 +197,6 @@
   }
 
   function applyPosterPaddingLayout(){
-    // padding sigue igual (para que se junten)
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
     $poster.style.setProperty("--posterPad", `${pad}px`);
   }
@@ -248,7 +246,6 @@
     });
   }
 
-  // ✅ Toggle row component (replaces checkbox)
   function toggleRow(label, checked, onChange){
     const row = document.createElement("div");
     row.className = "rowToggle";
@@ -263,9 +260,10 @@
     t.ariaChecked = String(!!checked);
 
     function set(val){
-      t.className = "toggle" + (val ? " on" : "");
-      t.ariaChecked = String(!!val);
-      onChange(!!val);
+      checked = !!val;
+      t.className = "toggle" + (checked ? " on" : "");
+      t.ariaChecked = String(checked);
+      onChange(checked);
     }
 
     t.onclick = () => set(!checked);
@@ -276,15 +274,137 @@
       }
     };
 
-    // keep current reference updated
-    Object.defineProperty(t, "_setChecked", {
-      value: (val) => { checked = !!val; t.className = "toggle" + (checked ? " on" : ""); t.ariaChecked = String(checked); },
-      enumerable: false
-    });
-
     row.appendChild(left);
     row.appendChild(t);
-    return { row, setChecked: (v) => t._setChecked(v) };
+    return { row, get checked(){ return checked; }, set };
+  }
+
+  function colorCirclesRow(){
+    const wrap = document.createElement("div");
+    wrap.className = "colorRow";
+
+    COLOR_THEMES.forEach(th => {
+      const c = colorsFor(th.id);
+
+      const dot = document.createElement("div");
+      dot.className = "colorDot" + (state.map.colorTheme === th.id ? " active" : "");
+      dot.title = th.name;
+      dot.style.background = c.bg; // ✅ poster bg
+
+      dot.onclick = () => {
+        state.map.colorTheme = th.id;
+        renderPosterAndMap();
+        renderAll();
+      };
+
+      wrap.appendChild(dot);
+    });
+
+    return wrap;
+  }
+
+  // ======================
+  // Thumbnail drawing (poster-like)
+  // ======================
+  function drawPosterThumbnail(ctx, w, h, styleId, colorTheme){
+    const colors = colorsFor(colorTheme);
+
+    // background
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0,0,w,h);
+
+    // border
+    ctx.save();
+    ctx.strokeStyle = "rgba(233,238,252,.12)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5,0.5,w-1,h-1);
+    ctx.restore();
+
+    // map circle area
+    const cx = w * 0.5;
+    const cy = h * 0.40;
+    const r = Math.min(w,h) * 0.26;
+
+    // circle clip
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.clip();
+
+    // stars
+    const rand = mulberry32(styleId === "classic" ? 1337 : 7331);
+    const N = 160;
+    for (let i=0;i<N;i++){
+      const x = cx - r + rand() * (2*r);
+      const y = cy - r + rand() * (2*r);
+      // keep inside circle (rough)
+      const dx = x - cx, dy = y - cy;
+      if ((dx*dx + dy*dy) > (r*r)) { i--; continue; }
+
+      const big = rand() > 0.92;
+      const rad = big ? (1.1 + rand()*0.9) : (rand()*0.8);
+      const a = big ? (0.75 + rand()*0.25) : (0.25 + rand()*0.55);
+
+      ctx.beginPath();
+      ctx.globalAlpha = a;
+      ctx.fillStyle = colors.star;
+      ctx.arc(x, y, rad, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // small constellation strokes hint
+    ctx.strokeStyle = colors.line;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.moveTo(cx - r*0.5, cy - r*0.1);
+    ctx.lineTo(cx - r*0.05, cy - r*0.35);
+    ctx.lineTo(cx + r*0.35, cy - r*0.05);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.restore();
+
+    // circle outline
+    ctx.save();
+    ctx.strokeStyle = "rgba(233,238,252,.18)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+
+    // text block differs by style
+    ctx.save();
+    ctx.fillStyle = colors.star;
+
+    if (styleId === "minimal"){
+      // left aligned block
+      const left = w*0.14;
+      const baseY = h*0.78;
+
+      ctx.globalAlpha = 0.95;
+      ctx.fillRect(left, baseY-10, w*0.38, 3);
+
+      ctx.globalAlpha = 0.7;
+      ctx.fillRect(left, baseY+4, w*0.55, 2);
+      ctx.fillRect(left, baseY+12, w*0.48, 2);
+    } else {
+      // centered block
+      const center = w*0.5;
+      const baseY = h*0.78;
+
+      ctx.globalAlpha = 0.95;
+      ctx.fillRect(center - w*0.18, baseY-10, w*0.36, 3);
+
+      ctx.globalAlpha = 0.7;
+      ctx.fillRect(center - w*0.22, baseY+4, w*0.44, 2);
+      ctx.fillRect(center - w*0.20, baseY+12, w*0.40, 2);
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
   function stylePreviewGrid(){
@@ -296,53 +416,29 @@
       card.className = "styleCard" + (state.map.styleId === st.id ? " active" : "");
 
       const top = document.createElement("div");
-      top.style.display = "flex";
-      top.style.justifyContent = "space-between";
-      top.style.alignItems = "center";
-      top.style.gap = "10px";
+      top.className = "styleTop";
 
       const name = document.createElement("div");
-      name.style.fontWeight = "850";
-      name.style.fontSize = "13px";
+      name.className = "styleName";
       name.textContent = st.name;
 
       const tag = document.createElement("div");
-      tag.style.fontSize = "11px";
-      tag.style.color = "var(--muted)";
+      tag.className = "styleTag";
       tag.textContent = (state.map.styleId === st.id) ? "Seleccionado" : "";
 
       top.appendChild(name);
       top.appendChild(tag);
 
-      const mini = document.createElement("div");
-      mini.className = "styleMini";
+      const canvas = document.createElement("canvas");
+      canvas.className = "thumb";
+      canvas.width = 220;
+      canvas.height = 120;
 
-      const circle = document.createElement("div");
-      circle.className = "miniCircle";
-      mini.appendChild(circle);
-
-      if (st.id === "classic"){
-        const line = document.createElement("div");
-        line.className = "miniLine";
-        mini.appendChild(line);
-      }
-
-      const dots = document.createElement("div");
-      dots.className = "miniDots";
-      // dots fixed positions (no random so it doesn't reflow visually)
-      const pts = st.id === "classic"
-        ? [[18,16],[36,24],[58,18],[44,30],[64,34]]
-        : [[20,18],[34,28],[54,16],[62,26],[46,34]];
-      pts.forEach(([x,y]) => {
-        const sp = document.createElement("span");
-        sp.style.left = `${x}px`;
-        sp.style.top = `${y}px`;
-        dots.appendChild(sp);
-      });
-      mini.appendChild(dots);
+      const ctx = canvas.getContext("2d");
+      drawPosterThumbnail(ctx, canvas.width, canvas.height, st.id, state.map.colorTheme);
 
       card.appendChild(top);
-      card.appendChild(mini);
+      card.appendChild(canvas);
 
       card.onclick = () => {
         state.map.styleId = st.id;
@@ -358,65 +454,42 @@
     return grid;
   }
 
-  function colorCirclesRow(){
-    const wrap = document.createElement("div");
-    wrap.className = "colorRow";
-
-    COLOR_THEMES.forEach(th => {
-      const dot = document.createElement("div");
-      dot.className = "colorDot" + (state.map.colorTheme === th.id ? " active" : "");
-      dot.title = th.name;
-      dot.style.background = th.dot;
-
-      dot.onclick = () => {
-        state.map.colorTheme = th.id;
-        renderPosterAndMap();
-        renderAll();
-      };
-
-      wrap.appendChild(dot);
-    });
-
-    return wrap;
-  }
-
   // ======================
-  // Section B (Mapa)
+  // Section: Diseño
   // ======================
-  function renderSectionB(){
+  function renderSectionDesign(){
     $section.innerHTML = "";
 
     const t = document.createElement("div");
     t.className = "title";
-    t.textContent = "b) Edición del mapa";
+    t.textContent = "Diseño";
 
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Estilo, color, constelaciones y márgenes con toggles.";
+    s.textContent = "Estilo, color, constelaciones y márgenes.";
 
-    // ✅ style preview (replaces select)
+    // style preview
     const styleRow = document.createElement("div");
     styleRow.className = "formRow";
     styleRow.innerHTML = `<div class="label">Estilo</div>`;
     styleRow.appendChild(stylePreviewGrid());
 
-    // ✅ color circles (replaces select)
+    // color circles
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
-    colorRow.innerHTML = `<div class="label">Color del mapa</div>`;
+    colorRow.innerHTML = `<div class="label">Color del póster</div>`;
     colorRow.appendChild(colorCirclesRow());
 
-    // constellations toggle (now switch)
+    // constellations toggle
     const con = toggleRow("Constelaciones", !!state.map.showConstellations, (val) => {
       state.map.showConstellations = val;
       drawMap();
       renderAll();
     });
 
-    // ✅ constellation size right under toggle
+    // constellation size (only visible when toggle ON)
     const csRow = document.createElement("div");
     csRow.className = "formRow";
-    csRow.style.marginTop = "2px";
     csRow.innerHTML = `<div class="label">Tamaño de constelaciones</div>`;
     const csRange = document.createElement("input");
     csRange.type = "range";
@@ -424,11 +497,10 @@
     csRange.max = "4";
     csRange.step = "0.5";
     csRange.value = String(state.map.constellationSize);
-    csRange.disabled = !state.map.showConstellations;
     csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
     csRow.appendChild(csRange);
 
-    // poster margin line (toggle + slider)
+    // poster margin
     const posterToggle = toggleRow("Margen del póster", !!state.map.posterMarginEnabled, (val) => {
       state.map.posterMarginEnabled = val;
       renderPosterAndMap();
@@ -451,7 +523,7 @@
     };
     posterThickRow.appendChild(posterThick);
 
-    // map margin line (toggle + slider)
+    // map margin
     const mapToggle = toggleRow("Margen del mapa", !!state.map.mapCircleMarginEnabled, (val) => {
       state.map.mapCircleMarginEnabled = val;
       drawMap();
@@ -491,9 +563,8 @@
     $section.appendChild(colorRow);
 
     $section.appendChild(con.row);
-    $section.appendChild(csRow);
+    if (state.map.showConstellations) $section.appendChild(csRow);
 
-    // margins
     $section.appendChild(posterToggle.row);
     $section.appendChild(posterThickRow);
 
@@ -510,17 +581,17 @@
   }
 
   // ======================
-  // Section C (Texto + Campos)
+  // Section: Contenido
   // ======================
-  function renderSectionC(){
+  function renderSectionContent(){
     $section.innerHTML = "";
 
     const t = document.createElement("div");
     t.className = "title";
-    t.textContent = "c) Texto";
+    t.textContent = "Contenido";
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Activa campos y edita contenido/tipografía.";
+    s.textContent = "Activa cada campo y escribe su contenido.";
 
     function inputRow(label, value, onChange, placeholder=""){
       const row = document.createElement("div");
@@ -538,6 +609,7 @@
       return row;
     }
 
+    // Font
     const fontRow = document.createElement("div");
     fontRow.className = "formRow";
     fontRow.innerHTML = `<div class="label">Fuente</div>`;
@@ -559,37 +631,29 @@
     };
     fontRow.appendChild(fontSel);
 
-    // ✅ Fields toggles moved here
-    const fieldsTitle = document.createElement("div");
-    fieldsTitle.className = "label";
-    fieldsTitle.style.marginTop = "8px";
-    fieldsTitle.textContent = "Campos visibles";
+    // Helper: toggle + input directly underneath (if enabled)
+    function toggleWithInput(key, label, valueGetter, valueSetter, placeholder=""){
+      const tg = toggleRow(label, !!state.visible[key], (val) => {
+        state.visible[key] = val;
+        renderPosterText();
+        renderAll();
+      });
+      $section.appendChild(tg.row);
 
-    const fieldToggles = [
-      ["title", "Título"],
-      ["subtitle", "Subtítulo"],
-      ["place", "Lugar"],
-      ["coords", "Coordenadas"],
-      ["datetime", "Fecha / hora"],
-    ].map(([key, label]) => toggleRow(label, !!state.visible[key], (val) => {
-      state.visible[key] = val;
-      renderPosterText();
-      renderAll();
-    }));
+      if (state.visible[key]) {
+        $section.appendChild(inputRow(label, valueGetter(), (v) => { valueSetter(v); renderPosterText(); }, placeholder));
+      }
+    }
 
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(fontRow);
 
-    $section.appendChild(fieldsTitle);
-    fieldToggles.forEach(tg => $section.appendChild(tg.row));
-
-    // ✅ Inputs shown only if field enabled (coherent UX)
-    if (state.visible.title) $section.appendChild(inputRow("Título", state.text.title, (v) => { state.text.title = v; renderPosterText(); }));
-    if (state.visible.subtitle) $section.appendChild(inputRow("Subtítulo", state.text.subtitle, (v) => { state.text.subtitle = v; renderPosterText(); }));
-    if (state.visible.place) $section.appendChild(inputRow("Lugar", state.text.place, (v) => { state.text.place = v; renderPosterText(); }));
-    if (state.visible.coords) $section.appendChild(inputRow("Coordenadas", state.text.coords, (v) => { state.text.coords = v; renderPosterText(); }));
-    if (state.visible.datetime) $section.appendChild(inputRow("Fecha / hora", state.text.datetime, (v) => { state.text.datetime = v; renderPosterText(); }, "YYYY-MM-DD HH:mm"));
+    toggleWithInput("title", "Título", () => state.text.title, (v) => state.text.title = v);
+    toggleWithInput("subtitle", "Subtítulo", () => state.text.subtitle, (v) => state.text.subtitle = v);
+    toggleWithInput("place", "Lugar", () => state.text.place, (v) => state.text.place = v);
+    toggleWithInput("coords", "Coordenadas", () => state.text.coords, (v) => state.text.coords = v);
+    toggleWithInput("datetime", "Fecha / hora", () => state.text.datetime, (v) => state.text.datetime = v, "YYYY-MM-DD HH:mm");
 
     $section.appendChild(navButtons({
       showPrev: true,
@@ -602,12 +666,12 @@
   // ======================
   // Export
   // ======================
-  function renderSectionD(){
+  function renderSectionExport(){
     $section.innerHTML = "";
 
     const t = document.createElement("div");
     t.className = "title";
-    t.textContent = "d) Exportar";
+    t.textContent = "Export";
 
     const s = document.createElement("div");
     s.className = "sub";
@@ -742,7 +806,7 @@
   }
 
   // ======================
-  // Map drawing (no grid)
+  // Map drawing
   // ======================
   function drawMap(){
     const cssSize = parseFloat(getComputedStyle($poster).getPropertyValue("--mapSize")) || 780;
@@ -760,9 +824,7 @@
     const colors = colorsFor(state.map.colorTheme);
     const rand = mulberry32(state.map.seed);
 
-    // ✅ KEY CHANGE:
-    // If poster margin is enabled, we apply the SAME innerPad used by map margin
-    // (so the star content feels smaller / less tight with the poster frame).
+    // ✅ same inset behavior when poster margin is ON
     const shouldInsetLikeMapMargin = state.map.mapCircleMarginEnabled || state.map.posterMarginEnabled;
     const innerPad = shouldInsetLikeMapMargin ? Math.round(size * state.map.mapCircleInsetPct) : 0;
 
@@ -781,7 +843,7 @@
     if (innerPad > 0){
       const innerR = (size / 2) - innerPad;
 
-      // ✅ only draw ring line if map margin is enabled (not just poster margin)
+      // draw ring only if map margin enabled
       if (state.map.mapCircleMarginEnabled){
         ctx.save();
         ctx.strokeStyle = colors.line;
@@ -794,7 +856,7 @@
         ctx.globalAlpha = 1;
       }
 
-      // clip inside inner circle (same sizing logic)
+      // clip inside
       ctx.save();
       ctx.beginPath();
       ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
@@ -963,12 +1025,12 @@
   }
 
   // ======================
-  // Section Router
+  // Router
   // ======================
   function renderSection(){
-    if (state.step === 0) return renderSectionB();
-    if (state.step === 1) return renderSectionC();
-    return renderSectionD();
+    if (state.step === 0) return renderSectionDesign();
+    if (state.step === 1) return renderSectionContent();
+    return renderSectionExport();
   }
 
   function renderAll(){

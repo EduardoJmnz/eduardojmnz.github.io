@@ -21,7 +21,12 @@
     map: {
       styleId: "classic",
       showConstellations: true,
+
+      // ✅ themes: mono, carbon, ice, navy, warm, forest, rose, neon, white, black
       colorTheme: "mono",
+
+      // ✅ invert colors only inside the star map circle
+      invertMapColors: false,
 
       posterMarginEnabled: false,
       posterMarginInsetPx: POSTER_MARGIN_INSET_DEFAULT,
@@ -44,8 +49,8 @@
 
   // ✅ SOLO 2 estilos
   const MAP_STYLES = [
-    { id: "classic", name: "Clásico", badge: null, mapsTo: "classic" },
-    { id: "minimal", name: "Minimalista", badge: null, mapsTo: "minimal" },
+    { id: "classic", name: "Clásico", mapsTo: "classic" },
+    { id: "minimal", name: "Minimalista", mapsTo: "minimal" },
   ];
 
   const FONT_PRESETS = [
@@ -57,24 +62,18 @@
     { key: "rounded", name: "Rounded (Friendly)", css: "'Trebuchet MS', 'Verdana', system-ui, Arial" },
   ];
 
-  // ✅ Más opciones de color (picker)
+  // ✅ EXACTAMENTE los colores que pediste
   const COLOR_THEMES = [
-    { id: "mono", name: "Mono" },
-    { id: "charcoal", name: "Carbón" },
-    { id: "ice", name: "Hielo" },
-
-    { id: "blue", name: "Azul" },
-    { id: "navy", name: "Azul marino" },
-
-    { id: "warm", name: "Cálido" },
-    { id: "sand", name: "Arena" },
-
+    { id: "mono",   name: "Mono" },
+    { id: "carbon", name: "Carbón" },
+    { id: "ice",    name: "Hielo" },
+    { id: "navy",   name: "Marino" },
+    { id: "warm",   name: "Cálido" },
     { id: "forest", name: "Bosque" },
-
-    { id: "plum", name: "Ciruela" },
-    { id: "rose", name: "Rosa oscuro" },
-
-    { id: "neon", name: "Neón" },
+    { id: "rose",   name: "Rosa" },
+    { id: "neon",   name: "Neón" },
+    { id: "white",  name: "Blanco" },
+    { id: "black",  name: "Negro" },
   ];
 
   const $tabs = document.getElementById("tabs");
@@ -106,26 +105,88 @@
     };
   }
 
+  function hexToRgb(hex){
+    if (!hex) return { r:255, g:255, b:255 };
+    let h = String(hex).trim();
+    if (h.startsWith("#")) h = h.slice(1);
+    if (h.length === 3) h = h.split("").map(ch => ch + ch).join("");
+    const n = parseInt(h, 16);
+    if (!Number.isFinite(n)) return { r:255, g:255, b:255 };
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+  function rgbaFromHex(hex, a){
+    const { r,g,b } = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
   function colorsFor(theme){
+    // base fallback
     const base = { bg: "#0B0D12", star: "#FFFFFF", line: "rgba(255,255,255,0.22)" };
 
     const THEMES = {
-      mono:     { bg:"#0B0D12", star:"#FFFFFF", line:"rgba(255,255,255,0.22)" },
-      charcoal: { bg:"#07080C", star:"#FFFFFF", line:"rgba(255,255,255,0.16)" },
-      ice:      { bg:"#071016", star:"#E9F6FF", line:"rgba(233,246,255,0.18)" },
+      // mono
+      mono: {
+        bg: "#0B0D12",
+        star: "#FFFFFF",
+        line: "rgba(255,255,255,0.22)",
+      },
 
-      blue:     { bg:"#071225", star:"#FFFFFF", line:"rgba(255,255,255,0.18)" },
-      navy:     { bg:"#050B18", star:"#FFFFFF", line:"rgba(255,255,255,0.18)" },
+      // ✅ carbón: blanco -> beige
+      carbon: {
+        bg: "#0A0B0D",
+        star: "#E8DCC8", // beige
+        line: "rgba(232,220,200,0.20)",
+      },
 
-      warm:     { bg:"#140E0A", star:"#F6E7C9", line:"rgba(246,231,201,0.20)" },
-      sand:     { bg:"#15110A", star:"#F2E7D3", line:"rgba(242,231,211,0.20)" },
+      ice: {
+        bg: "#071016",
+        star: "#E9F6FF",
+        line: "rgba(233,246,255,0.18)",
+      },
 
-      forest:   { bg:"#06130E", star:"#EAF7F1", line:"rgba(234,247,241,0.18)" },
+      navy: {
+        bg: "#050B18",
+        star: "#FFFFFF",
+        line: "rgba(255,255,255,0.18)",
+      },
 
-      plum:     { bg:"#120717", star:"#F4E9FF", line:"rgba(244,233,255,0.18)" },
-      rose:     { bg:"#16080C", star:"#FFE9EF", line:"rgba(255,233,239,0.18)" },
+      warm: {
+        bg: "#140E0A",
+        star: "#F6E7C9",
+        line: "rgba(246,231,201,0.20)",
+      },
 
-      neon:     { bg:"#05050A", star:"#7CFFFA", line:"rgba(124,255,250,0.18)" },
+      forest: {
+        bg: "#06130E",
+        star: "#EAF7F1",
+        line: "rgba(234,247,241,0.18)",
+      },
+
+      rose: {
+        bg: "#16080C",
+        star: "#FFE9EF",
+        line: "rgba(255,233,239,0.18)",
+      },
+
+      neon: {
+        bg: "#05050A",
+        star: "#7CFFFA",
+        line: "rgba(124,255,250,0.18)",
+      },
+
+      // ✅ blanco: letras/estrellas negras
+      white: {
+        bg: "#F5F5F2",
+        star: "#111111",
+        line: "rgba(17,17,17,0.20)",
+      },
+
+      // ✅ negro: NO #000000, sino oscuro agrisado
+      black: {
+        bg: "#0A0B0D",
+        star: "#FFFFFF",
+        line: "rgba(255,255,255,0.16)",
+      },
     };
 
     return { ...base, ...(THEMES[theme] || THEMES.mono) };
@@ -254,9 +315,10 @@
     return t;
   }
 
-  function drawPosterThumbnail(ctx, w, h, effectiveStyle, colorTheme){
+  function drawPosterThumbnail(ctx, w, h, effectiveStyle, colorTheme, invertMapColors){
     const colors = colorsFor(colorTheme);
 
+    // poster bg
     ctx.clearRect(0,0,w,h);
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0,0,w,h);
@@ -265,11 +327,28 @@
     const cy = h * 0.40;
     const r = Math.min(w,h) * 0.27;
 
+    // map palette (only inside circle)
+    let mapBg = colors.bg;
+    let starCol = colors.star;
+    let lineCol = colors.line;
+
+    if (invertMapColors){
+      mapBg = colors.star;
+      starCol = colors.bg;
+      lineCol = rgbaFromHex(starCol, 0.22);
+    }
+
+    // circle clip
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI*2);
     ctx.clip();
 
+    // fill map bg
+    ctx.fillStyle = mapBg;
+    ctx.fillRect(cx - r, cy - r, 2*r, 2*r);
+
+    // stars
     const rand = mulberry32(effectiveStyle === "classic" ? 1337 : 7331);
     const N = 220;
     for (let i=0;i<N;i++){
@@ -284,13 +363,14 @@
 
       ctx.beginPath();
       ctx.globalAlpha = a;
-      ctx.fillStyle = colors.star;
+      ctx.fillStyle = starCol;
       ctx.arc(x, y, rad, 0, Math.PI*2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    ctx.strokeStyle = colors.line;
+    // small constellation line hint
+    ctx.strokeStyle = lineCol;
     ctx.lineWidth = 1;
     ctx.globalAlpha = 0.9;
     ctx.beginPath();
@@ -302,8 +382,9 @@
 
     ctx.restore();
 
+    // circle outline
     ctx.save();
-    ctx.strokeStyle = "rgba(233,238,252,.18)";
+    ctx.strokeStyle = rgbaFromHex(colors.star, 0.18);
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI*2);
@@ -326,7 +407,15 @@
       canvas.width = 180;
       canvas.height = 240;
 
-      drawPosterThumbnail(canvas.getContext("2d"), canvas.width, canvas.height, st.mapsTo || st.id, state.map.colorTheme);
+      drawPosterThumbnail(
+        canvas.getContext("2d"),
+        canvas.width,
+        canvas.height,
+        st.mapsTo || st.id,
+        state.map.colorTheme,
+        state.map.invertMapColors
+      );
+
       poster.appendChild(canvas);
 
       const name = document.createElement("div");
@@ -369,7 +458,7 @@
     styleRow.innerHTML = `<div class="label">Diseño</div>`;
     styleRow.appendChild(stylePreviewGrid());
 
-    // ✅ Color picker (select)
+    // Color picker (select)
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
     colorRow.innerHTML = `<div class="label">Color del póster</div>`;
@@ -393,9 +482,21 @@
 
     colorRow.appendChild(colorSel);
 
+    // ✅ Invert map colors toggle
+    const invertRow = document.createElement("div");
+    invertRow.className = "rowToggle";
+    invertRow.classList.add("stackGap");
+    invertRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Invertir color" }));
+    invertRow.appendChild(toggleSwitch(!!state.map.invertMapColors, (val) => {
+      state.map.invertMapColors = val;
+      drawMap();
+      renderAll(); // refresh thumbnails too
+    }));
+
     // Constellations toggle
     const conRow = document.createElement("div");
     conRow.className = "rowToggle";
+    conRow.classList.add("stackGap");
     conRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Constelaciones" }));
     conRow.appendChild(toggleSwitch(!!state.map.showConstellations, (val) => {
       state.map.showConstellations = val;
@@ -444,7 +545,7 @@
     };
     posterThickRow.appendChild(posterThick);
 
-    // Map margin
+    // Map margin (NO desaparece por invertir color)
     const mapRow = document.createElement("div");
     mapRow.className = "rowToggle";
     mapRow.classList.add("stackGap");
@@ -488,6 +589,8 @@
     $section.appendChild(s);
     $section.appendChild(styleRow);
     $section.appendChild(colorRow);
+
+    $section.appendChild(invertRow);
 
     $section.appendChild(conRow);
     if (state.map.showConstellations) $section.appendChild(csRow);
@@ -666,6 +769,7 @@
   }
 
   function renderPosterAndMap(){
+    // Poster colors (NOT inverted)
     const c = colorsFor(state.map.colorTheme);
     $poster.style.background = c.bg;
     $poster.style.color = c.star;
@@ -764,9 +868,22 @@
     const ctx = $canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const colors = colorsFor(state.map.colorTheme);
+    // base colors from theme
+    const base = colorsFor(state.map.colorTheme);
+
+    // ✅ invert only inside map
+    let mapColors = { ...base };
+    if (state.map.invertMapColors){
+      mapColors = {
+        bg: base.star,
+        star: base.bg,
+        line: rgbaFromHex(base.bg, 0.22),
+      };
+    }
+
     const rand = mulberry32(state.map.seed);
 
+    // if poster margin enabled, map also insets same as map margin
     const shouldInsetLikeMapMargin = state.map.mapCircleMarginEnabled || state.map.posterMarginEnabled;
     const innerPad = shouldInsetLikeMapMargin ? Math.round(size * state.map.mapCircleInsetPct) : 0;
 
@@ -777,7 +894,9 @@
     const circleLineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
     ctx.clearRect(0, 0, size, size);
-    ctx.fillStyle = colors.bg;
+
+    // map bg (inside the canvas) uses mapColors.bg
+    ctx.fillStyle = mapColors.bg;
     ctx.fillRect(0, 0, size, size);
 
     if (innerPad > 0){
@@ -785,7 +904,7 @@
 
       if (state.map.mapCircleMarginEnabled){
         ctx.save();
-        ctx.strokeStyle = colors.line;
+        ctx.strokeStyle = mapColors.line;
         ctx.lineWidth = circleLineW;
         ctx.globalAlpha = 0.75;
         ctx.beginPath();
@@ -800,15 +919,15 @@
       ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
       ctx.clip();
 
-      drawStars(ctx, size, rand, colors, innerPad);
-      if (state.map.showConstellations) drawConstellations(ctx, size, rand, colors, conLineW, nodeR, innerPad);
+      drawStars(ctx, size, rand, mapColors, innerPad);
+      if (state.map.showConstellations) drawConstellations(ctx, size, rand, mapColors, conLineW, nodeR, innerPad);
 
       ctx.restore();
       return;
     }
 
-    drawStars(ctx, size, rand, colors, 0);
-    if (state.map.showConstellations) drawConstellations(ctx, size, rand, colors, conLineW, nodeR, 0);
+    drawStars(ctx, size, rand, mapColors, 0);
+    if (state.map.showConstellations) drawConstellations(ctx, size, rand, mapColors, conLineW, nodeR, 0);
   }
 
   function exportPoster(format){
@@ -822,9 +941,9 @@
     const ctx = out.getContext("2d");
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
-    const colors = colorsFor(state.map.colorTheme);
+    const posterColors = colorsFor(state.map.colorTheme);
 
-    ctx.fillStyle = colors.bg;
+    ctx.fillStyle = posterColors.bg;
     ctx.fillRect(0, 0, W, H);
 
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
@@ -842,7 +961,7 @@
     ctx.restore();
 
     const fontFamily = state.text.fontFamily;
-    ctx.fillStyle = colors.star;
+    ctx.fillStyle = posterColors.star;
 
     function drawText(text, x, y, sizePx, weight=800, align="left", alpha=1){
       ctx.save();

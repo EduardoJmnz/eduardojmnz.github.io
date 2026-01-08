@@ -3,7 +3,7 @@
   // State
   // ======================
   const state = {
-    step: 0, // 0..3
+    step: 0,
 
     visible: {
       title: true,
@@ -11,7 +11,6 @@
       place: true,
       coords: true,
       datetime: true,
-      spotify: true,
     },
 
     text: {
@@ -20,26 +19,29 @@
       place: "Mexico City, MX",
       coords: "19.4326, -99.1332",
       datetime: "2026-01-07 19:30",
-      spotify: "spotify:track:xxxx",
       fontKey: "system",
       fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
     },
 
     map: {
-      // ✅ Solo 2 estilos
+      // only two styles
       styleId: "minimal", // minimal | classic
-      // overlays
+
       showConstellations: true,
       showGrid: false,
-      // color theme (se mantiene como lo tenías)
       colorTheme: "mono",
-      // ✅ quitar magnitud (implícito 4)
-      // ✅ margen del mapa
-      mapMarginEnabled: false,
-      mapMargin: 0, // px
-      // ✅ tamaño de línea
+
+      // poster margin (global)
+      posterMarginEnabled: false,
+      posterMargin: 0, // px
+
+      // map circle margin (inner padding inside the circle)
+      mapCircleMarginEnabled: false,
+      mapCircleMargin: 0, // px
+
+      // line width
       lineWidth: 1.5,
-      // estable
+
       seed: 12345,
     },
   };
@@ -51,13 +53,11 @@
     { key: "d", label: "d) Export" },
   ];
 
-  // ✅ Estilos (2)
   const MAP_STYLES = [
     { id: "minimal", name: "Minimalista" },
     { id: "classic", name: "Clásico" },
   ];
 
-  // ✅ Fuentes (selector)
   const FONT_PRESETS = [
     { key: "system", name: "System (Default)", css: "system-ui, -apple-system, Segoe UI, Roboto, Arial" },
     { key: "inter", name: "Inter-like (Sans)", css: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial" },
@@ -81,14 +81,12 @@
   const $pPlace = document.getElementById("pPlace");
   const $pCoords = document.getElementById("pCoords");
   const $pDatetime = document.getElementById("pDatetime");
-  const $pSpotify = document.getElementById("pSpotify");
 
   // ======================
   // Utils
   // ======================
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
-  // deterministic PRNG (mulberry32)
   function mulberry32(seed){
     let t = seed >>> 0;
     return function() {
@@ -113,17 +111,37 @@
     return base; // mono
   }
 
+  // ======================
+  // Layout setters
+  // ======================
   function setPosterLayout(){
-    // ✅ estilo "clásico" = textos centrados
     if (state.map.styleId === "classic") $poster.classList.add("classic");
     else $poster.classList.remove("classic");
   }
 
-  function setMapSizeFromMargin(){
-    // base map size 780, margin reduce circle size
+  function applyPosterMargin(){
+    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
+    $poster.style.setProperty("--posterPad", `${pad}px`);
+  }
+
+  function setDefaultsByStyle(styleId){
+    // Requirement:
+    // - Classic: poster margin enabled by default
+    // - Minimal: poster margin disabled by default
+    if (styleId === "classic") {
+      state.map.posterMarginEnabled = true;
+      state.map.posterMargin = state.map.posterMargin || 80;
+    } else {
+      state.map.posterMarginEnabled = false;
+      state.map.posterMargin = 0;
+    }
+  }
+
+  function setMapSizeFromPosterPad(){
+    // we keep map size constant, but if pad is big we can slightly reduce to avoid tightness
     const base = 780;
-    const margin = state.map.mapMarginEnabled ? clamp(state.map.mapMargin, 0, 120) : 0;
-    const size = clamp(base - margin * 2, 520, 780);
+    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
+    const size = clamp(base - Math.round(pad * 0.6), 640, 780);
     $poster.style.setProperty("--mapSize", `${size}px`);
   }
 
@@ -194,7 +212,6 @@
       ["place", "Lugar"],
       ["coords", "Coordenadas"],
       ["datetime", "Fecha / hora"],
-      ["spotify", "Spotify"],
     ];
 
     toggles.forEach(([key, label]) => {
@@ -237,12 +254,12 @@
 
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Minimalista o Clásico, overlays, margen del mapa y tamaño de línea.";
+    s.textContent = "Minimalista o Clásico, color, overlays, margen del póster, margen del mapa y tamaño de línea.";
 
-    // Estilo (solo 2)
+    // style (2)
     const styleRow = document.createElement("div");
     styleRow.className = "formRow";
-    styleRow.innerHTML = `<div class="label">Estilo de mapa</div>`;
+    styleRow.innerHTML = `<div class="label">Estilo</div>`;
 
     const styleSel = document.createElement("select");
     styleSel.className = "select";
@@ -255,12 +272,14 @@
     styleSel.value = state.map.styleId;
     styleSel.onchange = () => {
       state.map.styleId = styleSel.value;
+      setDefaultsByStyle(state.map.styleId);
       setPosterLayout();
       renderPosterAndMap();
+      renderAll(); // refresh UI toggles/slider enabled states
     };
     styleRow.appendChild(styleSel);
 
-    // ✅ debajo del preview (aquí: debajo del estilo), selector de color
+    // color (below style)
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
     colorRow.innerHTML = `<div class="label">Color del mapa</div>`;
@@ -316,45 +335,69 @@
     grid.appendChild(conRow);
     grid.appendChild(gridRow);
 
-    // ✅ margen mapa: toggle + slider
-    const marginRow = document.createElement("div");
-    marginRow.className = "formRow";
-    marginRow.innerHTML = `<div class="label">Margen del mapa estelar</div>`;
+    // poster margin (global)
+    const posterMarginToggle = document.createElement("label");
+    posterMarginToggle.className = "rowToggle";
+    posterMarginToggle.style.marginTop = "10px";
+    posterMarginToggle.innerHTML = `<span>Margen del póster</span>`;
+    const posterMarginChk = document.createElement("input");
+    posterMarginChk.type = "checkbox";
+    posterMarginChk.checked = !!state.map.posterMarginEnabled;
+    posterMarginChk.onchange = () => {
+      state.map.posterMarginEnabled = posterMarginChk.checked;
+      if (!state.map.posterMarginEnabled) state.map.posterMargin = 0;
+      renderPosterAndMap();
+      renderAll();
+    };
+    posterMarginToggle.appendChild(posterMarginChk);
 
-    const marginToggle = document.createElement("label");
-    marginToggle.className = "rowToggle";
-    marginToggle.style.marginBottom = "10px";
-    marginToggle.innerHTML = `<span>Activar margen</span>`;
-    const marginChk = document.createElement("input");
-    marginChk.type = "checkbox";
-    marginChk.checked = !!state.map.mapMarginEnabled;
-    marginChk.onchange = () => {
-      state.map.mapMarginEnabled = marginChk.checked;
-      if (!state.map.mapMarginEnabled) state.map.mapMargin = 0;
-      setMapSizeFromMargin();
+    const posterMarginRow = document.createElement("div");
+    posterMarginRow.className = "formRow";
+    posterMarginRow.innerHTML = `<div class="label">Tamaño del margen del póster</div>`;
+    const posterMarginRange = document.createElement("input");
+    posterMarginRange.type = "range";
+    posterMarginRange.min = "0";
+    posterMarginRange.max = "140";
+    posterMarginRange.value = String(state.map.posterMargin);
+    posterMarginRange.disabled = !state.map.posterMarginEnabled;
+    posterMarginRange.oninput = () => {
+      state.map.posterMargin = Number(posterMarginRange.value);
+      renderPosterAndMap();
+    };
+    posterMarginRow.appendChild(posterMarginRange);
+
+    // map circle margin (inner padding)
+    const mapMarginToggle = document.createElement("label");
+    mapMarginToggle.className = "rowToggle";
+    mapMarginToggle.style.marginTop = "10px";
+    mapMarginToggle.innerHTML = `<span>Margen alrededor del mapa (círculo)</span>`;
+    const mapMarginChk = document.createElement("input");
+    mapMarginChk.type = "checkbox";
+    mapMarginChk.checked = !!state.map.mapCircleMarginEnabled;
+    mapMarginChk.onchange = () => {
+      state.map.mapCircleMarginEnabled = mapMarginChk.checked;
+      if (!state.map.mapCircleMarginEnabled) state.map.mapCircleMargin = 0;
+      drawMap();
+      renderAll();
+    };
+    mapMarginToggle.appendChild(mapMarginChk);
+
+    const mapMarginRow = document.createElement("div");
+    mapMarginRow.className = "formRow";
+    mapMarginRow.innerHTML = `<div class="label">Tamaño del margen del mapa</div>`;
+    const mapMarginRange = document.createElement("input");
+    mapMarginRange.type = "range";
+    mapMarginRange.min = "0";
+    mapMarginRange.max = "90";
+    mapMarginRange.value = String(state.map.mapCircleMargin);
+    mapMarginRange.disabled = !state.map.mapCircleMarginEnabled;
+    mapMarginRange.oninput = () => {
+      state.map.mapCircleMargin = Number(mapMarginRange.value);
       drawMap();
     };
-    marginToggle.appendChild(marginChk);
+    mapMarginRow.appendChild(mapMarginRange);
 
-    const marginRange = document.createElement("input");
-    marginRange.type = "range";
-    marginRange.min = "0";
-    marginRange.max = "120";
-    marginRange.value = String(state.map.mapMargin);
-    marginRange.disabled = !state.map.mapMarginEnabled;
-    marginRange.oninput = () => {
-      state.map.mapMargin = Number(marginRange.value);
-      setMapSizeFromMargin();
-      drawMap();
-    };
-
-    // helper text
-    const marginHint = document.createElement("div");
-    marginHint.className = "sub";
-    marginHint.style.marginTop = "6px";
-    marginHint.textContent = "A mayor margen, el círculo del mapa se hace más pequeño.";
-
-    // ✅ tamaño de línea
+    // line width
     const lwRow = document.createElement("div");
     lwRow.className = "formRow";
     lwRow.innerHTML = `<div class="label">Tamaño de línea</div>`;
@@ -391,24 +434,21 @@
     $section.appendChild(colorRow);
     $section.appendChild(grid);
 
-    $section.appendChild(marginToggle);
-    $section.appendChild(marginRow);
-    marginRow.appendChild(marginRange);
-    marginRow.appendChild(marginHint);
+    $section.appendChild(posterMarginToggle);
+    $section.appendChild(posterMarginRow);
+
+    $section.appendChild(mapMarginToggle);
+    $section.appendChild(mapMarginRow);
 
     $section.appendChild(lwRow);
     $section.appendChild(seedRow);
 
-    // next
     $section.appendChild(navButtons({
       showPrev: true,
       showNext: true,
       onPrev: () => { state.step = 0; renderAll(); },
       onNext: () => { state.step = 2; renderAll(); }
     }));
-
-    // refresh enable state for slider
-    marginRange.disabled = !state.map.mapMarginEnabled;
   }
 
   // ======================
@@ -440,7 +480,7 @@
       return row;
     }
 
-    // ✅ selector de fuente
+    // font selector
     const fontRow = document.createElement("div");
     fontRow.className = "formRow";
     fontRow.innerHTML = `<div class="label">Fuente</div>`;
@@ -471,7 +511,6 @@
     $section.appendChild(inputRow("Lugar", state.text.place, (v) => { state.text.place = v; renderPosterText(); }));
     $section.appendChild(inputRow("Coordenadas", state.text.coords, (v) => { state.text.coords = v; renderPosterText(); }));
     $section.appendChild(inputRow("Fecha / hora", state.text.datetime, (v) => { state.text.datetime = v; renderPosterText(); }, "YYYY-MM-DD HH:mm"));
-    $section.appendChild(inputRow("Spotify", state.text.spotify, (v) => { state.text.spotify = v; renderPosterText(); }, "spotify:track:..."));
 
     $section.appendChild(navButtons({
       showPrev: true,
@@ -482,7 +521,7 @@
   }
 
   // ======================
-  // Section D (Export)
+  // Export
   // ======================
   function renderSectionD(){
     $section.innerHTML = "";
@@ -506,6 +545,7 @@
       opt.textContent = n;
       formatSel.appendChild(opt);
     });
+    formatRow.appendChild(formatSel);
 
     const exportBtn = document.createElement("button");
     exportBtn.type = "button";
@@ -513,19 +553,15 @@
     exportBtn.textContent = "Exportar";
     exportBtn.onclick = () => exportPoster(formatSel.value);
 
-    formatRow.appendChild(formatSel);
-
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(formatRow);
 
-    // Botones
+    // ✅ sin botón "volver a a)"
     $section.appendChild(navButtons({
       showPrev: true,
-      showNext: true,
-      nextText: "Volver a a) →",
-      onPrev: () => { state.step = 2; renderAll(); },
-      onNext: () => { state.step = 0; renderAll(); }
+      showNext: false,
+      onPrev: () => { state.step = 2; renderAll(); }
     }));
 
     const bottom = document.createElement("div");
@@ -550,70 +586,70 @@
     $pPlace.style.display = state.visible.place ? "block" : "none";
     $pCoords.style.display = state.visible.coords ? "block" : "none";
     $pDatetime.style.display = state.visible.datetime ? "block" : "none";
-    $pSpotify.style.display = state.visible.spotify ? "block" : "none";
 
     $pTitle.textContent = state.text.title || "";
     $pSubtitle.textContent = state.text.subtitle || "";
     $pPlace.textContent = state.text.place || "";
     $pCoords.textContent = state.text.coords || "";
     $pDatetime.textContent = state.text.datetime || "";
-    $pSpotify.textContent = state.text.spotify || "";
   }
 
   function renderPosterAndMap(){
     const c = colorsFor(state.map.colorTheme);
     $poster.style.background = c.bg;
     $poster.style.color = c.star;
+
     setPosterLayout();
-    setMapSizeFromMargin();
+    applyPosterMargin();
+    setMapSizeFromPosterPad();
+
     drawMap();
   }
 
   // ======================
-  // Constellations (simple + clean, no scribbles)
+  // Constellations (simple + clean)
   // ======================
-  function drawConstellations(ctx, size, rand, colors, lw){
-    // constellations as: clusters of points + polyline connections in a sorted order
-    const count = 6; // number of constellations
+  function drawConstellations(ctx, size, rand, colors, lw, innerPad){
+    // generate constellations within inner circle bounds (avoid margin ring)
+    const count = 6;
     ctx.save();
     ctx.lineWidth = lw;
     ctx.strokeStyle = colors.line;
     ctx.fillStyle = colors.star;
 
+    const safeMin = innerPad + 36;
+    const safeMax = size - innerPad - 36;
+
     for (let c = 0; c < count; c++){
-      const cx = (0.15 + rand() * 0.7) * size;
-      const cy = (0.15 + rand() * 0.7) * size;
+      const cx = safeMin + rand() * (safeMax - safeMin);
+      const cy = safeMin + rand() * (safeMax - safeMin);
 
       const points = 4 + Math.floor(rand() * 4); // 4..7
       const pts = [];
 
-      // generate points around a center (elliptical)
-      const rx = 40 + rand() * 120;
-      const ry = 40 + rand() * 120;
+      const rx = 40 + rand() * 110;
+      const ry = 40 + rand() * 110;
 
       for (let i = 0; i < points; i++){
         const a = rand() * Math.PI * 2;
         const r1 = 0.35 + rand() * 0.75;
-        const x = clamp(cx + Math.cos(a) * rx * r1, 40, size - 40);
-        const y = clamp(cy + Math.sin(a) * ry * r1, 40, size - 40);
+        const x = clamp(cx + Math.cos(a) * rx * r1, safeMin, safeMax);
+        const y = clamp(cy + Math.sin(a) * ry * r1, safeMin, safeMax);
         pts.push({ x, y });
       }
 
-      // sort points by angle around centroid for clean polygon-like chain
+      // sort around centroid for clean chain
       const mx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
       const my = pts.reduce((s,p)=>s+p.y,0)/pts.length;
       pts.sort((p1,p2)=>Math.atan2(p1.y-my,p1.x-mx)-Math.atan2(p2.y-my,p2.x-mx));
 
-      // draw connections (polyline)
+      // polyline
       ctx.globalAlpha = 0.9;
       ctx.beginPath();
-      pts.forEach((p, i) => {
-        if (i === 0) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
-      });
+      pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
       ctx.stroke();
 
-      // draw brighter constellation stars at nodes
+      // nodes
       ctx.globalAlpha = 0.95;
       pts.forEach((p) => {
         ctx.beginPath();
@@ -621,11 +657,12 @@
         ctx.fill();
       });
 
-      // optional: a short branch from one node (simple, not scribble)
+      // optional single branch
       if (pts.length >= 5 && rand() > 0.55){
         const base = pts[Math.floor(rand()*pts.length)];
-        const bx = clamp(base.x + (rand()-0.5)*140, 30, size-30);
-        const by = clamp(base.y + (rand()-0.5)*140, 30, size-30);
+        const bx = clamp(base.x + (rand()-0.5)*140, safeMin, safeMax);
+        const by = clamp(base.y + (rand()-0.5)*140, safeMin, safeMax);
+
         ctx.globalAlpha = 0.85;
         ctx.beginPath();
         ctx.moveTo(base.x, base.y);
@@ -644,10 +681,9 @@
   }
 
   // ======================
-  // Map drawing (Canvas)
+  // Map drawing
   // ======================
   function drawMap(){
-    // The canvas should match CSS variable size
     const cssSize = parseFloat(getComputedStyle($poster).getPropertyValue("--mapSize")) || 780;
     const size = Math.round(cssSize);
 
@@ -663,16 +699,50 @@
     const colors = colorsFor(state.map.colorTheme);
     const rand = mulberry32(state.map.seed);
 
+    // inner padding inside circle (map circle margin)
+    const innerPad = state.map.mapCircleMarginEnabled ? clamp(state.map.mapCircleMargin, 0, 90) : 0;
+
     // background
     ctx.clearRect(0, 0, size, size);
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, size, size);
 
-    // stars (crisp)
+    // If map circle margin enabled, we "reserve" a ring by clipping to inner circle
+    if (innerPad > 0){
+      ctx.save();
+      const r = (size / 2) - innerPad;
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, r, 0, Math.PI*2);
+      ctx.clip();
+
+      drawStars(ctx, size, rand, colors, innerPad);
+
+      // overlays inside clip
+      if (state.map.showGrid) drawGrid(ctx, size, colors, state.map.lineWidth);
+      if (state.map.showConstellations) drawConstellations(ctx, size, rand, colors, state.map.lineWidth, innerPad);
+
+      ctx.restore();
+
+      // redraw ring background (clean edge already bg), optional subtle ring line:
+      // ctx.strokeStyle = colors.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(size/2,size/2,(size/2)-innerPad,0,Math.PI*2); ctx.stroke();
+      return;
+    }
+
+    // no inner margin
+    drawStars(ctx, size, rand, colors, 0);
+    if (state.map.showGrid) drawGrid(ctx, size, colors, state.map.lineWidth);
+    if (state.map.showConstellations) drawConstellations(ctx, size, rand, colors, state.map.lineWidth, 0);
+  }
+
+  function drawStars(ctx, size, rand, colors, innerPad){
     const N = Math.floor(680 + rand()*80);
+
+    const safeMin = innerPad + 2;
+    const safeMax = size - innerPad - 2;
+
     for (let i = 0; i < N; i++){
-      const x = rand() * size;
-      const y = rand() * size;
+      const x = safeMin + rand() * (safeMax - safeMin);
+      const y = safeMin + rand() * (safeMax - safeMin);
 
       const big = rand() > 0.92;
       const r = big ? (1.5 + rand() * 1.8) : (rand() * 1.2);
@@ -685,41 +755,33 @@
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+  }
 
-    // grid
-    if (state.map.showGrid){
-      ctx.strokeStyle = colors.line;
-      ctx.lineWidth = state.map.lineWidth;
-      const step = Math.max(26, Math.floor(size / 10));
-      for (let x = step; x < size; x += step){
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, size);
-        ctx.stroke();
-      }
-      for (let y = step; y < size; y += step){
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(size, y);
-        ctx.stroke();
-      }
+  function drawGrid(ctx, size, colors, lw){
+    ctx.strokeStyle = colors.line;
+    ctx.lineWidth = lw;
+    const step = Math.max(26, Math.floor(size / 10));
+    for (let x = step; x < size; x += step){
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, size);
+      ctx.stroke();
     }
-
-    // constellations (simple + clean)
-    if (state.map.showConstellations){
-      drawConstellations(ctx, size, rand, colors, state.map.lineWidth);
+    for (let y = step; y < size; y += step){
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(size, y);
+      ctx.stroke();
     }
-
-    ctx.globalAlpha = 1;
   }
 
   // ======================
-  // Export (PNG/JPG direct, PDF via print)
+  // Export
   // ======================
   function exportPoster(format){
-    // Render to offscreen canvas at poster size
     const W = 900, H = 1200;
-    const scale = 2; // export sharper
+    const scale = 2;
+
     const out = document.createElement("canvas");
     out.width = W * scale;
     out.height = H * scale;
@@ -729,17 +791,20 @@
 
     const colors = colorsFor(state.map.colorTheme);
 
-    // background
+    // bg
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
-    // map circle
-    const mapSize = parseFloat(getComputedStyle($poster).getPropertyValue("--mapSize")) || 780;
+    // poster pad influences positions (matches preview)
+    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
+
+    // map size from pad
+    const mapSize = clamp(780 - Math.round(pad * 0.6), 640, 780);
     const mapX = (W - mapSize) / 2;
-    const mapY = 70; // like posterInner padding-top
+    const mapY = pad + 70;
     const r = mapSize / 2;
 
-    // clip circle and draw current map canvas
+    // clip circle and draw current map canvas scaled to mapSize
     ctx.save();
     ctx.beginPath();
     ctx.arc(mapX + r, mapY + r, r, 0, Math.PI * 2);
@@ -747,12 +812,10 @@
     ctx.drawImage($canvas, mapX, mapY, mapSize, mapSize);
     ctx.restore();
 
-    // text styles
+    // font
+    const fontFamily = state.text.fontFamily;
     ctx.fillStyle = colors.star;
     ctx.globalAlpha = 1;
-
-    const fontFamily = state.text.fontFamily;
-    const show = state.visible;
 
     function drawText(text, x, y, sizePx, weight=800, align="left", alpha=1){
       ctx.save();
@@ -774,23 +837,19 @@
       ctx.restore();
     }
 
+    const show = state.visible;
+
     if (state.map.styleId === "minimal"){
-      // bottom aligned, like UI
-      const left = 80, right = W - 80;
-      let y = H - 64;
+      const left = pad + 80, right = W - (pad + 80);
 
-      // meta rows start from bottom upwards? We'll keep same spacing top-down inside block
-      const blockBottom = y;
-      // draw from top of block
-      let top = blockBottom - 22 - 14*2 - 6 - 10 - 18 - 10; // approx; doesn't need perfect
+      // place text block near bottom (consistent with preview)
+      let top = H - (pad + 64) - 120;
       top = Math.max(top, mapY + mapSize + 40);
-
       let ty = top;
 
       if (show.title) { drawText(state.text.title, left, ty + 54, 54, 900, "left", 1); ty += 54 + 10; }
       if (show.subtitle) { drawText(state.text.subtitle, left, ty + 18, 18, 600, "left", 0.85); ty += 18 + 22; }
 
-      // meta lines
       const metaY1 = ty + 14;
       const metaY2 = metaY1 + 20;
 
@@ -798,21 +857,14 @@
       if (show.coords) metaText(state.text.coords, left, metaY2, "left");
 
       if (show.datetime) metaText(state.text.datetime, right, metaY1, "right");
-      if (show.spotify) metaText(state.text.spotify, right, metaY2, "right");
     } else {
-      // classic centered with margin
       const centerX = W / 2;
-      const marginLR = 110;
-      let y = H - 90; // like CSS
-
-      // title/subtitle above meta
-      let ty = y - 60; // move up
+      let ty = H - (pad + 90) - 60;
       if (show.subtitle) ty -= 24;
 
       if (show.title) { drawText(state.text.title, centerX, ty, 54, 900, "center", 1); ty += 36; }
       if (show.subtitle) { drawText(state.text.subtitle, centerX, ty, 18, 650, "center", 0.85); ty += 36; }
 
-      // meta in two columns but centered
       const gap = 170;
       const leftX = centerX - gap;
       const rightX = centerX + gap;
@@ -824,10 +876,8 @@
       if (show.coords) metaText(state.text.coords, leftX, metaY2, "center");
 
       if (show.datetime) metaText(state.text.datetime, rightX, metaY1, "center");
-      if (show.spotify) metaText(state.text.spotify, rightX, metaY2, "center");
     }
 
-    // output
     if (format === "png" || format === "jpg"){
       const mime = format === "png" ? "image/png" : "image/jpeg";
       const quality = format === "jpg" ? 0.95 : undefined;
@@ -836,7 +886,7 @@
       return;
     }
 
-    // pdf: open printable window (user: Save as PDF)
+    // pdf via print
     const url = out.toDataURL("image/png");
     const w = window.open("", "_blank");
     if (!w) {
@@ -845,17 +895,11 @@
     }
     w.document.write(`
       <html><head><title>Poster PDF</title>
-      <style>
-        html,body{margin:0;padding:0;}
-        img{width:100%;height:auto;display:block;}
-      </style>
+      <style>html,body{margin:0;padding:0;} img{width:100%;height:auto;display:block;}</style>
       </head><body>
         <img src="${url}" />
         <script>
-          window.onload = () => {
-            window.focus();
-            window.print();
-          };
+          window.onload = () => { window.focus(); window.print(); };
         </script>
       </body></html>
     `);
@@ -892,6 +936,12 @@
   // ======================
   // Init
   // ======================
+  // enforce defaults on load
+  setDefaultsByStyle(state.map.styleId);
+  setPosterLayout();
+  applyPosterMargin();
+  setMapSizeFromPosterPad();
+
   renderAll();
   window.addEventListener("resize", () => drawMap());
 })();

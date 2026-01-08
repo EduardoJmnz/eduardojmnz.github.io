@@ -102,6 +102,7 @@
       justify-content:space-between;
       gap:10px;
       margin-top:12px;
+      align-items:center; /* ✅ para que queden al mismo nivel */
     }
     .btn{
       border-radius:14px;
@@ -109,6 +110,7 @@
       cursor:pointer;
       font-weight:750;
       user-select:none;
+      white-space:nowrap;
     }
     .btn.ghost{
       border:1px solid var(--stroke);
@@ -128,6 +130,7 @@
       justify-content:center;
       padding:18px;
       overflow:hidden;
+      position:relative;
     }
     .previewWrap{
       width:100%;
@@ -135,10 +138,45 @@
       display:flex;
       align-items:center;
       justify-content:center;
+      position:relative;
     }
     .previewScale{
-      transform: scale(0.5);         /* ✅ preview 50% */
       transform-origin: center center;
+      will-change: transform;
+    }
+
+    /* Zoom controls */
+    .zoomControls{
+      position:absolute;
+      left: 16px;
+      bottom: 16px;
+      display:flex;
+      gap:10px;
+      z-index: 20;
+      align-items:center;
+    }
+    .zoomBtn{
+      width:44px;
+      height:44px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor:pointer;
+      font-weight:900;
+      font-size: 18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+    }
+    .zoomLabel{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size: 12px;
     }
 
     /* Poster */
@@ -150,9 +188,21 @@
       position:relative;
       overflow:hidden;
 
-      /* variables */
       --mapSize: 780px;
-      --posterPad: 0px;             /* ✅ margen del póster (global) */
+      --posterPad: 0px;
+    }
+
+    /* ✅ Guía visual del margen del póster */
+    .poster .marginGuide{
+      position:absolute;
+      pointer-events:none;
+      inset: var(--posterPad);
+      border-radius: 20px;
+      border: 1px dashed rgba(233,238,252,.20);
+      opacity: 0;
+    }
+    .poster.showPosterMargin .marginGuide{
+      opacity: 1;
     }
 
     .posterInner{
@@ -162,7 +212,7 @@
       flex-direction:column;
       align-items:center;
       justify-content:flex-start;
-      padding-top: calc(var(--posterPad) + 70px); /* ✅ mapa respeta margen del póster */
+      padding-top: calc(var(--posterPad) + 70px);
     }
 
     .mapCircle{
@@ -178,7 +228,7 @@
       display:block;
     }
 
-    /* Minimalista: textos abajo */
+    /* Minimalista */
     .bottomText{
       position:absolute;
       left: calc(var(--posterPad) + 80px);
@@ -199,20 +249,19 @@
     }
     .meta{
       display:flex;
-      justify-content:space-between;
+      justify-content:flex-start; /* ✅ una sola columna */
       gap:20px;
       font-size:14px;
       opacity:.82;
     }
     .metaCol{ display:flex; flex-direction:column; gap:6px; }
-    .metaCol.right{ text-align:right; }
     .metaRow{
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
     }
 
-    /* Clásico: textos centrados con margen */
+    /* Clásico */
     .poster.classic .bottomText{
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
@@ -221,13 +270,9 @@
     }
     .poster.classic .meta{
       justify-content:center;
-      gap:34px;
     }
     .poster.classic .metaCol{
       align-items:center;
-      text-align:center;
-    }
-    .poster.classic .metaCol.right{
       text-align:center;
     }
     .poster.classic .tTitle{
@@ -262,8 +307,16 @@
 
     <main class="right">
       <div class="previewWrap">
-        <div class="previewScale">
+        <div class="zoomControls">
+          <button class="zoomBtn" id="zoomOut" title="Zoom out">−</button>
+          <button class="zoomBtn" id="zoomIn" title="Zoom in">+</button>
+          <div class="zoomLabel" id="zoomLabel">100%</div>
+        </div>
+
+        <div class="previewScale" id="previewScale">
           <div class="poster" id="poster">
+            <div class="marginGuide"></div>
+
             <div class="posterInner">
               <div class="mapCircle">
                 <canvas id="mapCanvas"></canvas>
@@ -273,19 +326,18 @@
                 <div class="tTitle" id="pTitle"></div>
                 <div class="tSub" id="pSubtitle"></div>
 
+                <!-- ✅ UNA sola columna (Lugar, Coord, Fecha) -->
                 <div class="meta">
                   <div class="metaCol">
                     <div class="metaRow" id="pPlace"></div>
                     <div class="metaRow" id="pCoords"></div>
-                  </div>
-                  <div class="metaCol right">
                     <div class="metaRow" id="pDatetime"></div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </div><!-- /previewScale -->
       </div>
     </main>
   </div>

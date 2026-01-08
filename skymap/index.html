@@ -161,10 +161,10 @@
       background: rgba(124,255,250,.95);
     }
 
-    /* ✅ More spacing between toggle groups and sliders */
-    .stackGap{ margin-top: 18px; }
+    /* ✅ Spacing helper (más aire entre bloques) */
+    .stackGap{ margin-top: 14px; }
 
-    /* ✅ Content field card (como mock) */
+    /* ✅ Content field card */
     .fieldCard{
       border:1px solid var(--stroke);
       border-radius:16px;
@@ -305,11 +305,16 @@
       position:relative;
       overflow:hidden;
 
-      --mapSize: 780px;
       --posterPad: 0px;
 
+      /* ✅ map dims (JS overrides) */
+      --mapW: 780px;
+      --mapH: 780px;
+
+      /* ✅ poster margin line */
       --posterMarginInset: 45px;
       --posterMarginThickness: 2px;
+      --posterMarginColor: rgba(233,238,252,.22);
     }
 
     .poster .marginGuide{
@@ -317,7 +322,7 @@
       pointer-events:none;
       inset: var(--posterMarginInset);
       border-radius: 20px;
-      border: var(--posterMarginThickness) solid rgba(233,238,252,.22);
+      border: var(--posterMarginThickness) solid var(--posterMarginColor);
       opacity: 0;
     }
     .poster.showPosterMargin .marginGuide{ opacity: 1; }
@@ -333,15 +338,21 @@
     }
 
     .mapCircle{
-      width: var(--mapSize);
-      height: var(--mapSize);
-      border-radius: 999px;
+      width: var(--mapW);
+      height: var(--mapH);
       overflow:hidden;
       position:relative;
     }
+    /* circle default */
+    .poster.shape-circle .mapCircle{ border-radius: 999px; }
+    /* rect default */
+    .poster.shape-rect .mapCircle{ border-radius: 0px; }
+    /* heart keeps square (canvas handles clipping) */
+    .poster.shape-heart .mapCircle{ border-radius: 0px; }
+
     canvas#mapCanvas{
-      width: var(--mapSize);
-      height: var(--mapSize);
+      width: var(--mapW);
+      height: var(--mapH);
       display:block;
     }
 
@@ -378,7 +389,7 @@
       text-overflow:ellipsis;
     }
 
-    /* Clásico */
+    /* Clásico (centrado) */
     .poster.classic .bottomText{
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
@@ -388,6 +399,15 @@
     .poster.classic .meta{ justify-content:center; }
     .poster.classic .metaCol{ align-items:center; text-align:center; }
     .poster.classic .tTitle{ letter-spacing:1.6px; }
+
+    /* ✅ Minimalista (rect) un poco más aire arriba y texto más abajo centrado */
+    .poster.minimalista .posterInner{
+      padding-top: calc(var(--posterPad) + 78px);
+    }
+    .poster.minimalista .bottomText{
+      text-align:center;
+    }
+    .poster.minimalista .meta{ justify-content:center; }
 
     @media (max-width: 980px){
       #app{ grid-template-columns: 1fr; }

@@ -20,10 +20,13 @@
 
     map: {
       styleId: "classic",
-      showConstellations: true,
-      colorTheme: "mono",
 
+      // toggles
+      showGrid: false,          // ✅ Retícula
+      showConstellations: true,
       invertMapColors: false,
+
+      colorTheme: "mono",
 
       posterMarginEnabled: false,
       posterMarginInsetPx: POSTER_MARGIN_INSET_DEFAULT,
@@ -140,23 +143,51 @@
     return MAP_STYLES.find(s => s.id === state.map.styleId) || MAP_STYLES[0];
   }
 
-  // ✅ Corazón más alto / menos apachurrado
-  function heartGeometricPath(ctx, cx, cy, size){
-    const topY    = cy - size * 0.78;
-    const bottomY = cy + size * 0.68;
+  // ✅ Heart path (más alto y sin “panzón lateral”)
+  // Usamos un corazón clásico con cubics y escalado vertical.
+  function heartPath(ctx, cx, cy, size){
+    // size = base scale
+    const w = size;
+    const h = size * 1.18; // ✅ más alto
 
-    const leftX  = cx - size * 0.82;
-    const rightX = cx + size * 0.82;
+    // ancla superior más arriba
+    const topY = cy - h * 0.62;
+    const bottomY = cy + h * 0.62;
 
-    const lobeY  = cy - size * 0.32;
+    // control lateral reducido para que no “explote” de los lados
+    const leftX = cx - w * 0.78;
+    const rightX = cx + w * 0.78;
 
     ctx.beginPath();
     ctx.moveTo(cx, bottomY);
 
-    ctx.quadraticCurveTo(cx - size * 0.98, cy + size * 0.10, leftX, cy - size * 0.10);
-    ctx.quadraticCurveTo(cx - size * 0.62, topY, cx, lobeY);
-    ctx.quadraticCurveTo(cx + size * 0.62, topY, rightX, cy - size * 0.10);
-    ctx.quadraticCurveTo(cx + size * 0.98, cy + size * 0.10, cx, bottomY);
+    // Izq abajo -> izq medio
+    ctx.bezierCurveTo(
+      cx - w * 0.92, cy + h * 0.30,
+      leftX,         cy - h * 0.08,
+      cx - w * 0.44, cy - h * 0.12
+    );
+
+    // Lóbulo izq
+    ctx.bezierCurveTo(
+      cx - w * 0.10, cy - h * 0.60,
+      cx - w * 0.55, topY,
+      cx,            cy - h * 0.28
+    );
+
+    // Lóbulo der
+    ctx.bezierCurveTo(
+      cx + w * 0.55, topY,
+      cx + w * 0.10, cy - h * 0.60,
+      cx + w * 0.44, cy - h * 0.12
+    );
+
+    // Der medio -> abajo
+    ctx.bezierCurveTo(
+      rightX,        cy - h * 0.08,
+      cx + w * 0.92, cy + h * 0.30,
+      cx,            bottomY
+    );
 
     ctx.closePath();
   }
@@ -182,7 +213,7 @@
     if (st.layout === "classic") $poster.classList.add("classic");
     else $poster.classList.remove("classic");
 
-    // map dims per style (set as CSS vars)
+    // map dims per style
     if (st.shape === "rect") {
       $poster.style.setProperty("--mapW", "820px");
       $poster.style.setProperty("--mapH", "860px");
@@ -286,6 +317,47 @@
     });
   }
 
+  function drawCurvedGrid(ctx, w, h, colors){
+    // ✅ “paralelos y meridianos” curvos (tipo globo)
+    ctx.save();
+    ctx.strokeStyle = colors.line;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.22;
+
+    const meridians = 7; // incluye centro
+    const parallels = 6;
+
+    // Meridianos (curvas verticales)
+    for (let i = 0; i < meridians; i++){
+      const t = i / (meridians - 1);
+      const x = w * (0.12 + t * 0.76);
+
+      const bend = (Math.abs(t - 0.5) / 0.5); // 0 centro, 1 extremos
+      const curve = (1 - bend) * (w * 0.18);  // más curva en centro
+
+      ctx.beginPath();
+      ctx.moveTo(x, h * 0.06);
+      ctx.quadraticCurveTo(x + curve * (t < 0.5 ? -1 : 1), h * 0.50, x, h * 0.94);
+      ctx.stroke();
+    }
+
+    // Paralelos (curvas horizontales)
+    for (let j = 0; j < parallels; j++){
+      const t = j / (parallels - 1);
+      const y = h * (0.16 + t * 0.68);
+
+      const bend = (Math.abs(t - 0.5) / 0.5);
+      const curve = (1 - bend) * (h * 0.16);
+
+      ctx.beginPath();
+      ctx.moveTo(w * 0.06, y);
+      ctx.quadraticCurveTo(w * 0.50, y + curve * (t < 0.5 ? 1 : -1), w * 0.94, y);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
   function drawConstellations(ctx, w, h, rand, colors, lineW, nodeR){
     const count = 6;
     ctx.save();
@@ -371,6 +443,7 @@
     const posterColors = colorsFor(state.map.colorTheme);
     const rand = mulberry32(state.map.seed);
 
+    // colores del mapa (posible inversión)
     let mapColors = { ...posterColors };
     if (state.map.invertMapColors){
       mapColors = {
@@ -387,11 +460,12 @@
     const showOutline = state.map.mapCircleMarginEnabled && !state.map.invertMapColors;
     const outlineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
+    // fondo del canvas = fondo del póster
     ctx.clearRect(0, 0, mapW, mapH);
     ctx.fillStyle = posterColors.bg;
     ctx.fillRect(0, 0, mapW, mapH);
 
-    // Circle
+    // ----- CIRCLE -----
     if (st.shape === "circle"){
       const shouldInsetLikeMapMargin = state.map.mapCircleMarginEnabled || state.map.posterMarginEnabled;
       const insetPad = shouldInsetLikeMapMargin ? Math.round(Math.min(mapW,mapH) * state.map.mapCircleInsetPct) : 0;
@@ -419,6 +493,7 @@
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
+      if (state.map.showGrid) drawCurvedGrid(ctx, mapW, mapH, mapColors);
       drawStars(ctx, mapW, mapH, rand, mapColors);
       if (state.map.showConstellations) drawConstellations(ctx, mapW, mapH, rand, mapColors, conLineW, nodeR);
 
@@ -426,18 +501,21 @@
       return;
     }
 
-    // Heart (más grande y sin contorno a menos que outline ON)
+    // ----- HEART -----
     if (st.shape === "heart"){
       const cx = mapW/2, cy = mapH/2;
-      const size = Math.min(mapW,mapH) * 0.60; // ✅ un poco más grande
+
+      // ✅ más grande y más alto
+      const size = Math.min(mapW,mapH) * 0.66;
 
       ctx.save();
-      heartGeometricPath(ctx, cx, cy, size);
+      heartPath(ctx, cx, cy, size);
       ctx.clip();
 
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
+      if (state.map.showGrid) drawCurvedGrid(ctx, mapW, mapH, mapColors);
       drawStars(ctx, mapW, mapH, rand, mapColors);
       if (state.map.showConstellations) drawConstellations(ctx, mapW, mapH, rand, mapColors, conLineW, nodeR);
 
@@ -448,19 +526,21 @@
         ctx.strokeStyle = mapColors.line;
         ctx.lineWidth = outlineW;
         ctx.globalAlpha = 0.85;
-        heartGeometricPath(ctx, cx, cy, size);
+        heartPath(ctx, cx, cy, size);
         ctx.stroke();
         ctx.restore();
       }
       return;
     }
 
-    // Rect (Poster) — NO encoger con contorno
+    // ----- RECT (Poster) -----
     if (st.shape === "rect"){
       ctx.save();
+
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
+      if (state.map.showGrid) drawCurvedGrid(ctx, mapW, mapH, mapColors);
       drawStars(ctx, mapW, mapH, rand, mapColors);
       if (state.map.showConstellations) drawConstellations(ctx, mapW, mapH, rand, mapColors, conLineW, nodeR);
 
@@ -503,7 +583,7 @@
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
-    // ✅ margen del póster mismo color de texto/mapa (stars)
+    // margen del póster = mismo color de texto
     $poster.style.setProperty("--posterMarginColor", rgbaFromHex(posterColors.star, 0.28));
 
     applyPosterLayoutByStyle();
@@ -528,7 +608,7 @@
     s.className = "sub";
     s.textContent = "Selecciona un estilo, color y opciones del mapa.";
 
-    // Estilos (label arriba del grid)
+    // Estilos
     const styleRow = document.createElement("div");
     styleRow.className = "formRow";
     styleRow.innerHTML = `<div class="label">Estilos</div>`;
@@ -546,17 +626,18 @@
       const c = document.createElement("canvas");
       c.width = 180; c.height = 240;
 
-      // thumbnail skeleton simple
       const ctx = c.getContext("2d");
       const pc = colorsFor(state.map.colorTheme);
 
+      // bg
       ctx.clearRect(0,0,180,240);
       ctx.fillStyle = pc.bg;
       ctx.fillRect(0,0,180,240);
 
-      // map frame
+      // map frame area
       ctx.save();
       const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
+
       if (st.shape === "circle"){
         ctx.beginPath();
         ctx.arc(mx+mw/2, my+mw/2, mw/2, 0, Math.PI*2);
@@ -564,8 +645,8 @@
       } else if (st.shape === "heart"){
         const cx = mx+mw/2;
         const cy = my+mw/2;
-        const size = mw*0.52;
-        heartGeometricPath(ctx, cx, cy, size);
+        const size = mw*0.60;
+        heartPath(ctx, cx, cy, size);
         ctx.clip();
       } else {
         ctx.beginPath();
@@ -585,7 +666,7 @@
         st.id === "poster" ? 202604 :
         st.id === "moderno" ? 202605 : 202602
       );
-      for (let i=0;i<180;i++){
+      for (let i=0;i<160;i++){
         const x = mx + r()*mw;
         const y = my + r()*mh;
         ctx.globalAlpha = 0.22 + r()*0.55;
@@ -622,7 +703,10 @@
 
       tile.onclick = () => {
         state.map.styleId = st.id;
-        if (st.id === "poster") state.map.posterMarginEnabled = false;
+
+        // reglas: Poster y Romántico sin margen del póster
+        if (st.id === "poster" || st.id === "romantico") state.map.posterMarginEnabled = false;
+
         renderPosterAndMap();
         renderAll();
       };
@@ -650,7 +734,7 @@
     colorSel.onchange = () => {
       state.map.colorTheme = colorSel.value;
 
-      // Blanco => auto invertir color + esconder contorno
+      // Blanco => auto invertir + ocultar contorno
       if (state.map.colorTheme === "white") {
         state.map.invertMapColors = true;
         state.map.mapCircleMarginEnabled = false;
@@ -670,6 +754,17 @@
     invertRow.appendChild(toggleSwitch(!!state.map.invertMapColors, (val) => {
       state.map.invertMapColors = val;
       if (val) state.map.mapCircleMarginEnabled = false;
+      drawMap();
+      renderAll();
+    }));
+
+    // ✅ Retícula (arriba de constelaciones, sin slider)
+    const gridRow = document.createElement("div");
+    gridRow.className = "rowToggle";
+    gridRow.classList.add("stackGap");
+    gridRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Retícula" }));
+    gridRow.appendChild(toggleSwitch(!!state.map.showGrid, (val) => {
+      state.map.showGrid = val;
       drawMap();
       renderAll();
     }));
@@ -698,7 +793,7 @@
     csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
     csRow.appendChild(csRange);
 
-    // Contorno del mapa (arriba del margen del póster) — oculto si invertir ON
+    // Contorno del mapa (oculto si invertir ON)
     let mapRow = null;
     let mapThickRow = null;
     if (!state.map.invertMapColors) {
@@ -731,9 +826,9 @@
       }
     }
 
-    // Margen del póster (oculto en estilo Poster)
+    // Margen del póster (oculto en Poster y Romántico)
     const stNow = getStyleDef();
-    const allowPosterMargin = stNow.id !== "poster";
+    const allowPosterMargin = (stNow.id !== "poster" && stNow.id !== "romantico");
 
     let posterRow = null;
     let posterThickRow = null;
@@ -782,16 +877,77 @@
     seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
 
+    // ✅ Poster aleatorio
+    const randomRow = document.createElement("div");
+    randomRow.className = "formRow";
+    randomRow.classList.add("stackGap");
+
+    const randomBtn = document.createElement("button");
+    randomBtn.type = "button";
+    randomBtn.className = "btn primary";
+    randomBtn.textContent = "Poster Aleatorio";
+    randomBtn.onclick = () => {
+      const r = Math.random;
+
+      const pick = (arr) => arr[Math.floor(r() * arr.length)];
+      const pickBool = () => r() > 0.5;
+      const pickRange = (min, max) => min + r() * (max - min);
+
+      // random style + color
+      state.map.styleId = pick(MAP_STYLES).id;
+      state.map.colorTheme = pick(COLOR_THEMES).id;
+
+      // random toggles
+      state.map.showGrid = pickBool();
+      state.map.showConstellations = pickBool();
+
+      // random size step 0.5
+      const cs = Math.round(pickRange(1, 4) * 2) / 2;
+      state.map.constellationSize = cs;
+
+      // random thickness
+      state.map.posterMarginThickness = Math.round(pickRange(1, 10));
+      state.map.mapCircleMarginThickness = Math.round(pickRange(1, 10));
+
+      // random invert
+      state.map.invertMapColors = pickBool();
+
+      // white => force invert + hide outline
+      if (state.map.colorTheme === "white") {
+        state.map.invertMapColors = true;
+      }
+      if (state.map.invertMapColors) {
+        state.map.mapCircleMarginEnabled = false;
+      } else {
+        state.map.mapCircleMarginEnabled = pickBool();
+      }
+
+      // poster margin allowed only if not poster/romantico
+      const st = getStyleDef();
+      const allowPM = (st.id !== "poster" && st.id !== "romantico");
+      state.map.posterMarginEnabled = allowPM ? pickBool() : false;
+
+      // seed random
+      state.map.seed = (Math.random() * 1e9) | 0;
+
+      renderPosterAndMap();
+      renderAll();
+    };
+
+    randomRow.appendChild(randomBtn);
+
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(styleRow);
     $section.appendChild(colorRow);
+
     $section.appendChild(invertRow);
+    $section.appendChild(gridRow);
 
     $section.appendChild(conRow);
     if (state.map.showConstellations) $section.appendChild(csRow);
 
-    // ✅ ORDEN NUEVO: Contorno arriba
+    // Contorno arriba de margen del poster
     if (mapRow) $section.appendChild(mapRow);
     if (mapThickRow) $section.appendChild(mapThickRow);
 
@@ -799,6 +955,7 @@
     if (posterThickRow) $section.appendChild(posterThickRow);
 
     $section.appendChild(seedRow);
+    $section.appendChild(randomRow);
 
     $section.appendChild(navButtons({
       showPrev: false,
@@ -947,8 +1104,8 @@
     $section.appendChild(actions);
   }
 
-  // Export (igual que tu base, usando el canvas ya renderizado)
   function exportPoster(format){
+    // Conservamos tu export “lo que ves es lo que exportas”
     const W = 900, H = 1200;
     const scale = 2;
 
@@ -966,7 +1123,6 @@
 
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
 
-    // map placement
     const st = getStyleDef();
 
     let mapW, mapH;
@@ -981,10 +1137,8 @@
     const mapX = (W - mapW) / 2;
     const mapY = pad + 70;
 
-    // draw the already-rendered mapCanvas scaled
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
-    // poster margin rectangle line (same color as text)
     if (state.map.posterMarginEnabled){
       ctx.save();
       ctx.strokeStyle = rgbaFromHex(colors.star, 0.28);
@@ -998,7 +1152,6 @@
       ctx.restore();
     }
 
-    // text
     const fontFamily = state.text.fontFamily;
     ctx.fillStyle = colors.star;
 
@@ -1058,7 +1211,6 @@
       if (show.datetime) metaText(state.text.datetime, centerX, metaY3, "center");
     }
 
-    // output
     if (format === "png" || format === "jpg"){
       const mime = format === "png" ? "image/png" : "image/jpeg";
       const quality = format === "jpg" ? 0.95 : undefined;

@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sky Poster Editor</title>
-  <link rel="stylesheet" href="./styles.css" />
   <style>
     :root{
       --bg:#07080c;
@@ -96,14 +95,7 @@
       border-radius:12px;
       outline:none;
     }
-    .pill{
-      display:inline-flex; align-items:center; justify-content:center;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px dashed rgba(233,238,252,.18);
-      color:var(--muted);
-      width: fit-content;
-    }
+    input[type="range"]{ width:100%; }
 
     .navBtns{
       display:flex;
@@ -157,6 +149,9 @@
       box-shadow: 0 24px 90px rgba(0,0,0,.55);
       position:relative;
       overflow:hidden;
+
+      /* variables del mapa */
+      --mapSize: 780px;
     }
 
     .posterInner{
@@ -170,24 +165,25 @@
     }
 
     .mapCircle{
-      width: 780px;
-      height: 780px;
+      width: var(--mapSize);
+      height: var(--mapSize);
       border-radius: 999px;
       overflow:hidden;
       position:relative;
     }
     canvas#mapCanvas{
-      width:780px;
-      height:780px;
+      width: var(--mapSize);
+      height: var(--mapSize);
       display:block;
     }
 
+    /* Minimalista: textos abajo pegados */
     .bottomText{
       position:absolute;
       left:80px;
       right:80px;
       bottom:64px;                  /* ✅ textos al bottom */
-      padding:0;                    /* ✅ sin borde, sin caja */
+      padding:0;                    /* ✅ sin borde */
     }
     .tTitle{
       font-size:54px;
@@ -215,6 +211,28 @@
       text-overflow:ellipsis;
     }
 
+    /* Clásico: textos centrados con margen */
+    .poster.classic .bottomText{
+      left:110px;
+      right:110px;
+      bottom:90px;
+      text-align:center;
+    }
+    .poster.classic .meta{
+      justify-content:center;
+      gap:34px;
+    }
+    .poster.classic .metaCol{
+      align-items:center;
+      text-align:center;
+    }
+    .poster.classic .metaCol.right{
+      text-align:center;
+    }
+    .poster.classic .tTitle{
+      letter-spacing:1.6px;
+    }
+
     .hint{
       padding:12px;
       border-radius:12px;
@@ -238,7 +256,7 @@
           <div class="dot"></div>
           <div>
             <div class="brandTitle">Sky Poster Editor</div>
-            <div class="brandSub">Todo en HTML + JS (un solo archivo)</div>
+            <div class="brandSub">Todo en HTML + JS</div>
           </div>
         </div>
       </div>

@@ -39,7 +39,7 @@
   };
 
   const STEPS = [
-    { key: "design", label: "Diseño" },
+    { key: "styles", label: "Estilos" },
     { key: "content", label: "Contenido" },
     { key: "export", label: "Export" },
   ];
@@ -167,9 +167,11 @@
     $poster.classList.remove("shape-circle","shape-rect","shape-heart");
     $poster.classList.add(`shape-${st.shape}`);
 
+    // map dims per style
     if (st.shape === "rect") {
-      $poster.style.setProperty("--mapW", "760px");
-      $poster.style.setProperty("--mapH", "780px");
+      // ✅ bigger rectangle for Poster
+      $poster.style.setProperty("--mapW", "820px");
+      $poster.style.setProperty("--mapH", "860px");
     } else {
       $poster.style.setProperty("--mapW", "780px");
       $poster.style.setProperty("--mapH", "780px");
@@ -180,9 +182,11 @@
     const st = getStyleDef();
     if (st.shape !== "circle") return;
 
+    // circles shrink with poster margin (except poster style, which is rect anyway)
     const base = 780;
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
     const size = clamp(base - Math.round(pad * 0.6), 640, 780);
+
     $poster.style.setProperty("--mapW", `${size}px`);
     $poster.style.setProperty("--mapH", `${size}px`);
   }
@@ -269,43 +273,25 @@
     return t;
   }
 
-  // ✅ Heart path updated to match reference (wider lobes + longer point)
-  function heartPath(ctx, cx, cy, s){
-    const topY = cy - s * 0.34;
-    const leftX = cx - s * 0.62;
-    const rightX = cx + s * 0.62;
-    const bottomY = cy + s * 0.70;
-
+  // ✅ Heart path: classic parametric heart curve (simple + clearly heart)
+  function heartParametricPath(ctx, cx, cy, size){
+    const steps = 260;
     ctx.beginPath();
-    ctx.moveTo(cx, bottomY);
 
-    // left curve up
-    ctx.bezierCurveTo(
-      cx - s * 0.55, cy + s * 0.40,
-      leftX,          cy + s * 0.05,
-      cx - s * 0.32,  topY
-    );
+    for (let i = 0; i <= steps; i++){
+      const t = (i / steps) * Math.PI * 2;
 
-    // left lobe into top center
-    ctx.bezierCurveTo(
-      cx - s * 0.16,  cy - s * 0.52,
-      cx - s * 0.02,  cy - s * 0.52,
-      cx,             cy - s * 0.36
-    );
+      // classic heart curve
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
 
-    // right lobe
-    ctx.bezierCurveTo(
-      cx + s * 0.02,  cy - s * 0.52,
-      cx + s * 0.16,  cy - s * 0.52,
-      cx + s * 0.32,  topY
-    );
+      // normalize to canvas coords
+      const px = cx + (x / 18) * size;
+      const py = cy - (y / 18) * size;
 
-    // right curve down
-    ctx.bezierCurveTo(
-      rightX,         cy + s * 0.05,
-      cx + s * 0.55,  cy + s * 0.40,
-      cx,             bottomY
-    );
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
 
     ctx.closePath();
   }
@@ -378,10 +364,6 @@
     ctx.globalAlpha = 1;
   }
 
-  // ✅ FIXES:
-  // - Circle: outside area always = poster bg (so invert never looks "bigger than map")
-  // - Rect (Poster): map margin draws border around rect and clips inside inset
-  // - Heart: invert only inside heart (outside remains poster bg)
   function drawMap(){
     const mapW = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) || 780);
     const mapH = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) || 780);
@@ -416,16 +398,15 @@
     const showMapMarginLine = state.map.mapCircleMarginEnabled && !state.map.invertMapColors;
     const marginLineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
-    // ✅ base fill ALWAYS = poster bg (important for circle + invert + poster margin)
+    // base fill ALWAYS = poster bg (prevents "invert bigger than map")
     ctx.clearRect(0, 0, mapW, mapH);
     ctx.fillStyle = posterColors.bg;
     ctx.fillRect(0, 0, mapW, mapH);
 
     ctx.save();
 
-    // --- CIRCLE ---
+    // CIRCLE
     if (st.shape === "circle"){
-      // inset if map margin OR poster margin (as you wanted)
       const shouldInsetLikeMapMargin = state.map.mapCircleMarginEnabled || state.map.posterMarginEnabled;
       const insetPad = shouldInsetLikeMapMargin ? Math.round(Math.min(mapW,mapH) * state.map.mapCircleInsetPct) : 0;
 
@@ -433,7 +414,6 @@
       const rOuter = Math.min(mapW,mapH)/2;
       const rInner = rOuter - insetPad;
 
-      // draw margin ring line only if map margin enabled (and invert off)
       if (showMapMarginLine){
         ctx.save();
         ctx.strokeStyle = mapColors.line;
@@ -446,12 +426,10 @@
         ctx.globalAlpha = 1;
       }
 
-      // clip inside inner circle
       ctx.beginPath();
       ctx.arc(cx, cy, rInner, 0, Math.PI*2);
       ctx.clip();
 
-      // fill inside circle with map bg (normal or inverted)
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
@@ -462,14 +440,14 @@
       return;
     }
 
-    // --- HEART ---
+    // HEART
     if (st.shape === "heart"){
       const cx = mapW/2, cy = mapH/2;
-      const size = Math.min(mapW,mapH) * 0.62; // bigger
-      heartPath(ctx, cx, cy, size);
+      const size = Math.min(mapW,mapH) * 0.44; // big & clear heart
+
+      heartParametricPath(ctx, cx, cy, size);
       ctx.clip();
 
-      // fill inside heart only
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
@@ -478,44 +456,39 @@
 
       ctx.restore();
 
-      // outline
       ctx.save();
       ctx.strokeStyle = mapColors.line;
-      ctx.lineWidth = 3.0;
+      ctx.lineWidth = 3;
       ctx.globalAlpha = 0.95;
-      heartPath(ctx, cx, cy, size);
+      heartParametricPath(ctx, cx, cy, size);
       ctx.stroke();
       ctx.restore();
       return;
     }
 
-    // --- RECT (Poster) ---
-    // If map margin enabled -> draw border around rectangle and clip inside inset rect
+    // RECT (Poster)
     if (st.shape === "rect"){
+      // ✅ IMPORTANT: Poster map NEVER shrinks; margin only draws inside
       const insetPad = (state.map.mapCircleMarginEnabled || state.map.posterMarginEnabled)
         ? Math.round(Math.min(mapW,mapH) * state.map.mapCircleInsetPct)
         : 0;
 
-      // draw margin border if map margin enabled and invert off
       if (showMapMarginLine){
         ctx.save();
         ctx.strokeStyle = mapColors.line;
         ctx.lineWidth = marginLineW;
         ctx.globalAlpha = 0.75;
-        // border follows the rectangle edges (inside the canvas)
         ctx.strokeRect(insetPad, insetPad, mapW - insetPad*2, mapH - insetPad*2);
         ctx.restore();
         ctx.globalAlpha = 1;
       }
 
-      // clip inside inset rect
       if (insetPad > 0){
         ctx.beginPath();
         ctx.rect(insetPad, insetPad, mapW - insetPad*2, mapH - insetPad*2);
         ctx.clip();
       }
 
-      // fill and draw
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
@@ -558,7 +531,7 @@
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
-    // poster margin line = text color
+    // margin line = same color as text
     $poster.style.setProperty("--posterMarginColor", rgbaFromHex(posterColors.star, 0.28));
 
     applyPosterLayoutByStyle();
@@ -570,132 +543,161 @@
   }
 
   // --------------------------
-  // UI sections (igual que antes, solo reusamos tu lógica actual)
+  // THUMBNAILS: map + skeleton text (no real text)
   // --------------------------
-  function renderSectionDesign(){
+  function drawStyleThumbnail(ctx, w, h, styleId, colorTheme, invert){
+    const st = MAP_STYLES.find(x => x.id === styleId) || MAP_STYLES[0];
+    const posterColors = colorsFor(colorTheme);
+
+    // base poster bg
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = posterColors.bg;
+    ctx.fillRect(0,0,w,h);
+
+    // map colors maybe inverted
+    let mapColors = { ...posterColors };
+    if (invert){
+      mapColors = { bg: posterColors.star, star: posterColors.bg, line: rgbaFromHex(posterColors.bg, 0.22) };
+    }
+
+    // draw map area positions per style (approx skeleton)
+    const rand = mulberry32(
+      styleId === "romantico" ? 202603 :
+      styleId === "poster" ? 202604 :
+      styleId === "moderno" ? 202605 : 202602
+    );
+
+    // map box area
+    let mx, my, mw, mh;
+    if (st.shape === "rect"){
+      mw = w * 0.78;
+      mh = h * 0.64;
+      mx = (w - mw) / 2;
+      my = h * 0.10;
+    } else {
+      mw = w * 0.78;
+      mh = w * 0.78;
+      mx = (w - mw) / 2;
+      my = h * 0.10;
+    }
+
+    // clip and fill map
+    ctx.save();
+    if (st.shape === "circle"){
+      const cx = mx + mw/2;
+      const cy = my + mh/2;
+      const r = Math.min(mw,mh)/2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.clip();
+    } else if (st.shape === "heart"){
+      const cx = mx + mw/2;
+      const cy = my + mh/2;
+      const size = Math.min(mw,mh) * 0.50;
+      heartParametricPath(ctx, cx, cy, size);
+      ctx.clip();
+    } else {
+      ctx.beginPath();
+      ctx.rect(mx, my, mw, mh);
+      ctx.clip();
+    }
+
+    ctx.fillStyle = mapColors.bg;
+    ctx.fillRect(mx, my, mw, mh);
+
+    // stars (lighter density)
+    const N = 180;
+    for (let i=0;i<N;i++){
+      const x = mx + rand()*mw;
+      const y = my + rand()*mh;
+
+      ctx.globalAlpha = 0.22 + rand()*0.55;
+      ctx.fillStyle = mapColors.star;
+      ctx.beginPath();
+      ctx.arc(x, y, rand()*0.9, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // outline
+    ctx.save();
+    ctx.strokeStyle = mapColors.line;
+    ctx.globalAlpha = 0.85;
+    ctx.lineWidth = 1.2;
+    if (st.shape === "circle"){
+      ctx.beginPath();
+      ctx.arc(mx + mw/2, my + mh/2, Math.min(mw,mh)/2, 0, Math.PI*2);
+      ctx.stroke();
+    } else if (st.shape === "heart"){
+      const cx = mx + mw/2;
+      const cy = my + mh/2;
+      const size = Math.min(mw,mh) * 0.50;
+      heartParametricPath(ctx, cx, cy, size);
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(mx, my, mw, mh);
+    }
+    ctx.restore();
+
+    // skeleton texts (positions only)
+    const sk = rgbaFromHex(posterColors.star, 0.55);
+    const sk2 = rgbaFromHex(posterColors.star, 0.32);
+
+    ctx.save();
+    ctx.fillStyle = sk;
+
+    if (st.layout === "minimal"){
+      // left aligned bottom blocks
+      const left = w * 0.12;
+      const baseY = h * 0.84;
+      ctx.globalAlpha = 0.95;
+      ctx.fillRect(left, baseY-22, w*0.46, 5);
+      ctx.globalAlpha = 0.70;
+      ctx.fillStyle = sk2;
+      ctx.fillRect(left, baseY-8,  w*0.60, 3);
+      ctx.fillRect(left, baseY+2,  w*0.52, 3);
+      ctx.fillRect(left, baseY+12, w*0.40, 3);
+    } else {
+      // centered bottom blocks
+      const center = w * 0.50;
+      const baseY = h * 0.86;
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = sk;
+      ctx.fillRect(center - w*0.22, baseY-24, w*0.44, 5);
+
+      ctx.globalAlpha = 0.70;
+      ctx.fillStyle = sk2;
+      ctx.fillRect(center - w*0.26, baseY-8,  w*0.52, 3);
+      ctx.fillRect(center - w*0.24, baseY+2,  w*0.48, 3);
+      ctx.fillRect(center - w*0.16, baseY+12, w*0.32, 3);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // --------------------------
+  // SECTIONS
+  // --------------------------
+  function renderSectionStyles(){
     $section.innerHTML = "";
 
     const t = document.createElement("div");
     t.className = "title";
-    t.textContent = "Diseño";
+    t.textContent = "Estilos";
 
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Estilo, color, constelaciones y márgenes.";
+    s.textContent = "Selecciona un estilo, color y opciones del mapa.";
 
-    // style picker thumbnails (simple)
+    // style grid thumbnails
     const styleRow = document.createElement("div");
     styleRow.className = "formRow";
-    styleRow.innerHTML = `<div class="label">Diseño</div>`;
+    styleRow.innerHTML = `<div class="label">Estilo</div>`;
 
     const grid = document.createElement("div");
     grid.className = "styleGrid";
-
-    function drawThumb(ctx, w, h, styleId){
-      const st = MAP_STYLES.find(x => x.id === styleId) || MAP_STYLES[0];
-      const posterColors = colorsFor(state.map.colorTheme);
-
-      // base poster bg
-      ctx.clearRect(0,0,w,h);
-      ctx.fillStyle = posterColors.bg;
-      ctx.fillRect(0,0,w,h);
-
-      // map colors maybe inverted
-      let mapColors = { ...posterColors };
-      if (state.map.invertMapColors){
-        mapColors = { bg: posterColors.star, star: posterColors.bg, line: rgbaFromHex(posterColors.bg, 0.22) };
-      }
-
-      const rand = mulberry32(styleId === "romantico" ? 2026 : (styleId === "poster" ? 4040 : 1337));
-
-      const cx = w*0.5, cy = h*0.40;
-
-      // draw shape
-      ctx.save();
-      if (st.shape === "circle"){
-        const r = Math.min(w,h)*0.27;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI*2);
-        ctx.clip();
-
-        ctx.fillStyle = mapColors.bg;
-        ctx.fillRect(0,0,w,h);
-
-        for (let i=0;i<180;i++){
-          const x = cx - r + rand()*(2*r);
-          const y = cy - r + rand()*(2*r);
-          const dx=x-cx, dy=y-cy;
-          if (dx*dx+dy*dy > r*r){ i--; continue; }
-          ctx.globalAlpha = 0.25 + rand()*0.7;
-          ctx.fillStyle = mapColors.star;
-          ctx.beginPath();
-          ctx.arc(x,y, rand()*0.9, 0, Math.PI*2);
-          ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = mapColors.line;
-        ctx.globalAlpha = 0.9;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI*2);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
-
-      if (st.shape === "rect"){
-        const rw=w*0.78, rh=h*0.62;
-        const rx=(w-rw)/2, ry=h*0.14;
-        ctx.fillStyle = mapColors.bg;
-        ctx.fillRect(rx,ry,rw,rh);
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(rx,ry,rw,rh);
-        ctx.clip();
-        for (let i=0;i<220;i++){
-          const x = rx + rand()*rw;
-          const y = ry + rand()*rh;
-          ctx.globalAlpha = 0.25 + rand()*0.7;
-          ctx.fillStyle = mapColors.star;
-          ctx.beginPath();
-          ctx.arc(x,y, rand()*0.95, 0, Math.PI*2);
-          ctx.fill();
-        }
-        ctx.restore();
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = mapColors.line;
-        ctx.globalAlpha = 0.9;
-        ctx.strokeRect(rx,ry,rw,rh);
-        ctx.globalAlpha = 1;
-      }
-
-      if (st.shape === "heart"){
-        const size = Math.min(w,h)*0.32;
-        ctx.save();
-        heartPath(ctx, cx, cy, size);
-        ctx.clip();
-        ctx.fillStyle = mapColors.bg;
-        ctx.fillRect(0,0,w,h);
-
-        for (let i=0;i<210;i++){
-          const x = rand()*w;
-          const y = rand()*h;
-          ctx.globalAlpha = 0.25 + rand()*0.7;
-          ctx.fillStyle = mapColors.star;
-          ctx.beginPath();
-          ctx.arc(x,y, rand()*0.9, 0, Math.PI*2);
-          ctx.fill();
-        }
-        ctx.restore();
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = mapColors.line;
-        ctx.globalAlpha = 0.9;
-        heartPath(ctx, cx, cy, size);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
-
-      ctx.restore();
-    }
 
     MAP_STYLES.forEach(st => {
       const tile = document.createElement("div");
@@ -706,7 +708,7 @@
 
       const c = document.createElement("canvas");
       c.width = 180; c.height = 240;
-      drawThumb(c.getContext("2d"), c.width, c.height, st.id);
+      drawStyleThumbnail(c.getContext("2d"), c.width, c.height, st.id, state.map.colorTheme, state.map.invertMapColors);
 
       poster.appendChild(c);
 
@@ -720,7 +722,6 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
         if (st.id === "poster") state.map.posterMarginEnabled = false;
-
         applyPosterLayoutByStyle();
         setMapSizeFromPosterPad();
         renderPosterAndMap();
@@ -750,7 +751,7 @@
     colorSel.onchange = () => {
       state.map.colorTheme = colorSel.value;
 
-      // White => auto invert and disable map margin
+      // white => auto invert + hide map margin
       if (state.map.colorTheme === "white") {
         state.map.invertMapColors = true;
         state.map.mapCircleMarginEnabled = false;
@@ -761,17 +762,19 @@
 
     colorRow.appendChild(colorSel);
 
+    // invert
     const invertRow = document.createElement("div");
     invertRow.className = "rowToggle";
     invertRow.classList.add("stackGap");
     invertRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Invertir color" }));
     invertRow.appendChild(toggleSwitch(!!state.map.invertMapColors, (val) => {
       state.map.invertMapColors = val;
-      if (val) state.map.mapCircleMarginEnabled = false; // hide/disable
+      if (val) state.map.mapCircleMarginEnabled = false;
       drawMap();
       renderAll();
     }));
 
+    // constellations
     const conRow = document.createElement("div");
     conRow.className = "rowToggle";
     conRow.classList.add("stackGap");
@@ -795,6 +798,7 @@
     csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
     csRow.appendChild(csRange);
 
+    // Poster margin (hidden for Poster style)
     const stNow = getStyleDef();
     const allowPosterMargin = stNow.id !== "poster";
 
@@ -833,6 +837,7 @@
       state.map.posterMarginEnabled = false;
     }
 
+    // Map margin (hidden if invert is on)
     let mapRow = null;
     let mapThickRow = null;
 
@@ -866,6 +871,7 @@
       }
     }
 
+    // Seed
     const seedRow = document.createElement("div");
     seedRow.className = "formRow";
     seedRow.classList.add("stackGap");
@@ -1059,8 +1065,8 @@
     const st = getStyleDef();
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
 
-    let mapW = (st.shape === "rect") ? 760 : 780;
-    let mapH = (st.shape === "rect") ? 780 : 780;
+    let mapW = (st.shape === "rect") ? 820 : 780;
+    let mapH = (st.shape === "rect") ? 860 : 780;
 
     if (st.shape === "circle"){
       const base = 780;
@@ -1070,7 +1076,7 @@
     }
 
     const mapX = (W - mapW) / 2;
-    const mapY = pad + 70;
+    const mapY = pad + (st.id === "poster" ? 54 : 70);
 
     if (st.shape === "circle"){
       const r = mapW/2;
@@ -1111,6 +1117,7 @@
 
     if (layout === "minimal"){
       const left = pad + 80;
+
       let top = H - (pad + 64) - 160;
       top = Math.max(top, mapY + mapH + 40);
       let ty = top;
@@ -1127,7 +1134,10 @@
       if (show.datetime) metaText(state.text.datetime, left, metaY3, "left");
     } else {
       const centerX = W / 2;
-      let ty = H - (pad + 90) - 80;
+
+      // ✅ Poster: push texts closer to bottom
+      const bottomPad = (st.id === "poster") ? 66 : 90;
+      let ty = H - (pad + bottomPad) - 80;
       if (show.subtitle) ty -= 24;
 
       if (show.title) { drawText(state.text.title, centerX, ty, 54, 900, "center", 1); ty += 36; }
@@ -1174,7 +1184,7 @@
   }
 
   function renderSection(){
-    if (state.step === 0) return renderSectionDesign();
+    if (state.step === 0) return renderSectionStyles();
     if (state.step === 1) return renderSectionContent();
     return renderSectionExport();
   }
@@ -1185,6 +1195,53 @@
     renderPosterFont();
     renderPosterText();
     renderPosterAndMap();
+  }
+
+  function renderPosterAndMap(){
+    const posterColors = colorsFor(state.map.colorTheme);
+
+    $poster.style.background = posterColors.bg;
+    $poster.style.color = posterColors.star;
+
+    // margin line = same color as text
+    $poster.style.setProperty("--posterMarginColor", rgbaFromHex(posterColors.star, 0.28));
+
+    applyPosterLayoutByStyle();
+    applyPosterMarginLine();
+    applyPosterPaddingLayout();
+    setMapSizeFromPosterPad();
+
+    drawMap();
+  }
+
+  function renderTabs(){
+    $tabs.innerHTML = "";
+    STEPS.forEach((s, idx) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "tab" + (idx === state.step ? " active" : "");
+      b.textContent = s.label;
+      b.onclick = () => { state.step = idx; renderAll(); };
+      $tabs.appendChild(b);
+    });
+  }
+
+  function renderPosterFont(){
+    $poster.style.fontFamily = state.text.fontFamily || "system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  }
+
+  function renderPosterText(){
+    $pTitle.style.display = state.visible.title ? "block" : "none";
+    $pSubtitle.style.display = state.visible.subtitle ? "block" : "none";
+    $pPlace.style.display = state.visible.place ? "block" : "none";
+    $pCoords.style.display = state.visible.coords ? "block" : "none";
+    $pDatetime.style.display = state.visible.datetime ? "block" : "none";
+
+    $pTitle.textContent = state.text.title || "";
+    $pSubtitle.textContent = state.text.subtitle || "";
+    $pPlace.textContent = state.text.place || "";
+    $pCoords.textContent = state.text.coords || "";
+    $pDatetime.textContent = state.text.datetime || "";
   }
 
   // Init

@@ -42,16 +42,10 @@
     { key: "export", label: "Export" },
   ];
 
-  // ✅ Styles list like example (mapped to existing layout logic)
+  // ✅ SOLO 2 estilos
   const MAP_STYLES = [
     { id: "classic", name: "Clásico", badge: null, mapsTo: "classic" },
-    { id: "poet", name: "Poeta", badge: "Favorito", mapsTo: "minimal" },
-    { id: "astronomer", name: "Astrónomo", badge: null, mapsTo: "classic" },
-    { id: "watercolor", name: "Acuarelas", badge: null, mapsTo: "minimal" },
-    { id: "romantic", name: "Romántico", badge: null, mapsTo: "classic" },
-    { id: "modern", name: "Moderno", badge: null, mapsTo: "minimal" },
-    { id: "photographer", name: "Fotógrafo", badge: null, mapsTo: "minimal" },
-    { id: "explorers", name: "Exploradores", badge: null, mapsTo: "classic" },
+    { id: "minimal", name: "Minimalista", badge: null, mapsTo: "minimal" },
   ];
 
   const FONT_PRESETS = [
@@ -63,10 +57,23 @@
     { key: "rounded", name: "Rounded (Friendly)", css: "'Trebuchet MS', 'Verdana', system-ui, Arial" },
   ];
 
+  // ✅ Más opciones de color (picker)
   const COLOR_THEMES = [
     { id: "mono", name: "Mono" },
+    { id: "charcoal", name: "Carbón" },
+    { id: "ice", name: "Hielo" },
+
     { id: "blue", name: "Azul" },
+    { id: "navy", name: "Azul marino" },
+
     { id: "warm", name: "Cálido" },
+    { id: "sand", name: "Arena" },
+
+    { id: "forest", name: "Bosque" },
+
+    { id: "plum", name: "Ciruela" },
+    { id: "rose", name: "Rosa oscuro" },
+
     { id: "neon", name: "Neón" },
   ];
 
@@ -101,10 +108,27 @@
 
   function colorsFor(theme){
     const base = { bg: "#0B0D12", star: "#FFFFFF", line: "rgba(255,255,255,0.22)" };
-    if (theme === "blue") return { ...base, bg: "#071225", line: "rgba(255,255,255,0.18)" };
-    if (theme === "warm") return { ...base, bg: "#140E0A", star: "#F6E7C9", line: "rgba(246,231,201,0.20)" };
-    if (theme === "neon") return { ...base, bg: "#05050A", star: "#7CFFFA", line: "rgba(124,255,250,0.18)" };
-    return base;
+
+    const THEMES = {
+      mono:     { bg:"#0B0D12", star:"#FFFFFF", line:"rgba(255,255,255,0.22)" },
+      charcoal: { bg:"#07080C", star:"#FFFFFF", line:"rgba(255,255,255,0.16)" },
+      ice:      { bg:"#071016", star:"#E9F6FF", line:"rgba(233,246,255,0.18)" },
+
+      blue:     { bg:"#071225", star:"#FFFFFF", line:"rgba(255,255,255,0.18)" },
+      navy:     { bg:"#050B18", star:"#FFFFFF", line:"rgba(255,255,255,0.18)" },
+
+      warm:     { bg:"#140E0A", star:"#F6E7C9", line:"rgba(246,231,201,0.20)" },
+      sand:     { bg:"#15110A", star:"#F2E7D3", line:"rgba(242,231,211,0.20)" },
+
+      forest:   { bg:"#06130E", star:"#EAF7F1", line:"rgba(234,247,241,0.18)" },
+
+      plum:     { bg:"#120717", star:"#F4E9FF", line:"rgba(244,233,255,0.18)" },
+      rose:     { bg:"#16080C", star:"#FFE9EF", line:"rgba(255,233,239,0.18)" },
+
+      neon:     { bg:"#05050A", star:"#7CFFFA", line:"rgba(124,255,250,0.18)" },
+    };
+
+    return { ...base, ...(THEMES[theme] || THEMES.mono) };
   }
 
   function getEffectiveStyle(){
@@ -211,12 +235,12 @@
     t.className = "toggle" + (checked ? " on" : "");
     t.role = "switch";
     t.tabIndex = 0;
-    t.ariaChecked = String(!!checked);
+    t.setAttribute("aria-checked", String(!!checked));
 
     function set(val){
       checked = !!val;
       t.className = "toggle" + (checked ? " on" : "");
-      t.ariaChecked = String(checked);
+      t.setAttribute("aria-checked", String(checked));
       onChange(checked);
     }
 
@@ -285,29 +309,6 @@
     ctx.arc(cx, cy, r, 0, Math.PI*2);
     ctx.stroke();
     ctx.restore();
-
-    ctx.save();
-    ctx.fillStyle = colors.star;
-
-    if (effectiveStyle === "minimal"){
-      const left = w*0.14;
-      const baseY = h*0.78;
-      ctx.globalAlpha = 0.95;
-      ctx.fillRect(left, baseY-10, w*0.38, 3);
-      ctx.globalAlpha = 0.7;
-      ctx.fillRect(left, baseY+4, w*0.55, 2);
-      ctx.fillRect(left, baseY+12, w*0.48, 2);
-    } else {
-      const center = w*0.5;
-      const baseY = h*0.78;
-      ctx.globalAlpha = 0.95;
-      ctx.fillRect(center - w*0.18, baseY-10, w*0.36, 3);
-      ctx.globalAlpha = 0.7;
-      ctx.fillRect(center - w*0.22, baseY+4, w*0.44, 2);
-      ctx.fillRect(center - w*0.20, baseY+12, w*0.40, 2);
-    }
-    ctx.globalAlpha = 1;
-    ctx.restore();
   }
 
   function stylePreviewGrid(){
@@ -320,13 +321,6 @@
 
       const poster = document.createElement("div");
       poster.className = "stylePoster";
-
-      if (st.badge){
-        const b = document.createElement("div");
-        b.className = "badge";
-        b.textContent = st.badge;
-        poster.appendChild(b);
-      }
 
       const canvas = document.createElement("canvas");
       canvas.width = 180;
@@ -359,30 +353,6 @@
     return grid;
   }
 
-  function colorCirclesRow(){
-    const wrap = document.createElement("div");
-    wrap.className = "colorRow";
-
-    COLOR_THEMES.forEach(th => {
-      const c = colorsFor(th.id);
-
-      const dot = document.createElement("div");
-      dot.className = "colorDot" + (state.map.colorTheme === th.id ? " active" : "");
-      dot.title = th.name;
-      dot.style.background = c.bg;
-
-      dot.onclick = () => {
-        state.map.colorTheme = th.id;
-        renderPosterAndMap();
-        renderAll();
-      };
-
-      wrap.appendChild(dot);
-    });
-
-    return wrap;
-  }
-
   function renderSectionDesign(){
     $section.innerHTML = "";
 
@@ -399,10 +369,29 @@
     styleRow.innerHTML = `<div class="label">Diseño</div>`;
     styleRow.appendChild(stylePreviewGrid());
 
+    // ✅ Color picker (select)
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
     colorRow.innerHTML = `<div class="label">Color del póster</div>`;
-    colorRow.appendChild(colorCirclesRow());
+
+    const colorSel = document.createElement("select");
+    colorSel.className = "select";
+
+    COLOR_THEMES.forEach(th => {
+      const opt = document.createElement("option");
+      opt.value = th.id;
+      opt.textContent = th.name;
+      colorSel.appendChild(opt);
+    });
+
+    colorSel.value = state.map.colorTheme;
+    colorSel.onchange = () => {
+      state.map.colorTheme = colorSel.value;
+      renderPosterAndMap();
+      renderAll();
+    };
+
+    colorRow.appendChild(colorSel);
 
     // Constellations toggle
     const conRow = document.createElement("div");
@@ -416,7 +405,7 @@
 
     const csRow = document.createElement("div");
     csRow.className = "formRow";
-    csRow.classList.add("stackGap"); // ✅ space from toggle
+    csRow.classList.add("stackGap");
     csRow.innerHTML = `<div class="label">Tamaño de constelaciones</div>`;
     const csRange = document.createElement("input");
     csRange.type = "range";
@@ -430,6 +419,7 @@
     // Poster margin
     const posterRow = document.createElement("div");
     posterRow.className = "rowToggle";
+    posterRow.classList.add("stackGap");
     posterRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Margen del póster" }));
     posterRow.appendChild(toggleSwitch(!!state.map.posterMarginEnabled, (val) => {
       state.map.posterMarginEnabled = val;
@@ -439,6 +429,7 @@
 
     const posterThickRow = document.createElement("div");
     posterThickRow.className = "formRow";
+    posterThickRow.classList.add("stackGap");
     posterThickRow.innerHTML = `<div class="label">Grosor de la línea (póster)</div>`;
     const posterThick = document.createElement("input");
     posterThick.type = "range";
@@ -456,6 +447,7 @@
     // Map margin
     const mapRow = document.createElement("div");
     mapRow.className = "rowToggle";
+    mapRow.classList.add("stackGap");
     mapRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Margen del mapa" }));
     mapRow.appendChild(toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
       state.map.mapCircleMarginEnabled = val;
@@ -465,6 +457,7 @@
 
     const mapThickRow = document.createElement("div");
     mapThickRow.className = "formRow";
+    mapThickRow.classList.add("stackGap");
     mapThickRow.innerHTML = `<div class="label">Grosor de la línea (mapa)</div>`;
     const mapThick = document.createElement("input");
     mapThick.type = "range";
@@ -482,6 +475,7 @@
     // Seed button
     const seedRow = document.createElement("div");
     seedRow.className = "formRow";
+    seedRow.classList.add("stackGap");
     seedRow.innerHTML = `<div class="label">Variación del cielo</div>`;
     const seedBtn = document.createElement("button");
     seedBtn.type = "button";

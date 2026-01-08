@@ -22,7 +22,7 @@
       styleId: "classic",
       showConstellations: true,
 
-      // ✅ themes: mono, carbon, ice, navy, warm, forest, rose, neon, white, black
+      // ✅ themes: mono (dark), marino (old mono), carbon, ice, warm, forest, rose, neonBlue, neonGreen, neonRose, white
       colorTheme: "mono",
 
       // ✅ invert colors only inside the star map circle
@@ -47,10 +47,10 @@
     { key: "export", label: "Export" },
   ];
 
-  // ✅ SOLO 2 estilos
+  // ✅ SOLO 2 estilos + rename Minimalista -> Moderno
   const MAP_STYLES = [
     { id: "classic", name: "Clásico", mapsTo: "classic" },
-    { id: "minimal", name: "Minimalista", mapsTo: "minimal" },
+    { id: "modern", name: "Moderno", mapsTo: "minimal" },
   ];
 
   const FONT_PRESETS = [
@@ -62,18 +62,22 @@
     { key: "rounded", name: "Rounded (Friendly)", css: "'Trebuchet MS', 'Verdana', system-ui, Arial" },
   ];
 
-  // ✅ EXACTAMENTE los colores que pediste
+  // ✅ Orden + renombres solicitados
+  // 1) Primer color: "Mono" (dark grayish)
+  // 2) El "Mono" anterior ahora se llama "Marino"
+  // + neon azul/verde/rosa
   const COLOR_THEMES = [
-    { id: "mono",   name: "Mono" },
-    { id: "carbon", name: "Carbón" },
-    { id: "ice",    name: "Hielo" },
-    { id: "navy",   name: "Marino" },
-    { id: "warm",   name: "Cálido" },
-    { id: "forest", name: "Bosque" },
-    { id: "rose",   name: "Rosa" },
-    { id: "neon",   name: "Neón" },
-    { id: "white",  name: "Blanco" },
-    { id: "black",  name: "Negro" },
+    { id: "mono",      name: "Mono" },        // dark (gris muy oscuro)
+    { id: "marino",    name: "Marino" },      // old mono
+    { id: "carbon",    name: "Carbón" },      // beige stars
+    { id: "ice",       name: "Hielo" },
+    { id: "warm",      name: "Cálido" },
+    { id: "forest",    name: "Bosque" },
+    { id: "rose",      name: "Rosa" },
+    { id: "neonBlue",  name: "Neón Azul" },
+    { id: "neonGreen", name: "Neón Verde" },
+    { id: "neonRose",  name: "Neón Rosa" },
+    { id: "white",     name: "Blanco" },      // black stars/text
   ];
 
   const $tabs = document.getElementById("tabs");
@@ -114,27 +118,32 @@
     if (!Number.isFinite(n)) return { r:255, g:255, b:255 };
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
   }
+
   function rgbaFromHex(hex, a){
     const { r,g,b } = hexToRgb(hex);
     return `rgba(${r},${g},${b},${a})`;
   }
 
   function colorsFor(theme){
-    // base fallback
-    const base = { bg: "#0B0D12", star: "#FFFFFF", line: "rgba(255,255,255,0.22)" };
-
     const THEMES = {
-      // mono
+      // ✅ Mono (dark grayish, NOT pure black)
       mono: {
+        bg: "#0A0B0D",
+        star: "#FFFFFF",
+        line: "rgba(255,255,255,0.16)",
+      },
+
+      // ✅ Marino = old Mono (antes)
+      marino: {
         bg: "#0B0D12",
         star: "#FFFFFF",
         line: "rgba(255,255,255,0.22)",
       },
 
-      // ✅ carbón: blanco -> beige
+      // ✅ Carbón: estrellas/beige
       carbon: {
         bg: "#0A0B0D",
-        star: "#E8DCC8", // beige
+        star: "#E8DCC8",
         line: "rgba(232,220,200,0.20)",
       },
 
@@ -142,12 +151,6 @@
         bg: "#071016",
         star: "#E9F6FF",
         line: "rgba(233,246,255,0.18)",
-      },
-
-      navy: {
-        bg: "#050B18",
-        star: "#FFFFFF",
-        line: "rgba(255,255,255,0.18)",
       },
 
       warm: {
@@ -168,28 +171,34 @@
         line: "rgba(255,233,239,0.18)",
       },
 
-      neon: {
+      // ✅ Neón Azul (antes neon)
+      neonBlue: {
         bg: "#05050A",
-        star: "#7CFFFA",
-        line: "rgba(124,255,250,0.18)",
+        star: "#4EA7FF",
+        line: "rgba(78,167,255,0.20)",
       },
 
-      // ✅ blanco: letras/estrellas negras
+      neonGreen: {
+        bg: "#05050A",
+        star: "#3CFF9B",
+        line: "rgba(60,255,155,0.20)",
+      },
+
+      neonRose: {
+        bg: "#05050A",
+        star: "#FF4FD8",
+        line: "rgba(255,79,216,0.20)",
+      },
+
+      // ✅ Blanco: estrellas/texto negro
       white: {
         bg: "#F5F5F2",
         star: "#111111",
         line: "rgba(17,17,17,0.20)",
       },
-
-      // ✅ negro: NO #000000, sino oscuro agrisado
-      black: {
-        bg: "#0A0B0D",
-        star: "#FFFFFF",
-        line: "rgba(255,255,255,0.16)",
-      },
     };
 
-    return { ...base, ...(THEMES[theme] || THEMES.mono) };
+    return THEMES[theme] || THEMES.mono;
   }
 
   function getEffectiveStyle(){
@@ -206,6 +215,7 @@
     state.ui.zoom = clamp(state.ui.zoom + state.ui.step, state.ui.minZoom, state.ui.maxZoom);
     applyZoom();
   });
+
   if ($zoomOut) $zoomOut.addEventListener("click", () => {
     state.ui.zoom = clamp(state.ui.zoom - state.ui.step, state.ui.minZoom, state.ui.maxZoom);
     applyZoom();
@@ -316,35 +326,32 @@
   }
 
   function drawPosterThumbnail(ctx, w, h, effectiveStyle, colorTheme, invertMapColors){
-    const colors = colorsFor(colorTheme);
+    const base = colorsFor(colorTheme);
 
-    // poster bg
     ctx.clearRect(0,0,w,h);
-    ctx.fillStyle = colors.bg;
+    ctx.fillStyle = base.bg;
     ctx.fillRect(0,0,w,h);
 
     const cx = w * 0.5;
     const cy = h * 0.40;
     const r = Math.min(w,h) * 0.27;
 
-    // map palette (only inside circle)
-    let mapBg = colors.bg;
-    let starCol = colors.star;
-    let lineCol = colors.line;
+    let mapBg = base.bg;
+    let starCol = base.star;
+    let lineCol = base.line;
 
     if (invertMapColors){
-      mapBg = colors.star;
-      starCol = colors.bg;
+      mapBg = base.star;
+      starCol = base.bg;
       lineCol = rgbaFromHex(starCol, 0.22);
     }
 
-    // circle clip
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI*2);
     ctx.clip();
 
-    // fill map bg
+    // fill map area
     ctx.fillStyle = mapBg;
     ctx.fillRect(cx - r, cy - r, 2*r, 2*r);
 
@@ -369,7 +376,7 @@
     }
     ctx.globalAlpha = 1;
 
-    // small constellation line hint
+    // constellation hint
     ctx.strokeStyle = lineCol;
     ctx.lineWidth = 1;
     ctx.globalAlpha = 0.9;
@@ -384,7 +391,7 @@
 
     // circle outline
     ctx.save();
-    ctx.strokeStyle = rgbaFromHex(colors.star, 0.18);
+    ctx.strokeStyle = rgbaFromHex(base.star, 0.18);
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI*2);
@@ -482,7 +489,7 @@
 
     colorRow.appendChild(colorSel);
 
-    // ✅ Invert map colors toggle
+    // Invert map colors toggle
     const invertRow = document.createElement("div");
     invertRow.className = "rowToggle";
     invertRow.classList.add("stackGap");
@@ -868,18 +875,8 @@
     const ctx = $canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // base colors from theme
+    // base theme (poster)
     const base = colorsFor(state.map.colorTheme);
-
-    // ✅ invert only inside map
-    let mapColors = { ...base };
-    if (state.map.invertMapColors){
-      mapColors = {
-        bg: base.star,
-        star: base.bg,
-        line: rgbaFromHex(base.bg, 0.22),
-      };
-    }
 
     const rand = mulberry32(state.map.seed);
 
@@ -895,7 +892,64 @@
 
     ctx.clearRect(0, 0, size, size);
 
-    // map bg (inside the canvas) uses mapColors.bg
+    // ✅ FIX: con margen de mapa ON + invertir ON
+    // - El "anillo" exterior mantiene el color normal (base.bg)
+    // - Solo dentro del radio interno se pinta el fondo invertido (base.star)
+    if (innerPad > 0 && state.map.invertMapColors){
+      const innerR = (size / 2) - innerPad;
+
+      // fondo exterior (anillo) = normal
+      ctx.fillStyle = base.bg;
+      ctx.fillRect(0, 0, size, size);
+
+      // ring line si está activado
+      if (state.map.mapCircleMarginEnabled){
+        ctx.save();
+        ctx.strokeStyle = base.line;
+        ctx.lineWidth = circleLineW;
+        ctx.globalAlpha = 0.75;
+        ctx.beginPath();
+        ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+
+      // clip al círculo interior
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
+      ctx.clip();
+
+      // fondo interior invertido
+      ctx.fillStyle = base.star;
+      ctx.fillRect(0, 0, size, size);
+
+      // dibujar estrellas/constelaciones invertidas dentro
+      const invColors = {
+        bg: base.star,
+        star: base.bg,
+        line: rgbaFromHex(base.bg, 0.22),
+      };
+
+      drawStars(ctx, size, rand, invColors, innerPad);
+      if (state.map.showConstellations) drawConstellations(ctx, size, rand, invColors, conLineW, nodeR, innerPad);
+
+      ctx.restore();
+      return;
+    }
+
+    // normal o sin innerPad (o sin invert)
+    let mapColors = { ...base };
+    if (state.map.invertMapColors){
+      mapColors = {
+        bg: base.star,
+        star: base.bg,
+        line: rgbaFromHex(base.bg, 0.22),
+      };
+    }
+
+    // fondo del canvas (map bg)
     ctx.fillStyle = mapColors.bg;
     ctx.fillRect(0, 0, size, size);
 

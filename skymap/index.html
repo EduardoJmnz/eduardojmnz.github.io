@@ -102,7 +102,7 @@
       justify-content:space-between;
       gap:10px;
       margin-top:12px;
-      align-items:center; /* ✅ para que queden al mismo nivel */
+      align-items:center; /* ✅ */
     }
     .btn{
       border-radius:14px;
@@ -111,6 +111,11 @@
       font-weight:750;
       user-select:none;
       white-space:nowrap;
+      min-height:44px;         /* ✅ asegura misma altura */
+      display:inline-flex;     /* ✅ */
+      align-items:center;      /* ✅ */
+      justify-content:center;  /* ✅ */
+      line-height:1;           /* ✅ */
     }
     .btn.ghost{
       border:1px solid var(--stroke);
@@ -177,6 +182,9 @@
       background: rgba(255,255,255,.03);
       color: var(--muted);
       font-size: 12px;
+      min-height:44px;
+      display:flex;
+      align-items:center;
     }
 
     /* Poster */
@@ -189,21 +197,24 @@
       overflow:hidden;
 
       --mapSize: 780px;
+
+      /* Esto sigue controlando el layout interno (cómo se juntan las cosas) */
       --posterPad: 0px;
+
+      /* ✅ Esto controla SOLO la línea guía del “margen” */
+      --posterMarginLine: 0px;
     }
 
-    /* ✅ Guía visual del margen del póster */
+    /* ✅ Línea guía rectangular del margen */
     .poster .marginGuide{
       position:absolute;
       pointer-events:none;
-      inset: var(--posterPad);
+      inset: var(--posterMarginLine);
       border-radius: 20px;
-      border: 1px dashed rgba(233,238,252,.20);
+      border: 1px solid rgba(233,238,252,.22); /* ✅ sólida (no dashed) */
       opacity: 0;
     }
-    .poster.showPosterMargin .marginGuide{
-      opacity: 1;
-    }
+    .poster.showPosterMargin .marginGuide{ opacity: 1; }
 
     .posterInner{
       position:absolute;
@@ -268,16 +279,9 @@
       bottom: calc(var(--posterPad) + 90px);
       text-align:center;
     }
-    .poster.classic .meta{
-      justify-content:center;
-    }
-    .poster.classic .metaCol{
-      align-items:center;
-      text-align:center;
-    }
-    .poster.classic .tTitle{
-      letter-spacing:1.6px;
-    }
+    .poster.classic .meta{ justify-content:center; }
+    .poster.classic .metaCol{ align-items:center; text-align:center; }
+    .poster.classic .tTitle{ letter-spacing:1.6px; }
 
     @media (max-width: 980px){
       #app{ grid-template-columns: 1fr; }
@@ -310,7 +314,7 @@
         <div class="zoomControls">
           <button class="zoomBtn" id="zoomOut" title="Zoom out">−</button>
           <button class="zoomBtn" id="zoomIn" title="Zoom in">+</button>
-          <div class="zoomLabel" id="zoomLabel">100%</div>
+          <div class="zoomLabel" id="zoomLabel">75%</div>
         </div>
 
         <div class="previewScale" id="previewScale">
@@ -326,7 +330,6 @@
                 <div class="tTitle" id="pTitle"></div>
                 <div class="tSub" id="pSubtitle"></div>
 
-                <!-- ✅ UNA sola columna (Lugar, Coord, Fecha) -->
                 <div class="meta">
                   <div class="metaCol">
                     <div class="metaRow" id="pPlace"></div>
@@ -336,7 +339,7 @@
                 </div>
               </div>
             </div>
-          </div>
+          </div><!-- /poster -->
         </div><!-- /previewScale -->
       </div>
     </main>

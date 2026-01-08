@@ -1,9 +1,9 @@
 (() => {
   // ======================
-  // Constants (for “2% poster margin” + “10% map margin”)
+  // Constants (for “5% poster margin” + “10% map margin”)
   // ======================
   const POSTER_W = 900;
-  const POSTER_MARGIN_INSET_DEFAULT = Math.round(POSTER_W * 0.02); // ✅ 2% => 18px
+  const POSTER_MARGIN_INSET_DEFAULT = Math.round(POSTER_W * 0.05); // ✅ 5% => 45px
 
   // ======================
   // State
@@ -42,7 +42,7 @@
       showConstellations: true,
       colorTheme: "mono",
 
-      // ✅ Poster “margin” = rectangle line (inset fixed 2%, slider = thickness)
+      // ✅ Poster “margin” = rectangle line (inset fixed 5%, slider = thickness)
       posterMarginEnabled: false,
       posterMarginInsetPx: POSTER_MARGIN_INSET_DEFAULT,
       posterMarginThickness: 2,
@@ -158,7 +158,7 @@
   }
 
   function setDefaultsByStyle(styleId){
-    // Classic: poster margin line ON by default (2% inset)
+    // Classic: poster margin line ON by default (5% inset)
     // Minimal: poster margin line OFF by default
     if (styleId === "classic") {
       state.map.posterMarginEnabled = true;
@@ -170,7 +170,7 @@
   }
 
   function setMapSizeFromPosterPad(){
-    // mantenemos la lógica de juntar elementos (como la aprobaste)
+    // mantenemos la lógica de juntar elementos (aprobado)
     const base = 780;
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
     const size = clamp(base - Math.round(pad * 0.6), 640, 780);
@@ -178,7 +178,7 @@
   }
 
   function applyPosterMarginLine(){
-    // inset fijo (2%), grosor variable
+    // inset fijo (5%), grosor variable
     const inset = state.map.posterMarginEnabled ? state.map.posterMarginInsetPx : POSTER_MARGIN_INSET_DEFAULT;
     const thick = clamp(state.map.posterMarginThickness, 1, 10);
 

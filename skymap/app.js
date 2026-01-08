@@ -4,6 +4,7 @@
   // ======================
   const state = {
     step: 0, // 0..3
+
     visible: {
       title: true,
       subtitle: true,
@@ -12,6 +13,7 @@
       datetime: true,
       spotify: true,
     },
+
     text: {
       title: "NIGHT SKY",
       subtitle: "A moment to remember",
@@ -19,15 +21,26 @@
       coords: "19.4326, -99.1332",
       datetime: "2026-01-07 19:30",
       spotify: "spotify:track:xxxx",
+      fontKey: "system",
       fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
     },
+
     map: {
-      styleId: "classic",
+      // ✅ Solo 2 estilos
+      styleId: "minimal", // minimal | classic
+      // overlays
       showConstellations: true,
       showGrid: false,
+      // color theme (se mantiene como lo tenías)
       colorTheme: "mono",
-      magnitude: 4, // ✅ fijo
-      seed: 12345,  // para que el render sea estable
+      // ✅ quitar magnitud (implícito 4)
+      // ✅ margen del mapa
+      mapMarginEnabled: false,
+      mapMargin: 0, // px
+      // ✅ tamaño de línea
+      lineWidth: 1.5,
+      // estable
+      seed: 12345,
     },
   };
 
@@ -38,16 +51,20 @@
     { key: "d", label: "d) Export" },
   ];
 
-  // ✅ “otros estilos” (no solo 3)
+  // ✅ Estilos (2)
   const MAP_STYLES = [
-    { id: "classic", name: "Classic (Negro)" },
-    { id: "midnight", name: "Midnight Blue" },
-    { id: "sepia", name: "Sepia" },
-    { id: "aurora", name: "Aurora" },
-    { id: "dusk", name: "Dusk" },
-    { id: "paper", name: "Paper" },
-    { id: "neon", name: "Neon" },
-    { id: "monoLight", name: "Mono Light" },
+    { id: "minimal", name: "Minimalista" },
+    { id: "classic", name: "Clásico" },
+  ];
+
+  // ✅ Fuentes (selector)
+  const FONT_PRESETS = [
+    { key: "system", name: "System (Default)", css: "system-ui, -apple-system, Segoe UI, Roboto, Arial" },
+    { key: "inter", name: "Inter-like (Sans)", css: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial" },
+    { key: "georgia", name: "Georgia (Serif)", css: "Georgia, 'Times New Roman', Times, serif" },
+    { key: "times", name: "Times New Roman (Serif)", css: "'Times New Roman', Times, serif" },
+    { key: "mono", name: "Monospace", css: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" },
+    { key: "rounded", name: "Rounded (Friendly)", css: "'Trebuchet MS', 'Verdana', system-ui, Arial" },
   ];
 
   // ======================
@@ -59,7 +76,6 @@
   const $poster = document.getElementById("poster");
   const $canvas = document.getElementById("mapCanvas");
 
-  const $bottomText = document.getElementById("bottomText");
   const $pTitle = document.getElementById("pTitle");
   const $pSubtitle = document.getElementById("pSubtitle");
   const $pPlace = document.getElementById("pPlace");
@@ -72,7 +88,7 @@
   // ======================
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
-  // Simple deterministic PRNG (mulberry32)
+  // deterministic PRNG (mulberry32)
   function mulberry32(seed){
     let t = seed >>> 0;
     return function() {
@@ -83,50 +99,37 @@
     };
   }
 
-  function colorsFor(styleId, theme){
+  function colorsFor(theme){
     const base = {
       bg: "#0B0D12",
       star: "#FFFFFF",
-      muted: "rgba(255,255,255,0.75)",
-      line: "rgba(255,255,255,0.20)",
+      muted: "rgba(255,255,255,0.78)",
+      line: "rgba(255,255,255,0.22)",
     };
 
-    const variants = {
-      classic: base,
-      midnight: { ...base, bg: "#071225", line: "rgba(255,255,255,0.18)" },
-      sepia: { ...base, bg: "#16120C", star: "#F6E7C9", muted: "rgba(246,231,201,0.78)", line: "rgba(246,231,201,0.20)" },
-      aurora: { ...base, bg: "#071018", line: "rgba(255,255,255,0.16)" },
-      dusk: { ...base, bg: "#120A16", line: "rgba(255,255,255,0.18)" },
-      paper: { bg: "#F4F1EA", star: "#111", muted: "rgba(0,0,0,0.72)", line: "rgba(0,0,0,0.18)" },
-      neon: { ...base, bg: "#06060B", star: "#E9FF3A", muted: "rgba(233,255,58,0.78)", line: "rgba(233,255,58,0.18)" },
-      monoLight: { bg: "#F7F7F7", star: "#111", muted: "rgba(0,0,0,0.72)", line: "rgba(0,0,0,0.18)" },
-    };
+    if (theme === "blue") return { ...base, bg: "#071225", line: "rgba(255,255,255,0.18)" };
+    if (theme === "warm") return { ...base, bg: "#140E0A", star: "#F6E7C9", muted: "rgba(246,231,201,0.78)", line: "rgba(246,231,201,0.20)" };
+    if (theme === "neon") return { ...base, bg: "#05050A", star: "#7CFFFA", muted: "rgba(124,255,250,0.75)", line: "rgba(124,255,250,0.18)" };
+    return base; // mono
+  }
 
-    let c = variants[styleId] || base;
+  function setPosterLayout(){
+    // ✅ estilo "clásico" = textos centrados
+    if (state.map.styleId === "classic") $poster.classList.add("classic");
+    else $poster.classList.remove("classic");
+  }
 
-    // Theme override
-    if (theme === "blue") c = { ...c, bg: "#071225" };
-    if (theme === "warm") c = { ...c, bg: "#140E0A" };
-    if (theme === "neon") c = { ...c, bg: "#05050A", star: "#7CFFFA", muted: "rgba(124,255,250,0.75)", line: "rgba(124,255,250,0.18)" };
-
-    return c;
+  function setMapSizeFromMargin(){
+    // base map size 780, margin reduce circle size
+    const base = 780;
+    const margin = state.map.mapMarginEnabled ? clamp(state.map.mapMargin, 0, 120) : 0;
+    const size = clamp(base - margin * 2, 520, 780);
+    $poster.style.setProperty("--mapSize", `${size}px`);
   }
 
   // ======================
-  // Render Tabs
+  // UI helpers
   // ======================
-  function renderTabs(){
-    $tabs.innerHTML = "";
-    STEPS.forEach((s, idx) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "tab" + (idx === state.step ? " active" : "");
-      b.textContent = s.label;
-      b.onclick = () => { state.step = idx; renderAll(); };
-      $tabs.appendChild(b);
-    });
-  }
-
   function navButtons({ showPrev, showNext, prevText="← Anterior", nextText="Siguiente →", onPrev, onNext }){
     const wrap = document.createElement("div");
     wrap.className = "navBtns";
@@ -155,6 +158,18 @@
     wrap.appendChild(left);
     wrap.appendChild(right);
     return wrap;
+  }
+
+  function renderTabs(){
+    $tabs.innerHTML = "";
+    STEPS.forEach((s, idx) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "tab" + (idx === state.step ? " active" : "");
+      b.textContent = s.label;
+      b.onclick = () => { state.step = idx; renderAll(); };
+      $tabs.appendChild(b);
+    });
   }
 
   // ======================
@@ -203,7 +218,6 @@
     $section.appendChild(s);
     $section.appendChild(grid);
 
-    // ✅ botón siguiente
     $section.appendChild(navButtons({
       showPrev: false,
       showNext: true,
@@ -220,14 +234,16 @@
     const t = document.createElement("div");
     t.className = "title";
     t.textContent = "b) Edición del mapa";
+
     const s = document.createElement("div");
     s.className = "sub";
-    s.innerHTML = `Estilo, overlays y color. Magnitud fija en <b>4</b>.`;
+    s.textContent = "Minimalista o Clásico, overlays, margen del mapa y tamaño de línea.";
 
-    // style select
+    // Estilo (solo 2)
     const styleRow = document.createElement("div");
     styleRow.className = "formRow";
     styleRow.innerHTML = `<div class="label">Estilo de mapa</div>`;
+
     const styleSel = document.createElement("select");
     styleSel.className = "select";
     MAP_STYLES.forEach(st => {
@@ -239,20 +255,37 @@
     styleSel.value = state.map.styleId;
     styleSel.onchange = () => {
       state.map.styleId = styleSel.value;
+      setPosterLayout();
       renderPosterAndMap();
     };
     styleRow.appendChild(styleSel);
 
-    // magnitude fixed
-    const magRow = document.createElement("div");
-    magRow.className = "formRow";
-    magRow.innerHTML = `<div class="label">Magnitud estrellas</div>`;
-    const magPill = document.createElement("div");
-    magPill.className = "pill";
-    magPill.textContent = "4 (fijo)";
-    magRow.appendChild(magPill);
+    // ✅ debajo del preview (aquí: debajo del estilo), selector de color
+    const colorRow = document.createElement("div");
+    colorRow.className = "formRow";
+    colorRow.innerHTML = `<div class="label">Color del mapa</div>`;
 
-    // toggles + theme
+    const colorSel = document.createElement("select");
+    colorSel.className = "select";
+    [
+      ["mono","Mono"],
+      ["blue","Azul"],
+      ["warm","Cálido"],
+      ["neon","Neón"],
+    ].forEach(([val, name]) => {
+      const opt = document.createElement("option");
+      opt.value = val;
+      opt.textContent = name;
+      colorSel.appendChild(opt);
+    });
+    colorSel.value = state.map.colorTheme;
+    colorSel.onchange = () => {
+      state.map.colorTheme = colorSel.value;
+      renderPosterAndMap();
+    };
+    colorRow.appendChild(colorSel);
+
+    // overlays
     const grid = document.createElement("div");
     grid.className = "grid2";
 
@@ -283,32 +316,61 @@
     grid.appendChild(conRow);
     grid.appendChild(gridRow);
 
-    const themeRow = document.createElement("div");
-    themeRow.className = "formRow";
-    themeRow.style.gridColumn = "1 / -1";
-    themeRow.innerHTML = `<div class="label">Tema de color</div>`;
-    const themeSel = document.createElement("select");
-    themeSel.className = "select";
-    [
-      ["mono","Mono"],
-      ["blue","Azul"],
-      ["warm","Cálido"],
-      ["neon","Neón"],
-    ].forEach(([val, name]) => {
-      const opt = document.createElement("option");
-      opt.value = val;
-      opt.textContent = name;
-      themeSel.appendChild(opt);
-    });
-    themeSel.value = state.map.colorTheme;
-    themeSel.onchange = () => {
-      state.map.colorTheme = themeSel.value;
-      renderPosterAndMap();
-    };
-    themeRow.appendChild(themeSel);
-    grid.appendChild(themeRow);
+    // ✅ margen mapa: toggle + slider
+    const marginRow = document.createElement("div");
+    marginRow.className = "formRow";
+    marginRow.innerHTML = `<div class="label">Margen del mapa estelar</div>`;
 
-    // seed button for new sky
+    const marginToggle = document.createElement("label");
+    marginToggle.className = "rowToggle";
+    marginToggle.style.marginBottom = "10px";
+    marginToggle.innerHTML = `<span>Activar margen</span>`;
+    const marginChk = document.createElement("input");
+    marginChk.type = "checkbox";
+    marginChk.checked = !!state.map.mapMarginEnabled;
+    marginChk.onchange = () => {
+      state.map.mapMarginEnabled = marginChk.checked;
+      if (!state.map.mapMarginEnabled) state.map.mapMargin = 0;
+      setMapSizeFromMargin();
+      drawMap();
+    };
+    marginToggle.appendChild(marginChk);
+
+    const marginRange = document.createElement("input");
+    marginRange.type = "range";
+    marginRange.min = "0";
+    marginRange.max = "120";
+    marginRange.value = String(state.map.mapMargin);
+    marginRange.disabled = !state.map.mapMarginEnabled;
+    marginRange.oninput = () => {
+      state.map.mapMargin = Number(marginRange.value);
+      setMapSizeFromMargin();
+      drawMap();
+    };
+
+    // helper text
+    const marginHint = document.createElement("div");
+    marginHint.className = "sub";
+    marginHint.style.marginTop = "6px";
+    marginHint.textContent = "A mayor margen, el círculo del mapa se hace más pequeño.";
+
+    // ✅ tamaño de línea
+    const lwRow = document.createElement("div");
+    lwRow.className = "formRow";
+    lwRow.innerHTML = `<div class="label">Tamaño de línea</div>`;
+    const lwRange = document.createElement("input");
+    lwRange.type = "range";
+    lwRange.min = "1";
+    lwRange.max = "4";
+    lwRange.step = "0.5";
+    lwRange.value = String(state.map.lineWidth);
+    lwRange.oninput = () => {
+      state.map.lineWidth = Number(lwRange.value);
+      drawMap();
+    };
+    lwRow.appendChild(lwRange);
+
+    // new sky
     const seedRow = document.createElement("div");
     seedRow.className = "formRow";
     seedRow.innerHTML = `<div class="label">Variación del cielo</div>`;
@@ -322,20 +384,31 @@
     };
     seedRow.appendChild(seedBtn);
 
+    // mount
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(styleRow);
-    $section.appendChild(magRow);
+    $section.appendChild(colorRow);
     $section.appendChild(grid);
+
+    $section.appendChild(marginToggle);
+    $section.appendChild(marginRow);
+    marginRow.appendChild(marginRange);
+    marginRow.appendChild(marginHint);
+
+    $section.appendChild(lwRow);
     $section.appendChild(seedRow);
 
-    // ✅ botón siguiente al final
+    // next
     $section.appendChild(navButtons({
       showPrev: true,
       showNext: true,
       onPrev: () => { state.step = 0; renderAll(); },
       onNext: () => { state.step = 2; renderAll(); }
     }));
+
+    // refresh enable state for slider
+    marginRange.disabled = !state.map.mapMarginEnabled;
   }
 
   // ======================
@@ -367,45 +440,39 @@
       return row;
     }
 
+    // ✅ selector de fuente
+    const fontRow = document.createElement("div");
+    fontRow.className = "formRow";
+    fontRow.innerHTML = `<div class="label">Fuente</div>`;
+    const fontSel = document.createElement("select");
+    fontSel.className = "select";
+    FONT_PRESETS.forEach(f => {
+      const opt = document.createElement("option");
+      opt.value = f.key;
+      opt.textContent = f.name;
+      fontSel.appendChild(opt);
+    });
+    fontSel.value = state.text.fontKey;
+    fontSel.onchange = () => {
+      const key = fontSel.value;
+      state.text.fontKey = key;
+      const found = FONT_PRESETS.find(f => f.key === key) || FONT_PRESETS[0];
+      state.text.fontFamily = found.css;
+      renderPosterFont();
+    };
+    fontRow.appendChild(fontSel);
+
     $section.appendChild(t);
     $section.appendChild(s);
+    $section.appendChild(fontRow);
 
-    $section.appendChild(inputRow("Fuente (CSS font-family)", state.text.fontFamily, (v) => {
-      state.text.fontFamily = v;
-      renderPosterFont();
-    }));
+    $section.appendChild(inputRow("Título", state.text.title, (v) => { state.text.title = v; renderPosterText(); }));
+    $section.appendChild(inputRow("Subtítulo", state.text.subtitle, (v) => { state.text.subtitle = v; renderPosterText(); }));
+    $section.appendChild(inputRow("Lugar", state.text.place, (v) => { state.text.place = v; renderPosterText(); }));
+    $section.appendChild(inputRow("Coordenadas", state.text.coords, (v) => { state.text.coords = v; renderPosterText(); }));
+    $section.appendChild(inputRow("Fecha / hora", state.text.datetime, (v) => { state.text.datetime = v; renderPosterText(); }, "YYYY-MM-DD HH:mm"));
+    $section.appendChild(inputRow("Spotify", state.text.spotify, (v) => { state.text.spotify = v; renderPosterText(); }, "spotify:track:..."));
 
-    $section.appendChild(inputRow("Título", state.text.title, (v) => {
-      state.text.title = v;
-      renderPosterText();
-    }));
-
-    $section.appendChild(inputRow("Subtítulo", state.text.subtitle, (v) => {
-      state.text.subtitle = v;
-      renderPosterText();
-    }));
-
-    $section.appendChild(inputRow("Lugar", state.text.place, (v) => {
-      state.text.place = v;
-      renderPosterText();
-    }));
-
-    $section.appendChild(inputRow("Coordenadas", state.text.coords, (v) => {
-      state.text.coords = v;
-      renderPosterText();
-    }));
-
-    $section.appendChild(inputRow("Fecha / hora", state.text.datetime, (v) => {
-      state.text.datetime = v;
-      renderPosterText();
-    }, "YYYY-MM-DD HH:mm"));
-
-    $section.appendChild(inputRow("Spotify", state.text.spotify, (v) => {
-      state.text.spotify = v;
-      renderPosterText();
-    }, "spotify:track:..."));
-
-    // ✅ botón siguiente al final
     $section.appendChild(navButtons({
       showPrev: true,
       showNext: true,
@@ -415,53 +482,59 @@
   }
 
   // ======================
-  // Section D
+  // Section D (Export)
   // ======================
   function renderSectionD(){
     $section.innerHTML = "";
 
     const t = document.createElement("div");
     t.className = "title";
-    t.textContent = "d) Export";
+    t.textContent = "d) Exportar";
+
     const s = document.createElement("div");
     s.className = "sub";
-    s.innerHTML = `Preview final reducido al <b>50%</b> para que quepa en toda la pantalla.`;
+    s.textContent = "Selecciona formato y exporta tu póster.";
 
-    const hint = document.createElement("div");
-    hint.className = "hint";
-    hint.innerHTML = `
-      Aquí puedes conectar tu export real (PNG/PDF).
-      <br/>Si quieres, te lo dejo con un botón que exporte el canvas + póster a PNG.
-    `;
+    const formatRow = document.createElement("div");
+    formatRow.className = "formRow";
+    formatRow.innerHTML = `<div class="label">Formato</div>`;
+    const formatSel = document.createElement("select");
+    formatSel.className = "select";
+    [["png","PNG"],["jpg","JPG"],["pdf","PDF"]].forEach(([v,n]) => {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = n;
+      formatSel.appendChild(opt);
+    });
 
     const exportBtn = document.createElement("button");
     exportBtn.type = "button";
     exportBtn.className = "btn primary";
-    exportBtn.textContent = "Exportar (placeholder)";
-    exportBtn.onclick = () => alert("Export placeholder (conecto PNG si me lo pides).");
+    exportBtn.textContent = "Exportar";
+    exportBtn.onclick = () => exportPoster(formatSel.value);
 
-    const btnRow = document.createElement("div");
-    btnRow.className = "navBtns";
-    btnRow.appendChild(document.createElement("div"));
-    const right = document.createElement("div");
-    right.appendChild(exportBtn);
-    btnRow.appendChild(right);
+    formatRow.appendChild(formatSel);
 
     $section.appendChild(t);
     $section.appendChild(s);
-    $section.appendChild(hint);
+    $section.appendChild(formatRow);
 
-    // ✅ botón siguiente al final (aquí lo hacemos “volver al inicio”)
+    // Botones
     $section.appendChild(navButtons({
       showPrev: true,
       showNext: true,
-      prevText: "← Anterior",
       nextText: "Volver a a) →",
       onPrev: () => { state.step = 2; renderAll(); },
       onNext: () => { state.step = 0; renderAll(); }
     }));
 
-    $section.appendChild(btnRow);
+    const bottom = document.createElement("div");
+    bottom.className = "navBtns";
+    bottom.appendChild(document.createElement("div"));
+    const right = document.createElement("div");
+    right.appendChild(exportBtn);
+    bottom.appendChild(right);
+    $section.appendChild(bottom);
   }
 
   // ======================
@@ -472,7 +545,6 @@
   }
 
   function renderPosterText(){
-    // visibility
     $pTitle.style.display = state.visible.title ? "block" : "none";
     $pSubtitle.style.display = state.visible.subtitle ? "block" : "none";
     $pPlace.style.display = state.visible.place ? "block" : "none";
@@ -480,7 +552,6 @@
     $pDatetime.style.display = state.visible.datetime ? "block" : "none";
     $pSpotify.style.display = state.visible.spotify ? "block" : "none";
 
-    // content
     $pTitle.textContent = state.text.title || "";
     $pSubtitle.textContent = state.text.subtitle || "";
     $pPlace.textContent = state.text.place || "";
@@ -490,19 +561,97 @@
   }
 
   function renderPosterAndMap(){
-    const c = colorsFor(state.map.styleId, state.map.colorTheme);
+    const c = colorsFor(state.map.colorTheme);
     $poster.style.background = c.bg;
     $poster.style.color = c.star;
+    setPosterLayout();
+    setMapSizeFromMargin();
     drawMap();
   }
 
   // ======================
-  // Map drawing (Canvas, no pixelated image)
+  // Constellations (simple + clean, no scribbles)
+  // ======================
+  function drawConstellations(ctx, size, rand, colors, lw){
+    // constellations as: clusters of points + polyline connections in a sorted order
+    const count = 6; // number of constellations
+    ctx.save();
+    ctx.lineWidth = lw;
+    ctx.strokeStyle = colors.line;
+    ctx.fillStyle = colors.star;
+
+    for (let c = 0; c < count; c++){
+      const cx = (0.15 + rand() * 0.7) * size;
+      const cy = (0.15 + rand() * 0.7) * size;
+
+      const points = 4 + Math.floor(rand() * 4); // 4..7
+      const pts = [];
+
+      // generate points around a center (elliptical)
+      const rx = 40 + rand() * 120;
+      const ry = 40 + rand() * 120;
+
+      for (let i = 0; i < points; i++){
+        const a = rand() * Math.PI * 2;
+        const r1 = 0.35 + rand() * 0.75;
+        const x = clamp(cx + Math.cos(a) * rx * r1, 40, size - 40);
+        const y = clamp(cy + Math.sin(a) * ry * r1, 40, size - 40);
+        pts.push({ x, y });
+      }
+
+      // sort points by angle around centroid for clean polygon-like chain
+      const mx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+      const my = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+      pts.sort((p1,p2)=>Math.atan2(p1.y-my,p1.x-mx)-Math.atan2(p2.y-my,p2.x-mx));
+
+      // draw connections (polyline)
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath();
+      pts.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+
+      // draw brighter constellation stars at nodes
+      ctx.globalAlpha = 0.95;
+      pts.forEach((p) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.2, 0, Math.PI*2);
+        ctx.fill();
+      });
+
+      // optional: a short branch from one node (simple, not scribble)
+      if (pts.length >= 5 && rand() > 0.55){
+        const base = pts[Math.floor(rand()*pts.length)];
+        const bx = clamp(base.x + (rand()-0.5)*140, 30, size-30);
+        const by = clamp(base.y + (rand()-0.5)*140, 30, size-30);
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath();
+        ctx.moveTo(base.x, base.y);
+        ctx.lineTo(bx, by);
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.95;
+        ctx.beginPath();
+        ctx.arc(bx, by, 2.0, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  // ======================
+  // Map drawing (Canvas)
   // ======================
   function drawMap(){
-    const size = 780;
-    const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    // The canvas should match CSS variable size
+    const cssSize = parseFloat(getComputedStyle($poster).getPropertyValue("--mapSize")) || 780;
+    const size = Math.round(cssSize);
 
+    const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
     $canvas.width = size * dpr;
     $canvas.height = size * dpr;
     $canvas.style.width = size + "px";
@@ -511,24 +660,23 @@
     const ctx = $canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const colors = colorsFor(state.map.styleId, state.map.colorTheme);
+    const colors = colorsFor(state.map.colorTheme);
+    const rand = mulberry32(state.map.seed);
 
     // background
     ctx.clearRect(0, 0, size, size);
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, size, size);
 
-    const rand = mulberry32(state.map.seed);
-
-    // Stars (stable & crisp)
-    const N = 700;
+    // stars (crisp)
+    const N = Math.floor(680 + rand()*80);
     for (let i = 0; i < N; i++){
       const x = rand() * size;
       const y = rand() * size;
 
-      // sizes
-      const r = (rand() < 0.92) ? (rand() * 1.2) : (1.2 + rand() * 1.6);
-      const a = 0.35 + rand() * 0.65;
+      const big = rand() > 0.92;
+      const r = big ? (1.5 + rand() * 1.8) : (rand() * 1.2);
+      const a = big ? (0.75 + rand() * 0.25) : (0.35 + rand() * 0.55);
 
       ctx.beginPath();
       ctx.globalAlpha = a;
@@ -538,11 +686,11 @@
     }
     ctx.globalAlpha = 1;
 
-    // Grid
+    // grid
     if (state.map.showGrid){
       ctx.strokeStyle = colors.line;
-      ctx.lineWidth = 1;
-      const step = Math.max(24, Math.floor(size / 10));
+      ctx.lineWidth = state.map.lineWidth;
+      const step = Math.max(26, Math.floor(size / 10));
       for (let x = step; x < size; x += step){
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -557,30 +705,174 @@
       }
     }
 
-    // Constellations
+    // constellations (simple + clean)
     if (state.map.showConstellations){
-      ctx.strokeStyle = colors.line;
-      ctx.lineWidth = 1.5;
-      ctx.globalAlpha = 0.9;
-
-      const paths = 8;
-      for (let p = 0; p < paths; p++){
-        const points = 4 + Math.floor(rand() * 5);
-        ctx.beginPath();
-        for (let i = 0; i < points; i++){
-          const x = (0.1 + rand() * 0.8) * size;
-          const y = (0.1 + rand() * 0.8) * size;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
+      drawConstellations(ctx, size, rand, colors, state.map.lineWidth);
     }
+
+    ctx.globalAlpha = 1;
   }
 
   // ======================
-  // Main render
+  // Export (PNG/JPG direct, PDF via print)
+  // ======================
+  function exportPoster(format){
+    // Render to offscreen canvas at poster size
+    const W = 900, H = 1200;
+    const scale = 2; // export sharper
+    const out = document.createElement("canvas");
+    out.width = W * scale;
+    out.height = H * scale;
+
+    const ctx = out.getContext("2d");
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+
+    const colors = colorsFor(state.map.colorTheme);
+
+    // background
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // map circle
+    const mapSize = parseFloat(getComputedStyle($poster).getPropertyValue("--mapSize")) || 780;
+    const mapX = (W - mapSize) / 2;
+    const mapY = 70; // like posterInner padding-top
+    const r = mapSize / 2;
+
+    // clip circle and draw current map canvas
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(mapX + r, mapY + r, r, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage($canvas, mapX, mapY, mapSize, mapSize);
+    ctx.restore();
+
+    // text styles
+    ctx.fillStyle = colors.star;
+    ctx.globalAlpha = 1;
+
+    const fontFamily = state.text.fontFamily;
+    const show = state.visible;
+
+    function drawText(text, x, y, sizePx, weight=800, align="left", alpha=1){
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.textAlign = align;
+      ctx.textBaseline = "alphabetic";
+      ctx.font = `${weight} ${sizePx}px ${fontFamily}`;
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+
+    function metaText(text, x, y, align){
+      ctx.save();
+      ctx.globalAlpha = 0.82;
+      ctx.textAlign = align;
+      ctx.textBaseline = "alphabetic";
+      ctx.font = `650 14px ${fontFamily}`;
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+
+    if (state.map.styleId === "minimal"){
+      // bottom aligned, like UI
+      const left = 80, right = W - 80;
+      let y = H - 64;
+
+      // meta rows start from bottom upwards? We'll keep same spacing top-down inside block
+      const blockBottom = y;
+      // draw from top of block
+      let top = blockBottom - 22 - 14*2 - 6 - 10 - 18 - 10; // approx; doesn't need perfect
+      top = Math.max(top, mapY + mapSize + 40);
+
+      let ty = top;
+
+      if (show.title) { drawText(state.text.title, left, ty + 54, 54, 900, "left", 1); ty += 54 + 10; }
+      if (show.subtitle) { drawText(state.text.subtitle, left, ty + 18, 18, 600, "left", 0.85); ty += 18 + 22; }
+
+      // meta lines
+      const metaY1 = ty + 14;
+      const metaY2 = metaY1 + 20;
+
+      if (show.place) metaText(state.text.place, left, metaY1, "left");
+      if (show.coords) metaText(state.text.coords, left, metaY2, "left");
+
+      if (show.datetime) metaText(state.text.datetime, right, metaY1, "right");
+      if (show.spotify) metaText(state.text.spotify, right, metaY2, "right");
+    } else {
+      // classic centered with margin
+      const centerX = W / 2;
+      const marginLR = 110;
+      let y = H - 90; // like CSS
+
+      // title/subtitle above meta
+      let ty = y - 60; // move up
+      if (show.subtitle) ty -= 24;
+
+      if (show.title) { drawText(state.text.title, centerX, ty, 54, 900, "center", 1); ty += 36; }
+      if (show.subtitle) { drawText(state.text.subtitle, centerX, ty, 18, 650, "center", 0.85); ty += 36; }
+
+      // meta in two columns but centered
+      const gap = 170;
+      const leftX = centerX - gap;
+      const rightX = centerX + gap;
+
+      const metaY1 = ty + 30;
+      const metaY2 = metaY1 + 22;
+
+      if (show.place) metaText(state.text.place, leftX, metaY1, "center");
+      if (show.coords) metaText(state.text.coords, leftX, metaY2, "center");
+
+      if (show.datetime) metaText(state.text.datetime, rightX, metaY1, "center");
+      if (show.spotify) metaText(state.text.spotify, rightX, metaY2, "center");
+    }
+
+    // output
+    if (format === "png" || format === "jpg"){
+      const mime = format === "png" ? "image/png" : "image/jpeg";
+      const quality = format === "jpg" ? 0.95 : undefined;
+      const url = out.toDataURL(mime, quality);
+      downloadDataURL(url, `poster.${format}`);
+      return;
+    }
+
+    // pdf: open printable window (user: Save as PDF)
+    const url = out.toDataURL("image/png");
+    const w = window.open("", "_blank");
+    if (!w) {
+      alert("Bloqueaste popups. Permite ventanas emergentes para exportar PDF.");
+      return;
+    }
+    w.document.write(`
+      <html><head><title>Poster PDF</title>
+      <style>
+        html,body{margin:0;padding:0;}
+        img{width:100%;height:auto;display:block;}
+      </style>
+      </head><body>
+        <img src="${url}" />
+        <script>
+          window.onload = () => {
+            window.focus();
+            window.print();
+          };
+        </script>
+      </body></html>
+    `);
+    w.document.close();
+  }
+
+  function downloadDataURL(dataURL, filename){
+    const a = document.createElement("a");
+    a.href = dataURL;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  // ======================
+  // Section Router
   // ======================
   function renderSection(){
     if (state.step === 0) return renderSectionA();
@@ -597,9 +889,9 @@
     renderPosterAndMap();
   }
 
-  // initial
+  // ======================
+  // Init
+  // ======================
   renderAll();
-
-  // keep crisp on resize
   window.addEventListener("resize", () => drawMap());
 })();

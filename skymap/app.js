@@ -1,9 +1,9 @@
 (() => {
   // ======================
-  // Constants (for “10%” defaults)
+  // Constants (for “2% poster margin” + “10% map margin”)
   // ======================
   const POSTER_W = 900;
-  const POSTER_MARGIN_INSET_DEFAULT = Math.round(POSTER_W * 0.10); // 10% => 90px
+  const POSTER_MARGIN_INSET_DEFAULT = Math.round(POSTER_W * 0.02); // ✅ 2% => 18px
 
   // ======================
   // State
@@ -42,17 +42,17 @@
       showConstellations: true,
       colorTheme: "mono",
 
-      // ✅ Poster “margin” = rectangle line (inset fixed 10%, slider = thickness)
+      // ✅ Poster “margin” = rectangle line (inset fixed 2%, slider = thickness)
       posterMarginEnabled: false,
       posterMarginInsetPx: POSTER_MARGIN_INSET_DEFAULT,
       posterMarginThickness: 2,
 
       // ✅ Map “margin” = circle line (inset fixed 10% of map size, slider = thickness)
       mapCircleMarginEnabled: false,
-      mapCircleInsetPct: 0.10,     // 10%
+      mapCircleInsetPct: 0.10,     // ✅ 10%
       mapCircleMarginThickness: 2,
 
-      // ✅ rename: affects constellation thickness + nodes
+      // ✅ affects constellation stroke + nodes
       constellationSize: 2.0,
 
       seed: 12345,
@@ -158,7 +158,7 @@
   }
 
   function setDefaultsByStyle(styleId){
-    // Classic: poster margin line ON by default (10% inset)
+    // Classic: poster margin line ON by default (2% inset)
     // Minimal: poster margin line OFF by default
     if (styleId === "classic") {
       state.map.posterMarginEnabled = true;
@@ -170,7 +170,7 @@
   }
 
   function setMapSizeFromPosterPad(){
-    // mantenemos la lógica de juntar elementos (como lo aprobaste)
+    // mantenemos la lógica de juntar elementos (como la aprobaste)
     const base = 780;
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
     const size = clamp(base - Math.round(pad * 0.6), 640, 780);
@@ -178,7 +178,7 @@
   }
 
   function applyPosterMarginLine(){
-    // inset fijo (10%), grosor variable
+    // inset fijo (2%), grosor variable
     const inset = state.map.posterMarginEnabled ? state.map.posterMarginInsetPx : POSTER_MARGIN_INSET_DEFAULT;
     const thick = clamp(state.map.posterMarginThickness, 1, 10);
 
@@ -190,7 +190,7 @@
   }
 
   function applyPosterPaddingLayout(){
-    // padding sigue igual (como dijiste: está bien que se junten)
+    // padding sigue igual (para que se junten)
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
     $poster.style.setProperty("--posterPad", `${pad}px`);
   }
@@ -293,7 +293,7 @@
   }
 
   // ======================
-  // Section B (✅ no grid option)
+  // Section B
   // ======================
   function renderSectionB(){
     $section.innerHTML = "";
@@ -669,7 +669,7 @@
   }
 
   // ======================
-  // Map drawing (✅ no grid, margins are 10% inset, sliders control thickness)
+  // Map drawing (no grid)
   // ======================
   function drawMap(){
     const cssSize = parseFloat(getComputedStyle($poster).getPropertyValue("--mapSize")) || 780;
@@ -687,25 +687,25 @@
     const colors = colorsFor(state.map.colorTheme);
     const rand = mulberry32(state.map.seed);
 
-    // ✅ fixed inset at 10% of the current map size when enabled
+    // ✅ fixed inset at 10% of current map size when enabled
     const innerPad = state.map.mapCircleMarginEnabled ? Math.round(size * state.map.mapCircleInsetPct) : 0;
 
-    // constellation size drives constellation stroke + nodes (NOT margin thickness)
+    // constellation styling
     const cs = clamp(state.map.constellationSize, 1, 4);
     const conLineW = 0.9 + cs * 0.55;
     const nodeR = 1.6 + cs * 0.35;
 
-    // margin (circle) line thickness slider
+    // margin line thickness slider
     const circleLineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
     ctx.clearRect(0, 0, size, size);
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, size, size);
 
-    // if circular margin is enabled, draw the ring line (thickness controlled) and clip inside
     if (innerPad > 0){
       const innerR = (size / 2) - innerPad;
 
+      // visible ring line (thickness controlled)
       ctx.save();
       ctx.strokeStyle = colors.line;
       ctx.lineWidth = circleLineW;
@@ -716,6 +716,7 @@
       ctx.restore();
       ctx.globalAlpha = 1;
 
+      // clip inside ring
       ctx.save();
       ctx.beginPath();
       ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
@@ -728,7 +729,6 @@
       return;
     }
 
-    // no circular margin
     drawStars(ctx, size, rand, colors, 0);
     if (state.map.showConstellations) drawConstellations(ctx, size, rand, colors, conLineW, nodeR, 0);
   }

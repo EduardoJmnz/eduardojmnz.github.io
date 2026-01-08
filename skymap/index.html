@@ -161,56 +161,92 @@
       background: rgba(124,255,250,.95);
     }
 
-    /* ✅ Style preview poster thumbnails */
-    .styleGrid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    /* ✅ Spacing helper */
+    .stackGap{ margin-top: 10px; }
+
+    /* ✅ Content field card (como mock) */
+    .fieldCard{
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      background: rgba(255,255,255,.02);
+      overflow:hidden;
       margin-bottom: 10px;
     }
-    .styleCard{
-      border: 1px solid var(--stroke);
-      background: rgba(255,255,255,.02);
+    .fieldHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 14px 14px;
+    }
+    .fieldHeader .fieldLabel{
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .fieldBody{
+      padding: 0 14px 14px 14px;
+    }
+    .fieldInput{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      padding: 16px 14px;
       border-radius: 14px;
-      padding: 10px;
+      outline:none;
+      font-size: 18px;
+    }
+
+    /* ✅ Styles preview grid (como ejemplo) */
+    .styleGrid{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 8px;
+    }
+    @media (max-width: 420px){
+      .styleGrid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .styleTile{
       cursor:pointer;
       user-select:none;
-      transition: 160ms ease;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
     }
-    .styleCard:hover{
-      background: rgba(255,255,255,.04);
-      transform: translateY(-1px);
-    }
-    .styleCard.active{
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(124,255,250,.10);
-    }
-    .styleTop{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-    }
-    .styleName{
-      font-weight:850;
-      font-size:13px;
-    }
-    .styleTag{
-      font-size:11px;
-      color:var(--muted);
-      min-height: 14px;
-    }
-    .thumb{
-      width: 100%;
-      height: 120px;
-      border-radius: 12px;
-      border: 1px solid rgba(233,238,252,.12);
+    .stylePoster{
+      width:100%;
+      aspect-ratio: 3 / 4;
+      border-radius: 6px;
       background: rgba(0,0,0,.18);
+      border: 2px solid rgba(0,0,0,0);
       overflow:hidden;
+      position:relative;
+      box-shadow: 0 10px 24px rgba(0,0,0,.28);
+    }
+    .styleTile.active .stylePoster{
+      border-color: rgba(255,210,90,.95);
+      box-shadow: 0 0 0 2px rgba(255,210,90,.25), 0 10px 24px rgba(0,0,0,.28);
+    }
+    .stylePoster canvas{
+      width:100%;
+      height:100%;
       display:block;
+    }
+    .styleNameLabel{
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      opacity: .92;
+    }
+    .badge{
+      position:absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(255,255,255,.88);
+      color: #111;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      z-index: 2;
     }
 
     /* ✅ Color circles */
@@ -303,11 +339,8 @@
       overflow:hidden;
 
       --mapSize: 780px;
-
-      /* layout */
       --posterPad: 0px;
 
-      /* ✅ line inset and thickness */
       --posterMarginInset: 45px;
       --posterMarginThickness: 2px;
     }
@@ -431,26 +464,3 @@
               <div class="mapCircle">
                 <canvas id="mapCanvas"></canvas>
               </div>
-
-              <div class="bottomText" id="bottomText">
-                <div class="tTitle" id="pTitle"></div>
-                <div class="tSub" id="pSubtitle"></div>
-
-                <div class="meta">
-                  <div class="metaCol">
-                    <div class="metaRow" id="pPlace"></div>
-                    <div class="metaRow" id="pCoords"></div>
-                    <div class="metaRow" id="pDatetime"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div><!-- /poster -->
-        </div><!-- /previewScale -->
-      </div>
-    </main>
-  </div>
-
-  <script src="./app.js"></script>
-</body>
-</html>

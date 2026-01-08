@@ -6,11 +6,9 @@
     step: 0,
 
     ui: {
-      // ✅ +20% vs el 0.5 anterior: ahora "100%" inicial es 0.6
-      baseZoom: 0.6,
-      zoom: 0.6,      // current zoom
+      zoom: 0.75,     // ✅ default 75%
       minZoom: 0.35,
-      maxZoom: 1.2,
+      maxZoom: 1.25,
       step: 0.1
     },
 
@@ -39,16 +37,16 @@
       showGrid: false,
       colorTheme: "mono",
 
-      // poster margin (global)
+      // Layout padding (opcional) + visible margin line (lo que tú llamas “margen”)
       posterMarginEnabled: false,
-      posterMargin: 0, // px
+      posterMargin: 80, // slider value; for classic default
 
-      // map circle inner margin (ring)
+      // Map circle margin line
       mapCircleMarginEnabled: false,
-      mapCircleMargin: 0, // px
+      mapCircleMargin: 24,
 
-      // renamed: constellation size
-      constellationSize: 2.0, // affects line width + node size
+      // ✅ rename: affects constellation thickness + nodes + grid thickness
+      constellationSize: 2.0,
 
       seed: 12345,
     },
@@ -114,65 +112,70 @@
     const base = {
       bg: "#0B0D12",
       star: "#FFFFFF",
-      muted: "rgba(255,255,255,0.78)",
       line: "rgba(255,255,255,0.22)",
     };
     if (theme === "blue") return { ...base, bg: "#071225", line: "rgba(255,255,255,0.18)" };
-    if (theme === "warm") return { ...base, bg: "#140E0A", star: "#F6E7C9", muted: "rgba(246,231,201,0.78)", line: "rgba(246,231,201,0.20)" };
-    if (theme === "neon") return { ...base, bg: "#05050A", star: "#7CFFFA", muted: "rgba(124,255,250,0.75)", line: "rgba(124,255,250,0.18)" };
+    if (theme === "warm") return { ...base, bg: "#140E0A", star: "#F6E7C9", line: "rgba(246,231,201,0.20)" };
+    if (theme === "neon") return { ...base, bg: "#05050A", star: "#7CFFFA", line: "rgba(124,255,250,0.18)" };
     return base; // mono
   }
 
   // ======================
-  // Zoom controls
+  // Zoom (✅ working)
   // ======================
   function applyZoom(){
+    if (!$previewScale) return;
     $previewScale.style.transform = `scale(${state.ui.zoom})`;
-    const pct = Math.round((state.ui.zoom / state.ui.baseZoom) * 100);
-    $zoomLabel.textContent = `${pct}%`;
+    if ($zoomLabel) $zoomLabel.textContent = `${Math.round(state.ui.zoom * 100)}%`;
   }
 
-  $zoomIn.addEventListener("click", () => {
-    state.ui.zoom = clamp(state.ui.zoom + state.ui.step, state.ui.minZoom, state.ui.maxZoom);
-    applyZoom();
-  });
-
-  $zoomOut.addEventListener("click", () => {
-    state.ui.zoom = clamp(state.ui.zoom - state.ui.step, state.ui.minZoom, state.ui.maxZoom);
-    applyZoom();
-  });
+  if ($zoomIn) {
+    $zoomIn.addEventListener("click", () => {
+      state.ui.zoom = clamp(state.ui.zoom + state.ui.step, state.ui.minZoom, state.ui.maxZoom);
+      applyZoom();
+    });
+  }
+  if ($zoomOut) {
+    $zoomOut.addEventListener("click", () => {
+      state.ui.zoom = clamp(state.ui.zoom - state.ui.step, state.ui.minZoom, state.ui.maxZoom);
+      applyZoom();
+    });
+  }
 
   // ======================
-  // Layout setters
+  // Layout + “margen” (líneas)
   // ======================
   function setPosterLayout(){
     if (state.map.styleId === "classic") $poster.classList.add("classic");
     else $poster.classList.remove("classic");
   }
 
-  function applyPosterMargin(){
-    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
-    $poster.style.setProperty("--posterPad", `${pad}px`);
-
-    // ✅ mostrar guía del margen cuando está activo
-    if (pad > 0 && state.map.posterMarginEnabled) $poster.classList.add("showPosterMargin");
-    else $poster.classList.remove("showPosterMargin");
-  }
-
   function setDefaultsByStyle(styleId){
-    // Classic: poster margin ON by default
-    // Minimal: poster margin OFF by default
+    // Classic: margin line ON by default
+    // Minimal: margin line OFF by default
     if (styleId === "classic") {
       state.map.posterMarginEnabled = true;
-      if (!state.map.posterMargin || state.map.posterMargin < 40) state.map.posterMargin = 80;
+      if (!state.map.posterMargin || state.map.posterMargin < 20) state.map.posterMargin = 80;
     } else {
       state.map.posterMarginEnabled = false;
-      state.map.posterMargin = 0;
     }
   }
 
+  function applyPosterMarginLine(){
+    // ✅ línea rectangular del margen (esto es el “margen” que pediste)
+    const inset = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
+    $poster.style.setProperty("--posterMarginLine", `${inset}px`);
+    if (state.map.posterMarginEnabled && inset > 0) $poster.classList.add("showPosterMargin");
+    else $poster.classList.remove("showPosterMargin");
+  }
+
+  function applyPosterPaddingLayout(){
+    // (Esto es opcional; lo dejo igual que antes porque comentaste que está bien que se junten)
+    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
+    $poster.style.setProperty("--posterPad", `${pad}px`);
+  }
+
   function setMapSizeFromPosterPad(){
-    // optional soft reduction so content breathes
     const base = 780;
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
     const size = clamp(base - Math.round(pad * 0.6), 640, 780);
@@ -288,13 +291,12 @@
 
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Estilo, color, constelaciones, retícula tipo globo, márgenes y tamaño de constelaciones.";
+    s.textContent = "Estilo, color, constelaciones, retícula tipo globo y márgenes con línea.";
 
     // style
     const styleRow = document.createElement("div");
     styleRow.className = "formRow";
     styleRow.innerHTML = `<div class="label">Estilo</div>`;
-
     const styleSel = document.createElement("select");
     styleSel.className = "select";
     MAP_STYLES.forEach(st => {
@@ -309,23 +311,17 @@
       setDefaultsByStyle(state.map.styleId);
       setPosterLayout();
       renderPosterAndMap();
-      renderAll(); // refresh enabled states
+      renderAll();
     };
     styleRow.appendChild(styleSel);
 
-    // color (below style)
+    // color
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
     colorRow.innerHTML = `<div class="label">Color del mapa</div>`;
-
     const colorSel = document.createElement("select");
     colorSel.className = "select";
-    [
-      ["mono","Mono"],
-      ["blue","Azul"],
-      ["warm","Cálido"],
-      ["neon","Neón"],
-    ].forEach(([val, name]) => {
+    [["mono","Mono"],["blue","Azul"],["warm","Cálido"],["neon","Neón"]].forEach(([val, name]) => {
       const opt = document.createElement("option");
       opt.value = val;
       opt.textContent = name;
@@ -338,7 +334,7 @@
     };
     colorRow.appendChild(colorSel);
 
-    // overlays
+    // toggles
     const grid = document.createElement("div");
     grid.className = "grid2";
 
@@ -348,10 +344,7 @@
     const conInput = document.createElement("input");
     conInput.type = "checkbox";
     conInput.checked = !!state.map.showConstellations;
-    conInput.onchange = () => {
-      state.map.showConstellations = conInput.checked;
-      drawMap();
-    };
+    conInput.onchange = () => { state.map.showConstellations = conInput.checked; drawMap(); };
     conRow.appendChild(conInput);
 
     const gridRow = document.createElement("label");
@@ -360,26 +353,22 @@
     const gridInput = document.createElement("input");
     gridInput.type = "checkbox";
     gridInput.checked = !!state.map.showGrid;
-    gridInput.onchange = () => {
-      state.map.showGrid = gridInput.checked;
-      drawMap();
-    };
+    gridInput.onchange = () => { state.map.showGrid = gridInput.checked; drawMap(); };
     gridRow.appendChild(gridInput);
 
     grid.appendChild(conRow);
     grid.appendChild(gridRow);
 
-    // poster margin
+    // poster margin (LINE)
     const posterMarginToggle = document.createElement("label");
     posterMarginToggle.className = "rowToggle";
     posterMarginToggle.style.marginTop = "10px";
-    posterMarginToggle.innerHTML = `<span>Margen del póster</span>`;
+    posterMarginToggle.innerHTML = `<span>Margen del póster (línea)</span>`;
     const posterMarginChk = document.createElement("input");
     posterMarginChk.type = "checkbox";
     posterMarginChk.checked = !!state.map.posterMarginEnabled;
     posterMarginChk.onchange = () => {
       state.map.posterMarginEnabled = posterMarginChk.checked;
-      if (!state.map.posterMarginEnabled) state.map.posterMargin = 0;
       renderPosterAndMap();
       renderAll();
     };
@@ -400,20 +389,15 @@
     };
     posterMarginRow.appendChild(posterMarginRange);
 
-    // map circle margin
+    // map circle margin (LINE)
     const mapMarginToggle = document.createElement("label");
     mapMarginToggle.className = "rowToggle";
     mapMarginToggle.style.marginTop = "10px";
-    mapMarginToggle.innerHTML = `<span>Margen alrededor del mapa (círculo)</span>`;
+    mapMarginToggle.innerHTML = `<span>Margen del mapa (línea circular)</span>`;
     const mapMarginChk = document.createElement("input");
     mapMarginChk.type = "checkbox";
     mapMarginChk.checked = !!state.map.mapCircleMarginEnabled;
-    mapMarginChk.onchange = () => {
-      state.map.mapCircleMarginEnabled = mapMarginChk.checked;
-      if (!state.map.mapCircleMarginEnabled) state.map.mapCircleMargin = 0;
-      drawMap();
-      renderAll();
-    };
+    mapMarginChk.onchange = () => { state.map.mapCircleMarginEnabled = mapMarginChk.checked; drawMap(); renderAll(); };
     mapMarginToggle.appendChild(mapMarginChk);
 
     const mapMarginRow = document.createElement("div");
@@ -425,13 +409,10 @@
     mapMarginRange.max = "90";
     mapMarginRange.value = String(state.map.mapCircleMargin);
     mapMarginRange.disabled = !state.map.mapCircleMarginEnabled;
-    mapMarginRange.oninput = () => {
-      state.map.mapCircleMargin = Number(mapMarginRange.value);
-      drawMap();
-    };
+    mapMarginRange.oninput = () => { state.map.mapCircleMargin = Number(mapMarginRange.value); drawMap(); };
     mapMarginRow.appendChild(mapMarginRange);
 
-    // constellation size (renamed)
+    // ✅ constellation size
     const csRow = document.createElement("div");
     csRow.className = "formRow";
     csRow.innerHTML = `<div class="label">Tamaño de constelaciones</div>`;
@@ -441,10 +422,7 @@
     csRange.max = "4";
     csRange.step = "0.5";
     csRange.value = String(state.map.constellationSize);
-    csRange.oninput = () => {
-      state.map.constellationSize = Number(csRange.value);
-      drawMap();
-    };
+    csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
     csRow.appendChild(csRange);
 
     // new sky
@@ -455,10 +433,7 @@
     seedBtn.type = "button";
     seedBtn.className = "btn ghost";
     seedBtn.textContent = "Generar nuevo cielo";
-    seedBtn.onclick = () => {
-      state.map.seed = (Math.random() * 1e9) | 0;
-      drawMap();
-    };
+    seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
 
     // mount
@@ -554,7 +529,7 @@
   }
 
   // ======================
-  // Section D (Export)
+  // Export (✅ aligned same row)
   // ======================
   function renderSectionD(){
     $section.innerHTML = "";
@@ -586,11 +561,6 @@
     exportBtn.textContent = "Exportar";
     exportBtn.onclick = () => exportPoster(formatSel.value);
 
-    $section.appendChild(t);
-    $section.appendChild(s);
-    $section.appendChild(formatRow);
-
-    // ✅ Ambos al mismo nivel: Anterior (izq) y Exportar (der)
     const actions = document.createElement("div");
     actions.className = "navBtns";
 
@@ -607,6 +577,10 @@
 
     actions.appendChild(left);
     actions.appendChild(right);
+
+    $section.appendChild(t);
+    $section.appendChild(s);
+    $section.appendChild(formatRow);
     $section.appendChild(actions);
   }
 
@@ -637,13 +611,63 @@
     $poster.style.color = c.star;
 
     setPosterLayout();
-    applyPosterMargin();
+
+    // ✅ “margen” = línea
+    applyPosterMarginLine();
+
+    // layout interno (si quieres que NO mueva layout, lo quitas aquí)
+    applyPosterPaddingLayout();
     setMapSizeFromPosterPad();
+
     drawMap();
   }
 
   // ======================
-  // Constellations (clean)
+  // Globe grid
+  // ======================
+  function drawGlobeGrid(ctx, size, colors, lineW, innerPad){
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = (size / 2) - innerPad - 2;
+
+    ctx.save();
+    ctx.strokeStyle = colors.line;
+
+    function strokeEllipse(x, y, rx, ry, lw, alpha){
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = lw;
+      ctx.beginPath();
+      ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    const latDegs = [-66.5, -23.5, 0, 23.5, 66.5];
+    latDegs.forEach((deg) => {
+      const a = (deg * Math.PI) / 180;
+      const y = cy + Math.sin(a) * r * 0.72;
+      const rx = Math.cos(a) * r;
+      const ry = Math.max(10, rx * 0.18);
+      const isEquator = Math.abs(deg) < 0.001;
+      strokeEllipse(cx, y, rx, ry, isEquator ? (lineW + 0.7) : lineW, isEquator ? 0.55 : 0.35);
+    });
+
+    const meridians = 8;
+    for (let i = 0; i < meridians; i++){
+      const deg = (i * 180) / meridians;
+      const a = (deg * Math.PI) / 180;
+      const x = cx + Math.sin(a) * r * 0.72;
+      const ry = r;
+      const rx = Math.max(10, ry * 0.18);
+      const isPrime = i === 0;
+      strokeEllipse(x, cy, rx, ry, isPrime ? (lineW + 0.3) : lineW, isPrime ? 0.42 : 0.28);
+    }
+
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  // ======================
+  // Constellations
   // ======================
   function drawConstellations(ctx, size, rand, colors, lineW, nodeR, innerPad){
     const count = 6;
@@ -688,23 +712,6 @@
         ctx.arc(p.x, p.y, nodeR, 0, Math.PI*2);
         ctx.fill();
       });
-
-      if (pts.length >= 5 && rand() > 0.55){
-        const base = pts[Math.floor(rand()*pts.length)];
-        const bx = clamp(base.x + (rand()-0.5)*140, safeMin, safeMax);
-        const by = clamp(base.y + (rand()-0.5)*140, safeMin, safeMax);
-
-        ctx.globalAlpha = 0.85;
-        ctx.beginPath();
-        ctx.moveTo(base.x, base.y);
-        ctx.lineTo(bx, by);
-        ctx.stroke();
-
-        ctx.globalAlpha = 0.95;
-        ctx.beginPath();
-        ctx.arc(bx, by, Math.max(1.8, nodeR - 0.2), 0, Math.PI*2);
-        ctx.fill();
-      }
     }
 
     ctx.restore();
@@ -712,54 +719,7 @@
   }
 
   // ======================
-  // Globe-style grid (lat/long)
-  // ======================
-  function drawGlobeGrid(ctx, size, colors, lineW, innerPad){
-    const cx = size / 2;
-    const cy = size / 2;
-    const r = (size / 2) - innerPad - 2;
-
-    ctx.save();
-    ctx.strokeStyle = colors.line;
-
-    // helper to draw an ellipse
-    function strokeEllipse(x, y, rx, ry, lw, alpha){
-      ctx.globalAlpha = alpha;
-      ctx.lineWidth = lw;
-      ctx.beginPath();
-      ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    // Latitudes (equator thicker)
-    const latDegs = [-66.5, -23.5, 0, 23.5, 66.5];
-    latDegs.forEach((deg) => {
-      const a = (deg * Math.PI) / 180;
-      const y = cy + Math.sin(a) * r * 0.72;
-      const rx = Math.cos(a) * r;
-      const ry = Math.max(10, rx * 0.18);
-      const isEquator = Math.abs(deg) < 0.001;
-      strokeEllipse(cx, y, rx, ry, isEquator ? (lineW + 0.7) : lineW, isEquator ? 0.55 : 0.35);
-    });
-
-    // Longitudes (meridians)
-    const meridians = 8;
-    for (let i = 0; i < meridians; i++){
-      const deg = (i * 180) / meridians; // 0..180
-      const a = (deg * Math.PI) / 180;
-      const x = cx + Math.sin(a) * r * 0.72;
-      const ry = r;
-      const rx = Math.max(10, ry * 0.18);
-      const isPrime = i === 0;
-      strokeEllipse(x, cy, rx, ry, isPrime ? (lineW + 0.3) : lineW, isPrime ? 0.42 : 0.28);
-    }
-
-    ctx.restore();
-    ctx.globalAlpha = 1;
-  }
-
-  // ======================
-  // Map drawing
+  // Map drawing (with visible circle margin line)
   // ======================
   function drawMap(){
     const cssSize = parseFloat(getComputedStyle($poster).getPropertyValue("--mapSize")) || 780;
@@ -779,32 +739,28 @@
 
     const innerPad = state.map.mapCircleMarginEnabled ? clamp(state.map.mapCircleMargin, 0, 90) : 0;
 
-    // scale: constellationSize drives line width + node size
     const cs = clamp(state.map.constellationSize, 1, 4);
     const lineW = 0.9 + cs * 0.55;
     const nodeR = 1.6 + cs * 0.35;
 
-    // base background
     ctx.clearRect(0, 0, size, size);
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, size, size);
 
-    // If inner margin enabled, clip to inner circle and draw a visible ring line
+    // ✅ visible “margen” circular: línea
     if (innerPad > 0){
       const innerR = (size / 2) - innerPad;
 
-      // visible inner ring
       ctx.save();
       ctx.strokeStyle = colors.line;
       ctx.lineWidth = Math.max(1, lineW * 0.9);
-      ctx.globalAlpha = 0.55;
+      ctx.globalAlpha = 0.65;
       ctx.beginPath();
       ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
       ctx.stroke();
       ctx.restore();
       ctx.globalAlpha = 1;
 
-      // clip inside the inner circle
       ctx.save();
       ctx.beginPath();
       ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
@@ -819,16 +775,13 @@
       return;
     }
 
-    // no inner margin
     drawStars(ctx, size, rand, colors, 0);
-
     if (state.map.showGrid) drawGlobeGrid(ctx, size, colors, Math.max(1, lineW * 0.85), 0);
     if (state.map.showConstellations) drawConstellations(ctx, size, rand, colors, lineW, nodeR, 0);
   }
 
   function drawStars(ctx, size, rand, colors, innerPad){
     const N = Math.floor(680 + rand()*80);
-
     const safeMin = innerPad + 2;
     const safeMax = size - innerPad - 2;
 
@@ -865,20 +818,16 @@
 
     const colors = colorsFor(state.map.colorTheme);
 
-    // bg
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
-    // poster pad influences positions
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
 
-    // map size from pad
     const mapSize = clamp(780 - Math.round(pad * 0.6), 640, 780);
     const mapX = (W - mapSize) / 2;
     const mapY = pad + 70;
     const r = mapSize / 2;
 
-    // clip circle and draw current map canvas
     ctx.save();
     ctx.beginPath();
     ctx.arc(mapX + r, mapY + r, r, 0, Math.PI * 2);
@@ -886,7 +835,6 @@
     ctx.drawImage($canvas, mapX, mapY, mapSize, mapSize);
     ctx.restore();
 
-    // font
     const fontFamily = state.text.fontFamily;
     ctx.fillStyle = colors.star;
     ctx.globalAlpha = 1;
@@ -916,7 +864,7 @@
     if (state.map.styleId === "minimal"){
       const left = pad + 80;
 
-      let top = H - (pad + 64) - 140;
+      let top = H - (pad + 64) - 160;
       top = Math.max(top, mapY + mapSize + 40);
       let ty = top;
 
@@ -955,7 +903,6 @@
       return;
     }
 
-    // pdf via print
     const url = out.toDataURL("image/png");
     const w = window.open("", "_blank");
     if (!w) {
@@ -985,27 +932,6 @@
   }
 
   // ======================
-  // Poster + Map
-  // ======================
-  function renderPosterFont(){
-    $poster.style.fontFamily = state.text.fontFamily || "system-ui, -apple-system, Segoe UI, Roboto, Arial";
-  }
-
-  function renderPosterText(){
-    $pTitle.style.display = state.visible.title ? "block" : "none";
-    $pSubtitle.style.display = state.visible.subtitle ? "block" : "none";
-    $pPlace.style.display = state.visible.place ? "block" : "none";
-    $pCoords.style.display = state.visible.coords ? "block" : "none";
-    $pDatetime.style.display = state.visible.datetime ? "block" : "none";
-
-    $pTitle.textContent = state.text.title || "";
-    $pSubtitle.textContent = state.text.subtitle || "";
-    $pPlace.textContent = state.text.place || "";
-    $pCoords.textContent = state.text.coords || "";
-    $pDatetime.textContent = state.text.datetime || "";
-  }
-
-  // ======================
   // Section Router
   // ======================
   function renderSection(){
@@ -1026,13 +952,12 @@
   // ======================
   // Init
   // ======================
-  // enforce defaults on load
   setDefaultsByStyle(state.map.styleId);
   setPosterLayout();
-  applyPosterMargin();
+  applyPosterMarginLine();
+  applyPosterPaddingLayout();
   setMapSizeFromPosterPad();
-
-  applyZoom(); // ✅ set initial zoom and label
+  applyZoom(); // ✅ sets 75% and updates label
 
   renderAll();
   window.addEventListener("resize", () => drawMap());

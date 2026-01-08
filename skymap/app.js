@@ -1,5 +1,11 @@
 (() => {
   // ======================
+  // Constants (for “10%” defaults)
+  // ======================
+  const POSTER_W = 900;
+  const POSTER_MARGIN_INSET_DEFAULT = Math.round(POSTER_W * 0.10); // 10% => 90px
+
+  // ======================
   // State
   // ======================
   const state = {
@@ -34,18 +40,19 @@
       styleId: "minimal", // minimal | classic
 
       showConstellations: true,
-      showGrid: false,
       colorTheme: "mono",
 
-      // Layout padding (opcional) + visible margin line (lo que tú llamas “margen”)
+      // ✅ Poster “margin” = rectangle line (inset fixed 10%, slider = thickness)
       posterMarginEnabled: false,
-      posterMargin: 80, // slider value; for classic default
+      posterMarginInsetPx: POSTER_MARGIN_INSET_DEFAULT,
+      posterMarginThickness: 2,
 
-      // Map circle margin line
+      // ✅ Map “margin” = circle line (inset fixed 10% of map size, slider = thickness)
       mapCircleMarginEnabled: false,
-      mapCircleMargin: 24,
+      mapCircleInsetPct: 0.10,     // 10%
+      mapCircleMarginThickness: 2,
 
-      // ✅ rename: affects constellation thickness + nodes + grid thickness
+      // ✅ rename: affects constellation thickness + nodes
       constellationSize: 2.0,
 
       seed: 12345,
@@ -121,7 +128,7 @@
   }
 
   // ======================
-  // Zoom (✅ working)
+  // Zoom
   // ======================
   function applyZoom(){
     if (!$previewScale) return;
@@ -143,7 +150,7 @@
   }
 
   // ======================
-  // Layout + “margen” (líneas)
+  // Layout + Style defaults
   // ======================
   function setPosterLayout(){
     if (state.map.styleId === "classic") $poster.classList.add("classic");
@@ -151,35 +158,41 @@
   }
 
   function setDefaultsByStyle(styleId){
-    // Classic: margin line ON by default
-    // Minimal: margin line OFF by default
+    // Classic: poster margin line ON by default (10% inset)
+    // Minimal: poster margin line OFF by default
     if (styleId === "classic") {
       state.map.posterMarginEnabled = true;
-      if (!state.map.posterMargin || state.map.posterMargin < 20) state.map.posterMargin = 80;
+      state.map.posterMarginInsetPx = POSTER_MARGIN_INSET_DEFAULT;
     } else {
       state.map.posterMarginEnabled = false;
+      state.map.posterMarginInsetPx = POSTER_MARGIN_INSET_DEFAULT;
     }
   }
 
+  function setMapSizeFromPosterPad(){
+    // mantenemos la lógica de juntar elementos (como lo aprobaste)
+    const base = 780;
+    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
+    const size = clamp(base - Math.round(pad * 0.6), 640, 780);
+    $poster.style.setProperty("--mapSize", `${size}px`);
+  }
+
   function applyPosterMarginLine(){
-    // ✅ línea rectangular del margen (esto es el “margen” que pediste)
-    const inset = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
-    $poster.style.setProperty("--posterMarginLine", `${inset}px`);
-    if (state.map.posterMarginEnabled && inset > 0) $poster.classList.add("showPosterMargin");
+    // inset fijo (10%), grosor variable
+    const inset = state.map.posterMarginEnabled ? state.map.posterMarginInsetPx : POSTER_MARGIN_INSET_DEFAULT;
+    const thick = clamp(state.map.posterMarginThickness, 1, 10);
+
+    $poster.style.setProperty("--posterMarginInset", `${inset}px`);
+    $poster.style.setProperty("--posterMarginThickness", `${thick}px`);
+
+    if (state.map.posterMarginEnabled) $poster.classList.add("showPosterMargin");
     else $poster.classList.remove("showPosterMargin");
   }
 
   function applyPosterPaddingLayout(){
-    // (Esto es opcional; lo dejo igual que antes porque comentaste que está bien que se junten)
-    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
+    // padding sigue igual (como dijiste: está bien que se junten)
+    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
     $poster.style.setProperty("--posterPad", `${pad}px`);
-  }
-
-  function setMapSizeFromPosterPad(){
-    const base = 780;
-    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
-    const size = clamp(base - Math.round(pad * 0.6), 640, 780);
-    $poster.style.setProperty("--mapSize", `${size}px`);
   }
 
   // ======================
@@ -280,7 +293,7 @@
   }
 
   // ======================
-  // Section B
+  // Section B (✅ no grid option)
   // ======================
   function renderSectionB(){
     $section.innerHTML = "";
@@ -291,7 +304,7 @@
 
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Estilo, color, constelaciones, retícula tipo globo y márgenes con línea.";
+    s.textContent = "Estilo, color, constelaciones y márgenes (líneas) con grosor ajustable.";
 
     // style
     const styleRow = document.createElement("div");
@@ -334,10 +347,7 @@
     };
     colorRow.appendChild(colorSel);
 
-    // toggles
-    const grid = document.createElement("div");
-    grid.className = "grid2";
-
+    // constellations toggle
     const conRow = document.createElement("label");
     conRow.className = "rowToggle";
     conRow.innerHTML = `<span>Constelaciones</span>`;
@@ -347,72 +357,61 @@
     conInput.onchange = () => { state.map.showConstellations = conInput.checked; drawMap(); };
     conRow.appendChild(conInput);
 
-    const gridRow = document.createElement("label");
-    gridRow.className = "rowToggle";
-    gridRow.innerHTML = `<span>Retícula (globo)</span>`;
-    const gridInput = document.createElement("input");
-    gridInput.type = "checkbox";
-    gridInput.checked = !!state.map.showGrid;
-    gridInput.onchange = () => { state.map.showGrid = gridInput.checked; drawMap(); };
-    gridRow.appendChild(gridInput);
+    // poster margin line
+    const posterToggle = document.createElement("label");
+    posterToggle.className = "rowToggle";
+    posterToggle.style.marginTop = "10px";
+    posterToggle.innerHTML = `<span>Margen del póster (línea)</span>`;
+    const posterChk = document.createElement("input");
+    posterChk.type = "checkbox";
+    posterChk.checked = !!state.map.posterMarginEnabled;
+    posterChk.onchange = () => { state.map.posterMarginEnabled = posterChk.checked; renderPosterAndMap(); renderAll(); };
+    posterToggle.appendChild(posterChk);
 
-    grid.appendChild(conRow);
-    grid.appendChild(gridRow);
-
-    // poster margin (LINE)
-    const posterMarginToggle = document.createElement("label");
-    posterMarginToggle.className = "rowToggle";
-    posterMarginToggle.style.marginTop = "10px";
-    posterMarginToggle.innerHTML = `<span>Margen del póster (línea)</span>`;
-    const posterMarginChk = document.createElement("input");
-    posterMarginChk.type = "checkbox";
-    posterMarginChk.checked = !!state.map.posterMarginEnabled;
-    posterMarginChk.onchange = () => {
-      state.map.posterMarginEnabled = posterMarginChk.checked;
-      renderPosterAndMap();
-      renderAll();
+    const posterThickRow = document.createElement("div");
+    posterThickRow.className = "formRow";
+    posterThickRow.innerHTML = `<div class="label">Grosor de la línea del margen (póster)</div>`;
+    const posterThick = document.createElement("input");
+    posterThick.type = "range";
+    posterThick.min = "1";
+    posterThick.max = "10";
+    posterThick.step = "1";
+    posterThick.value = String(state.map.posterMarginThickness);
+    posterThick.disabled = !state.map.posterMarginEnabled;
+    posterThick.oninput = () => {
+      state.map.posterMarginThickness = Number(posterThick.value);
+      applyPosterMarginLine();
     };
-    posterMarginToggle.appendChild(posterMarginChk);
+    posterThickRow.appendChild(posterThick);
 
-    const posterMarginRow = document.createElement("div");
-    posterMarginRow.className = "formRow";
-    posterMarginRow.innerHTML = `<div class="label">Tamaño del margen del póster</div>`;
-    const posterMarginRange = document.createElement("input");
-    posterMarginRange.type = "range";
-    posterMarginRange.min = "0";
-    posterMarginRange.max = "140";
-    posterMarginRange.value = String(state.map.posterMargin);
-    posterMarginRange.disabled = !state.map.posterMarginEnabled;
-    posterMarginRange.oninput = () => {
-      state.map.posterMargin = Number(posterMarginRange.value);
-      renderPosterAndMap();
+    // map margin line
+    const mapToggle = document.createElement("label");
+    mapToggle.className = "rowToggle";
+    mapToggle.style.marginTop = "10px";
+    mapToggle.innerHTML = `<span>Margen del mapa (línea circular)</span>`;
+    const mapChk = document.createElement("input");
+    mapChk.type = "checkbox";
+    mapChk.checked = !!state.map.mapCircleMarginEnabled;
+    mapChk.onchange = () => { state.map.mapCircleMarginEnabled = mapChk.checked; drawMap(); renderAll(); };
+    mapToggle.appendChild(mapChk);
+
+    const mapThickRow = document.createElement("div");
+    mapThickRow.className = "formRow";
+    mapThickRow.innerHTML = `<div class="label">Grosor de la línea del margen (mapa)</div>`;
+    const mapThick = document.createElement("input");
+    mapThick.type = "range";
+    mapThick.min = "1";
+    mapThick.max = "10";
+    mapThick.step = "1";
+    mapThick.value = String(state.map.mapCircleMarginThickness);
+    mapThick.disabled = !state.map.mapCircleMarginEnabled;
+    mapThick.oninput = () => {
+      state.map.mapCircleMarginThickness = Number(mapThick.value);
+      drawMap();
     };
-    posterMarginRow.appendChild(posterMarginRange);
+    mapThickRow.appendChild(mapThick);
 
-    // map circle margin (LINE)
-    const mapMarginToggle = document.createElement("label");
-    mapMarginToggle.className = "rowToggle";
-    mapMarginToggle.style.marginTop = "10px";
-    mapMarginToggle.innerHTML = `<span>Margen del mapa (línea circular)</span>`;
-    const mapMarginChk = document.createElement("input");
-    mapMarginChk.type = "checkbox";
-    mapMarginChk.checked = !!state.map.mapCircleMarginEnabled;
-    mapMarginChk.onchange = () => { state.map.mapCircleMarginEnabled = mapMarginChk.checked; drawMap(); renderAll(); };
-    mapMarginToggle.appendChild(mapMarginChk);
-
-    const mapMarginRow = document.createElement("div");
-    mapMarginRow.className = "formRow";
-    mapMarginRow.innerHTML = `<div class="label">Tamaño del margen del mapa</div>`;
-    const mapMarginRange = document.createElement("input");
-    mapMarginRange.type = "range";
-    mapMarginRange.min = "0";
-    mapMarginRange.max = "90";
-    mapMarginRange.value = String(state.map.mapCircleMargin);
-    mapMarginRange.disabled = !state.map.mapCircleMarginEnabled;
-    mapMarginRange.oninput = () => { state.map.mapCircleMargin = Number(mapMarginRange.value); drawMap(); };
-    mapMarginRow.appendChild(mapMarginRange);
-
-    // ✅ constellation size
+    // constellation size (renamed)
     const csRow = document.createElement("div");
     csRow.className = "formRow";
     csRow.innerHTML = `<div class="label">Tamaño de constelaciones</div>`;
@@ -436,18 +435,17 @@
     seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
 
-    // mount
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(styleRow);
     $section.appendChild(colorRow);
-    $section.appendChild(grid);
+    $section.appendChild(conRow);
 
-    $section.appendChild(posterMarginToggle);
-    $section.appendChild(posterMarginRow);
+    $section.appendChild(posterToggle);
+    $section.appendChild(posterThickRow);
 
-    $section.appendChild(mapMarginToggle);
-    $section.appendChild(mapMarginRow);
+    $section.appendChild(mapToggle);
+    $section.appendChild(mapThickRow);
 
     $section.appendChild(csRow);
     $section.appendChild(seedRow);
@@ -529,7 +527,7 @@
   }
 
   // ======================
-  // Export (✅ aligned same row)
+  // Export
   // ======================
   function renderSectionD(){
     $section.innerHTML = "";
@@ -611,59 +609,11 @@
     $poster.style.color = c.star;
 
     setPosterLayout();
-
-    // ✅ “margen” = línea
     applyPosterMarginLine();
-
-    // layout interno (si quieres que NO mueva layout, lo quitas aquí)
     applyPosterPaddingLayout();
     setMapSizeFromPosterPad();
 
     drawMap();
-  }
-
-  // ======================
-  // Globe grid
-  // ======================
-  function drawGlobeGrid(ctx, size, colors, lineW, innerPad){
-    const cx = size / 2;
-    const cy = size / 2;
-    const r = (size / 2) - innerPad - 2;
-
-    ctx.save();
-    ctx.strokeStyle = colors.line;
-
-    function strokeEllipse(x, y, rx, ry, lw, alpha){
-      ctx.globalAlpha = alpha;
-      ctx.lineWidth = lw;
-      ctx.beginPath();
-      ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    const latDegs = [-66.5, -23.5, 0, 23.5, 66.5];
-    latDegs.forEach((deg) => {
-      const a = (deg * Math.PI) / 180;
-      const y = cy + Math.sin(a) * r * 0.72;
-      const rx = Math.cos(a) * r;
-      const ry = Math.max(10, rx * 0.18);
-      const isEquator = Math.abs(deg) < 0.001;
-      strokeEllipse(cx, y, rx, ry, isEquator ? (lineW + 0.7) : lineW, isEquator ? 0.55 : 0.35);
-    });
-
-    const meridians = 8;
-    for (let i = 0; i < meridians; i++){
-      const deg = (i * 180) / meridians;
-      const a = (deg * Math.PI) / 180;
-      const x = cx + Math.sin(a) * r * 0.72;
-      const ry = r;
-      const rx = Math.max(10, ry * 0.18);
-      const isPrime = i === 0;
-      strokeEllipse(x, cy, rx, ry, isPrime ? (lineW + 0.3) : lineW, isPrime ? 0.42 : 0.28);
-    }
-
-    ctx.restore();
-    ctx.globalAlpha = 1;
   }
 
   // ======================
@@ -719,7 +669,7 @@
   }
 
   // ======================
-  // Map drawing (with visible circle margin line)
+  // Map drawing (✅ no grid, margins are 10% inset, sliders control thickness)
   // ======================
   function drawMap(){
     const cssSize = parseFloat(getComputedStyle($poster).getPropertyValue("--mapSize")) || 780;
@@ -737,24 +687,29 @@
     const colors = colorsFor(state.map.colorTheme);
     const rand = mulberry32(state.map.seed);
 
-    const innerPad = state.map.mapCircleMarginEnabled ? clamp(state.map.mapCircleMargin, 0, 90) : 0;
+    // ✅ fixed inset at 10% of the current map size when enabled
+    const innerPad = state.map.mapCircleMarginEnabled ? Math.round(size * state.map.mapCircleInsetPct) : 0;
 
+    // constellation size drives constellation stroke + nodes (NOT margin thickness)
     const cs = clamp(state.map.constellationSize, 1, 4);
-    const lineW = 0.9 + cs * 0.55;
+    const conLineW = 0.9 + cs * 0.55;
     const nodeR = 1.6 + cs * 0.35;
+
+    // margin (circle) line thickness slider
+    const circleLineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
     ctx.clearRect(0, 0, size, size);
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, size, size);
 
-    // ✅ visible “margen” circular: línea
+    // if circular margin is enabled, draw the ring line (thickness controlled) and clip inside
     if (innerPad > 0){
       const innerR = (size / 2) - innerPad;
 
       ctx.save();
       ctx.strokeStyle = colors.line;
-      ctx.lineWidth = Math.max(1, lineW * 0.9);
-      ctx.globalAlpha = 0.65;
+      ctx.lineWidth = circleLineW;
+      ctx.globalAlpha = 0.75;
       ctx.beginPath();
       ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
       ctx.stroke();
@@ -767,17 +722,15 @@
       ctx.clip();
 
       drawStars(ctx, size, rand, colors, innerPad);
-
-      if (state.map.showGrid) drawGlobeGrid(ctx, size, colors, Math.max(1, lineW * 0.85), innerPad);
-      if (state.map.showConstellations) drawConstellations(ctx, size, rand, colors, lineW, nodeR, innerPad);
+      if (state.map.showConstellations) drawConstellations(ctx, size, rand, colors, conLineW, nodeR, innerPad);
 
       ctx.restore();
       return;
     }
 
+    // no circular margin
     drawStars(ctx, size, rand, colors, 0);
-    if (state.map.showGrid) drawGlobeGrid(ctx, size, colors, Math.max(1, lineW * 0.85), 0);
-    if (state.map.showConstellations) drawConstellations(ctx, size, rand, colors, lineW, nodeR, 0);
+    if (state.map.showConstellations) drawConstellations(ctx, size, rand, colors, conLineW, nodeR, 0);
   }
 
   function drawStars(ctx, size, rand, colors, innerPad){
@@ -821,7 +774,7 @@
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
-    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMargin, 0, 140) : 0;
+    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
 
     const mapSize = clamp(780 - Math.round(pad * 0.6), 640, 780);
     const mapX = (W - mapSize) / 2;
@@ -957,7 +910,7 @@
   applyPosterMarginLine();
   applyPosterPaddingLayout();
   setMapSizeFromPosterPad();
-  applyZoom(); // ✅ sets 75% and updates label
+  applyZoom();
 
   renderAll();
   window.addEventListener("resize", () => drawMap());

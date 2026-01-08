@@ -161,10 +161,10 @@
       background: rgba(124,255,250,.95);
     }
 
-    /* ✅ more spacing between groups */
-    .stackGap{ margin-top: 14px; }
+    /* ✅ Spacing helper */
+    .stackGap{ margin-top: 12px; }
 
-    /* ✅ Content field card (como mock) */
+    /* ✅ Content field card */
     .fieldCard{
       border:1px solid var(--stroke);
       border-radius:16px;
@@ -252,20 +252,17 @@
       will-change: transform;
     }
 
-    /* ✅ Footer on preview */
+    /* ✅ Footer (más pequeño) */
     .previewFooter{
       position:absolute;
       right: 16px;
-      bottom: 16px;
-      z-index: 30;
-      font-size: 12px;
-      color: rgba(233,238,252,.72);
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid var(--stroke);
-      background: rgba(0,0,0,.22);
-      backdrop-filter: blur(6px);
+      bottom: 14px;
+      font-size: 10px;
+      opacity: .55;
+      letter-spacing: .15px;
       user-select:none;
+      pointer-events:none;
+      z-index: 25;
     }
 
     /* Zoom controls */
@@ -314,17 +311,17 @@
       position:relative;
       overflow:hidden;
 
-      /* map dims (JS updates) */
-      --mapW: 780px;
-      --mapH: 780px;
-
       --posterPad: 0px;
 
       --posterMarginInset: 45px;
       --posterMarginThickness: 2px;
 
-      /* ✅ margin color matches poster text */
+      /* ✅ set by JS */
       --posterMarginColor: rgba(233,238,252,.22);
+
+      /* ✅ map dims set by JS */
+      --mapW: 780px;
+      --mapH: 780px;
     }
 
     .poster .marginGuide{
@@ -347,30 +344,21 @@
       padding-top: calc(var(--posterPad) + 70px);
     }
 
-    /* ✅ Poster style: move map a bit up to free space for bottom text */
-    .poster.posterStylePoster .posterInner{
-      padding-top: calc(var(--posterPad) + 52px);
-    }
-
-    .mapCircle{
+    /* ✅ Map frame: NO clipping here (JS draws shapes on canvas) */
+    .mapFrame{
       width: var(--mapW);
       height: var(--mapH);
-      overflow:hidden;
-      position:relative;
-      border-radius: 999px; /* default circle */
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
-
-    /* Shapes */
-    .poster.shape-rect .mapCircle{ border-radius: 14px; }
-    .poster.shape-heart .mapCircle{ border-radius: 14px; } /* canvas clips internally anyway */
-
     canvas#mapCanvas{
       width: var(--mapW);
       height: var(--mapH);
       display:block;
     }
 
-    /* Minimalista (layout) */
+    /* Minimalista */
     .bottomText{
       position:absolute;
       left: calc(var(--posterPad) + 80px);
@@ -403,7 +391,7 @@
       text-overflow:ellipsis;
     }
 
-    /* Clásico (layout) */
+    /* Clásico */
     .poster.classic .bottomText{
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
@@ -413,13 +401,6 @@
     .poster.classic .meta{ justify-content:center; }
     .poster.classic .metaCol{ align-items:center; text-align:center; }
     .poster.classic .tTitle{ letter-spacing:1.6px; }
-
-    /* ✅ Poster style: text closer to bottom + a bit narrower */
-    .poster.posterStylePoster .bottomText{
-      left: calc(var(--posterPad) + 90px);
-      right: calc(var(--posterPad) + 90px);
-      bottom: calc(var(--posterPad) + 54px);
-    }
 
     @media (max-width: 980px){
       #app{ grid-template-columns: 1fr; }
@@ -455,14 +436,15 @@
           <div class="zoomLabel" id="zoomLabel">75%</div>
         </div>
 
-        <div class="previewFooter">© Skymap Creator 2026 · All rights reserved.</div>
+        <!-- ✅ footer -->
+        <div class="previewFooter">© skymap creator 2026 · all rights reserved</div>
 
         <div class="previewScale" id="previewScale">
           <div class="poster" id="poster">
             <div class="marginGuide"></div>
 
             <div class="posterInner">
-              <div class="mapCircle">
+              <div class="mapFrame">
                 <canvas id="mapCanvas"></canvas>
               </div>
 

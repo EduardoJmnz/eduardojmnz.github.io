@@ -59,8 +59,8 @@
     },
   };
 
+  // ✅ Removed "a) Campos" — fields moved to Texto tab
   const STEPS = [
-    { key: "a", label: "a) Campos" },
     { key: "b", label: "b) Mapa" },
     { key: "c", label: "c) Texto" },
     { key: "d", label: "d) Export" },
@@ -69,6 +69,14 @@
   const MAP_STYLES = [
     { id: "minimal", name: "Minimalista" },
     { id: "classic", name: "Clásico" },
+  ];
+
+  const COLOR_THEMES = [
+    // circles UI (value must match colorsFor())
+    { id: "mono", name: "Mono", dot: "#FFFFFF" },
+    { id: "blue", name: "Azul", dot: "#9bc1ff" },
+    { id: "warm", name: "Cálido", dot: "#F6E7C9" },
+    { id: "neon", name: "Neón", dot: "#7CFFFA" },
   ];
 
   const FONT_PRESETS = [
@@ -240,60 +248,140 @@
     });
   }
 
-  // ======================
-  // Section A
-  // ======================
-  function renderSectionA(){
-    $section.innerHTML = "";
+  // ✅ Toggle row component (replaces checkbox)
+  function toggleRow(label, checked, onChange){
+    const row = document.createElement("div");
+    row.className = "rowToggle";
+
+    const left = document.createElement("span");
+    left.textContent = label;
 
     const t = document.createElement("div");
-    t.className = "title";
-    t.textContent = "a) Selector de campos visibles";
-    const s = document.createElement("div");
-    s.className = "sub";
-    s.textContent = "Activa/desactiva lo que aparecerá en el póster.";
+    t.className = "toggle" + (checked ? " on" : "");
+    t.role = "switch";
+    t.tabIndex = 0;
+    t.ariaChecked = String(!!checked);
 
-    const grid = document.createElement("div");
-    grid.className = "grid2";
+    function set(val){
+      t.className = "toggle" + (val ? " on" : "");
+      t.ariaChecked = String(!!val);
+      onChange(!!val);
+    }
 
-    const toggles = [
-      ["title", "Título"],
-      ["subtitle", "Subtítulo"],
-      ["place", "Lugar"],
-      ["coords", "Coordenadas"],
-      ["datetime", "Fecha / hora"],
-    ];
+    t.onclick = () => set(!checked);
+    t.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        set(!checked);
+      }
+    };
 
-    toggles.forEach(([key, label]) => {
-      const row = document.createElement("label");
-      row.className = "rowToggle";
-      const span = document.createElement("span");
-      span.textContent = label;
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.checked = !!state.visible[key];
-      input.onchange = () => {
-        state.visible[key] = input.checked;
-        renderPosterText();
-      };
-      row.appendChild(span);
-      row.appendChild(input);
-      grid.appendChild(row);
+    // keep current reference updated
+    Object.defineProperty(t, "_setChecked", {
+      value: (val) => { checked = !!val; t.className = "toggle" + (checked ? " on" : ""); t.ariaChecked = String(checked); },
+      enumerable: false
     });
 
-    $section.appendChild(t);
-    $section.appendChild(s);
-    $section.appendChild(grid);
+    row.appendChild(left);
+    row.appendChild(t);
+    return { row, setChecked: (v) => t._setChecked(v) };
+  }
 
-    $section.appendChild(navButtons({
-      showPrev: false,
-      showNext: true,
-      onNext: () => { state.step = 1; renderAll(); }
-    }));
+  function stylePreviewGrid(){
+    const grid = document.createElement("div");
+    grid.className = "styleGrid";
+
+    MAP_STYLES.forEach(st => {
+      const card = document.createElement("div");
+      card.className = "styleCard" + (state.map.styleId === st.id ? " active" : "");
+
+      const top = document.createElement("div");
+      top.style.display = "flex";
+      top.style.justifyContent = "space-between";
+      top.style.alignItems = "center";
+      top.style.gap = "10px";
+
+      const name = document.createElement("div");
+      name.style.fontWeight = "850";
+      name.style.fontSize = "13px";
+      name.textContent = st.name;
+
+      const tag = document.createElement("div");
+      tag.style.fontSize = "11px";
+      tag.style.color = "var(--muted)";
+      tag.textContent = (state.map.styleId === st.id) ? "Seleccionado" : "";
+
+      top.appendChild(name);
+      top.appendChild(tag);
+
+      const mini = document.createElement("div");
+      mini.className = "styleMini";
+
+      const circle = document.createElement("div");
+      circle.className = "miniCircle";
+      mini.appendChild(circle);
+
+      if (st.id === "classic"){
+        const line = document.createElement("div");
+        line.className = "miniLine";
+        mini.appendChild(line);
+      }
+
+      const dots = document.createElement("div");
+      dots.className = "miniDots";
+      // dots fixed positions (no random so it doesn't reflow visually)
+      const pts = st.id === "classic"
+        ? [[18,16],[36,24],[58,18],[44,30],[64,34]]
+        : [[20,18],[34,28],[54,16],[62,26],[46,34]];
+      pts.forEach(([x,y]) => {
+        const sp = document.createElement("span");
+        sp.style.left = `${x}px`;
+        sp.style.top = `${y}px`;
+        dots.appendChild(sp);
+      });
+      mini.appendChild(dots);
+
+      card.appendChild(top);
+      card.appendChild(mini);
+
+      card.onclick = () => {
+        state.map.styleId = st.id;
+        setDefaultsByStyle(state.map.styleId);
+        setPosterLayout();
+        renderPosterAndMap();
+        renderAll();
+      };
+
+      grid.appendChild(card);
+    });
+
+    return grid;
+  }
+
+  function colorCirclesRow(){
+    const wrap = document.createElement("div");
+    wrap.className = "colorRow";
+
+    COLOR_THEMES.forEach(th => {
+      const dot = document.createElement("div");
+      dot.className = "colorDot" + (state.map.colorTheme === th.id ? " active" : "");
+      dot.title = th.name;
+      dot.style.background = th.dot;
+
+      dot.onclick = () => {
+        state.map.colorTheme = th.id;
+        renderPosterAndMap();
+        renderAll();
+      };
+
+      wrap.appendChild(dot);
+    });
+
+    return wrap;
   }
 
   // ======================
-  // Section B
+  // Section B (Mapa)
   // ======================
   function renderSectionB(){
     $section.innerHTML = "";
@@ -304,73 +392,52 @@
 
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Estilo, color, constelaciones y márgenes (líneas) con grosor ajustable.";
+    s.textContent = "Estilo, color, constelaciones y márgenes con toggles.";
 
-    // style
+    // ✅ style preview (replaces select)
     const styleRow = document.createElement("div");
     styleRow.className = "formRow";
     styleRow.innerHTML = `<div class="label">Estilo</div>`;
-    const styleSel = document.createElement("select");
-    styleSel.className = "select";
-    MAP_STYLES.forEach(st => {
-      const opt = document.createElement("option");
-      opt.value = st.id;
-      opt.textContent = st.name;
-      styleSel.appendChild(opt);
-    });
-    styleSel.value = state.map.styleId;
-    styleSel.onchange = () => {
-      state.map.styleId = styleSel.value;
-      setDefaultsByStyle(state.map.styleId);
-      setPosterLayout();
-      renderPosterAndMap();
-      renderAll();
-    };
-    styleRow.appendChild(styleSel);
+    styleRow.appendChild(stylePreviewGrid());
 
-    // color
+    // ✅ color circles (replaces select)
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
     colorRow.innerHTML = `<div class="label">Color del mapa</div>`;
-    const colorSel = document.createElement("select");
-    colorSel.className = "select";
-    [["mono","Mono"],["blue","Azul"],["warm","Cálido"],["neon","Neón"]].forEach(([val, name]) => {
-      const opt = document.createElement("option");
-      opt.value = val;
-      opt.textContent = name;
-      colorSel.appendChild(opt);
+    colorRow.appendChild(colorCirclesRow());
+
+    // constellations toggle (now switch)
+    const con = toggleRow("Constelaciones", !!state.map.showConstellations, (val) => {
+      state.map.showConstellations = val;
+      drawMap();
+      renderAll();
     });
-    colorSel.value = state.map.colorTheme;
-    colorSel.onchange = () => {
-      state.map.colorTheme = colorSel.value;
+
+    // ✅ constellation size right under toggle
+    const csRow = document.createElement("div");
+    csRow.className = "formRow";
+    csRow.style.marginTop = "2px";
+    csRow.innerHTML = `<div class="label">Tamaño de constelaciones</div>`;
+    const csRange = document.createElement("input");
+    csRange.type = "range";
+    csRange.min = "1";
+    csRange.max = "4";
+    csRange.step = "0.5";
+    csRange.value = String(state.map.constellationSize);
+    csRange.disabled = !state.map.showConstellations;
+    csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
+    csRow.appendChild(csRange);
+
+    // poster margin line (toggle + slider)
+    const posterToggle = toggleRow("Margen del póster", !!state.map.posterMarginEnabled, (val) => {
+      state.map.posterMarginEnabled = val;
       renderPosterAndMap();
-    };
-    colorRow.appendChild(colorSel);
-
-    // constellations toggle
-    const conRow = document.createElement("label");
-    conRow.className = "rowToggle";
-    conRow.innerHTML = `<span>Constelaciones</span>`;
-    const conInput = document.createElement("input");
-    conInput.type = "checkbox";
-    conInput.checked = !!state.map.showConstellations;
-    conInput.onchange = () => { state.map.showConstellations = conInput.checked; drawMap(); };
-    conRow.appendChild(conInput);
-
-    // poster margin line
-    const posterToggle = document.createElement("label");
-    posterToggle.className = "rowToggle";
-    posterToggle.style.marginTop = "10px";
-    posterToggle.innerHTML = `<span>Margen del póster (línea)</span>`;
-    const posterChk = document.createElement("input");
-    posterChk.type = "checkbox";
-    posterChk.checked = !!state.map.posterMarginEnabled;
-    posterChk.onchange = () => { state.map.posterMarginEnabled = posterChk.checked; renderPosterAndMap(); renderAll(); };
-    posterToggle.appendChild(posterChk);
+      renderAll();
+    });
 
     const posterThickRow = document.createElement("div");
     posterThickRow.className = "formRow";
-    posterThickRow.innerHTML = `<div class="label">Grosor de la línea del margen (póster)</div>`;
+    posterThickRow.innerHTML = `<div class="label">Grosor de la línea (póster)</div>`;
     const posterThick = document.createElement("input");
     posterThick.type = "range";
     posterThick.min = "1";
@@ -384,20 +451,16 @@
     };
     posterThickRow.appendChild(posterThick);
 
-    // map margin line
-    const mapToggle = document.createElement("label");
-    mapToggle.className = "rowToggle";
-    mapToggle.style.marginTop = "10px";
-    mapToggle.innerHTML = `<span>Margen del mapa (línea circular)</span>`;
-    const mapChk = document.createElement("input");
-    mapChk.type = "checkbox";
-    mapChk.checked = !!state.map.mapCircleMarginEnabled;
-    mapChk.onchange = () => { state.map.mapCircleMarginEnabled = mapChk.checked; drawMap(); renderAll(); };
-    mapToggle.appendChild(mapChk);
+    // map margin line (toggle + slider)
+    const mapToggle = toggleRow("Margen del mapa", !!state.map.mapCircleMarginEnabled, (val) => {
+      state.map.mapCircleMarginEnabled = val;
+      drawMap();
+      renderAll();
+    });
 
     const mapThickRow = document.createElement("div");
     mapThickRow.className = "formRow";
-    mapThickRow.innerHTML = `<div class="label">Grosor de la línea del margen (mapa)</div>`;
+    mapThickRow.innerHTML = `<div class="label">Grosor de la línea (mapa)</div>`;
     const mapThick = document.createElement("input");
     mapThick.type = "range";
     mapThick.min = "1";
@@ -410,19 +473,6 @@
       drawMap();
     };
     mapThickRow.appendChild(mapThick);
-
-    // constellation size (renamed)
-    const csRow = document.createElement("div");
-    csRow.className = "formRow";
-    csRow.innerHTML = `<div class="label">Tamaño de constelaciones</div>`;
-    const csRange = document.createElement("input");
-    csRange.type = "range";
-    csRange.min = "1";
-    csRange.max = "4";
-    csRange.step = "0.5";
-    csRange.value = String(state.map.constellationSize);
-    csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
-    csRow.appendChild(csRange);
 
     // new sky
     const seedRow = document.createElement("div");
@@ -439,37 +489,38 @@
     $section.appendChild(s);
     $section.appendChild(styleRow);
     $section.appendChild(colorRow);
-    $section.appendChild(conRow);
 
-    $section.appendChild(posterToggle);
+    $section.appendChild(con.row);
+    $section.appendChild(csRow);
+
+    // margins
+    $section.appendChild(posterToggle.row);
     $section.appendChild(posterThickRow);
 
-    $section.appendChild(mapToggle);
+    $section.appendChild(mapToggle.row);
     $section.appendChild(mapThickRow);
 
-    $section.appendChild(csRow);
     $section.appendChild(seedRow);
 
     $section.appendChild(navButtons({
-      showPrev: true,
+      showPrev: false,
       showNext: true,
-      onPrev: () => { state.step = 0; renderAll(); },
-      onNext: () => { state.step = 2; renderAll(); }
+      onNext: () => { state.step = 1; renderAll(); }
     }));
   }
 
   // ======================
-  // Section C
+  // Section C (Texto + Campos)
   // ======================
   function renderSectionC(){
     $section.innerHTML = "";
 
     const t = document.createElement("div");
     t.className = "title";
-    t.textContent = "c) Editor de texto";
+    t.textContent = "c) Texto";
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Edita contenido y tipografía.";
+    s.textContent = "Activa campos y edita contenido/tipografía.";
 
     function inputRow(label, value, onChange, placeholder=""){
       const row = document.createElement("div");
@@ -508,21 +559,43 @@
     };
     fontRow.appendChild(fontSel);
 
+    // ✅ Fields toggles moved here
+    const fieldsTitle = document.createElement("div");
+    fieldsTitle.className = "label";
+    fieldsTitle.style.marginTop = "8px";
+    fieldsTitle.textContent = "Campos visibles";
+
+    const fieldToggles = [
+      ["title", "Título"],
+      ["subtitle", "Subtítulo"],
+      ["place", "Lugar"],
+      ["coords", "Coordenadas"],
+      ["datetime", "Fecha / hora"],
+    ].map(([key, label]) => toggleRow(label, !!state.visible[key], (val) => {
+      state.visible[key] = val;
+      renderPosterText();
+      renderAll();
+    }));
+
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(fontRow);
 
-    $section.appendChild(inputRow("Título", state.text.title, (v) => { state.text.title = v; renderPosterText(); }));
-    $section.appendChild(inputRow("Subtítulo", state.text.subtitle, (v) => { state.text.subtitle = v; renderPosterText(); }));
-    $section.appendChild(inputRow("Lugar", state.text.place, (v) => { state.text.place = v; renderPosterText(); }));
-    $section.appendChild(inputRow("Coordenadas", state.text.coords, (v) => { state.text.coords = v; renderPosterText(); }));
-    $section.appendChild(inputRow("Fecha / hora", state.text.datetime, (v) => { state.text.datetime = v; renderPosterText(); }, "YYYY-MM-DD HH:mm"));
+    $section.appendChild(fieldsTitle);
+    fieldToggles.forEach(tg => $section.appendChild(tg.row));
+
+    // ✅ Inputs shown only if field enabled (coherent UX)
+    if (state.visible.title) $section.appendChild(inputRow("Título", state.text.title, (v) => { state.text.title = v; renderPosterText(); }));
+    if (state.visible.subtitle) $section.appendChild(inputRow("Subtítulo", state.text.subtitle, (v) => { state.text.subtitle = v; renderPosterText(); }));
+    if (state.visible.place) $section.appendChild(inputRow("Lugar", state.text.place, (v) => { state.text.place = v; renderPosterText(); }));
+    if (state.visible.coords) $section.appendChild(inputRow("Coordenadas", state.text.coords, (v) => { state.text.coords = v; renderPosterText(); }));
+    if (state.visible.datetime) $section.appendChild(inputRow("Fecha / hora", state.text.datetime, (v) => { state.text.datetime = v; renderPosterText(); }, "YYYY-MM-DD HH:mm"));
 
     $section.appendChild(navButtons({
       showPrev: true,
       showNext: true,
-      onPrev: () => { state.step = 1; renderAll(); },
-      onNext: () => { state.step = 3; renderAll(); }
+      onPrev: () => { state.step = 0; renderAll(); },
+      onNext: () => { state.step = 2; renderAll(); }
     }));
   }
 
@@ -567,7 +640,7 @@
     prev.type = "button";
     prev.className = "btn ghost";
     prev.textContent = "← Anterior";
-    prev.onclick = () => { state.step = 2; renderAll(); };
+    prev.onclick = () => { state.step = 1; renderAll(); };
     left.appendChild(prev);
 
     const right = document.createElement("div");
@@ -687,8 +760,11 @@
     const colors = colorsFor(state.map.colorTheme);
     const rand = mulberry32(state.map.seed);
 
-    // ✅ fixed inset at 10% of current map size when enabled
-    const innerPad = state.map.mapCircleMarginEnabled ? Math.round(size * state.map.mapCircleInsetPct) : 0;
+    // ✅ KEY CHANGE:
+    // If poster margin is enabled, we apply the SAME innerPad used by map margin
+    // (so the star content feels smaller / less tight with the poster frame).
+    const shouldInsetLikeMapMargin = state.map.mapCircleMarginEnabled || state.map.posterMarginEnabled;
+    const innerPad = shouldInsetLikeMapMargin ? Math.round(size * state.map.mapCircleInsetPct) : 0;
 
     // constellation styling
     const cs = clamp(state.map.constellationSize, 1, 4);
@@ -705,18 +781,20 @@
     if (innerPad > 0){
       const innerR = (size / 2) - innerPad;
 
-      // visible ring line (thickness controlled)
-      ctx.save();
-      ctx.strokeStyle = colors.line;
-      ctx.lineWidth = circleLineW;
-      ctx.globalAlpha = 0.75;
-      ctx.beginPath();
-      ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
-      ctx.stroke();
-      ctx.restore();
-      ctx.globalAlpha = 1;
+      // ✅ only draw ring line if map margin is enabled (not just poster margin)
+      if (state.map.mapCircleMarginEnabled){
+        ctx.save();
+        ctx.strokeStyle = colors.line;
+        ctx.lineWidth = circleLineW;
+        ctx.globalAlpha = 0.75;
+        ctx.beginPath();
+        ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
 
-      // clip inside ring
+      // clip inside inner circle (same sizing logic)
       ctx.save();
       ctx.beginPath();
       ctx.arc(size/2, size/2, innerR, 0, Math.PI*2);
@@ -888,9 +966,8 @@
   // Section Router
   // ======================
   function renderSection(){
-    if (state.step === 0) return renderSectionA();
-    if (state.step === 1) return renderSectionB();
-    if (state.step === 2) return renderSectionC();
+    if (state.step === 0) return renderSectionB();
+    if (state.step === 1) return renderSectionC();
     return renderSectionD();
   }
 

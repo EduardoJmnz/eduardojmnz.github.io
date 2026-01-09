@@ -331,7 +331,7 @@
       display:block;
     }
 
-    /* ✅ 100px desde bottom para TODOS los estilos */
+    /* ✅ CAMBIO: 100px desde bottom para el grupo de textos */
     .bottomText{
       position:absolute;
       left: calc(var(--posterPad) + 80px);
@@ -364,7 +364,7 @@
       text-overflow:ellipsis;
     }
 
-    /* ✅ Igual: 100px también en classic */
+    /* ✅ Classic: solo cambia bottom a 100px (lo demás igual) */
     .poster.classic .bottomText{
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
@@ -375,7 +375,7 @@
     .poster.classic .metaCol{ align-items:center; text-align:center; }
     .poster.classic .tTitle{ letter-spacing:1.6px; }
 
-    /* ✅ Igual: 100px también en rectStyle */
+    /* ✅ RectStyle: solo cambia bottom a 100px (lo demás igual) */
     .poster.rectStyle .bottomText{
       bottom: calc(var(--posterPad) + 100px);
       left: calc(var(--posterPad) + 110px);

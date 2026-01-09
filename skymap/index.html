@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!doctype html>
 <html lang="es">
 <head>
@@ -306,6 +307,9 @@
 
       --mapW: 780px;
       --mapH: 780px;
+
+      /* ✅ base bottom (JS la ajusta cuando hay margen) */
+      --bottomTextBottom: 12px;
     }
 
     .posterInner{
@@ -331,12 +335,12 @@
       display:block;
     }
 
-    /* ✅ Textos más abajo (más espacio entre mapa y textos) */
+    /* ✅ Textos: bottom controlado por variable */
     .bottomText{
       position:absolute;
       left: calc(var(--posterPad) + 80px);
       right: calc(var(--posterPad) + 80px);
-      bottom: calc(var(--posterPad) + 12px);
+      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
       padding:0;
     }
     .tTitle{
@@ -364,20 +368,20 @@
       text-overflow:ellipsis;
     }
 
-    /* ✅ Clásico también más abajo */
+    /* ✅ Clásico también usa la variable */
     .poster.classic .bottomText{
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
-      bottom: calc(var(--posterPad) + 28px);
+      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
       text-align:center;
     }
     .poster.classic .meta{ justify-content:center; }
     .poster.classic .metaCol{ align-items:center; text-align:center; }
     .poster.classic .tTitle{ letter-spacing:1.6px; }
 
-    /* Rect: más abajo */
+    /* Rect: también usa la variable */
     .poster.rectStyle .bottomText{
-      bottom: calc(var(--posterPad) + 12px);
+      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
       text-align:center;

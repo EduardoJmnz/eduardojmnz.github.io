@@ -315,7 +315,6 @@
       flex-direction:column;
       align-items:center;
       justify-content:flex-start;
-      /* ✅ como lo tenías */
       padding-top: calc(var(--posterPad) + 70px);
     }
 
@@ -332,14 +331,12 @@
       display:block;
     }
 
+    /* ✅ Textos más abajo (más espacio entre mapa y textos) */
     .bottomText{
       position:absolute;
       left: calc(var(--posterPad) + 80px);
       right: calc(var(--posterPad) + 80px);
-
-      /* ✅ BAJA EL TEXTO (más pegado al bottom) */
-      bottom: calc(var(--posterPad) + 30px);
-
+      bottom: calc(var(--posterPad) + 12px);
       padding:0;
     }
     .tTitle{
@@ -367,24 +364,20 @@
       text-overflow:ellipsis;
     }
 
+    /* ✅ Clásico también más abajo */
     .poster.classic .bottomText{
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
-
-      /* ✅ BAJA EL TEXTO EN CLÁSICO */
-      bottom: calc(var(--posterPad) + 55px);
-
+      bottom: calc(var(--posterPad) + 28px);
       text-align:center;
     }
     .poster.classic .meta{ justify-content:center; }
     .poster.classic .metaCol{ align-items:center; text-align:center; }
     .poster.classic .tTitle{ letter-spacing:1.6px; }
 
-    /* Poster (rect): textos más pequeños */
+    /* Rect: más abajo */
     .poster.rectStyle .bottomText{
-      /* ✅ BAJA EL TEXTO EN RECT */
-      bottom: calc(var(--posterPad) + 24px);
-
+      bottom: calc(var(--posterPad) + 12px);
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
       text-align:center;

@@ -350,6 +350,7 @@
       display:block;
     }
 
+    /* Minimalista */
     .bottomText{
       position:absolute;
       left: calc(var(--posterPad) + 80px);
@@ -393,10 +394,28 @@
     .poster.classic .metaCol{ align-items:center; text-align:center; }
     .poster.classic .tTitle{ letter-spacing:1.6px; }
 
-    /* ✅ Estilo Poster (rect) -> texto MÁS al bottom para más espacio vs mapa */
+    /* ✅ Poster (rect): NO pegado al bottom, textos más pequeños */
     .poster.rectStyle .bottomText{
-      bottom: calc(var(--posterPad) + 12px);
+      bottom: calc(var(--posterPad) + 46px);
+      left: calc(var(--posterPad) + 110px);
+      right: calc(var(--posterPad) + 110px);
+      text-align:center;
     }
+    .poster.rectStyle .tTitle{
+      font-size: 46px;
+      margin-bottom: 8px;
+      letter-spacing: 1.4px;
+    }
+    .poster.rectStyle .tSub{
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+    .poster.rectStyle .meta{
+      justify-content:center;
+      font-size: 12px;
+      gap: 16px;
+    }
+    .poster.rectStyle .metaCol{ align-items:center; text-align:center; }
 
     @media (max-width: 980px){
       #app{ grid-template-columns: 1fr; }

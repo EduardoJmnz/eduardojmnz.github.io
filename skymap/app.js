@@ -2,11 +2,12 @@
   const POSTER_W = 900;
   const POSTER_H = 1200;
 
-  // ✅ Aire fijo desde el borde del poster
-  const POSTER_EDGE_GAP_PX = 20;
+  // ✅ Separación fija desde el borde del poster (25px)
+  const POSTER_EDGE_GAP_PX = 25;
 
-  // ✅ Marco (área) default = MÁXIMO del slider
-  const POSTER_FRAME_PCT_MAX = 0.12;
+  // ✅ Marco (área) máximo = la MITAD de antes (0.12 -> 0.06)
+  // ✅ Valor inicial del marco = máximo permitido
+  const POSTER_FRAME_PCT_MAX = 0.06;
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
   // ✅ Margen (línea) default = máximo del slider
@@ -46,8 +47,8 @@
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
-      // ✅ Margen del póster (línea) - INDEPENDIENTE,
-      // pero si Marco se enciende => el Margen se apaga/oculta.
+      // ✅ Margen del póster (línea)
+      // Independiente, pero si Marco se enciende => el Margen se apaga/oculta.
       posterMarginEnabled: false,
       posterMarginThickness: POSTER_LINE_THICK_MAX,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
@@ -246,7 +247,7 @@
   // --------------------------
   // ✅ CAPAS: edge gap + marco(área) + margen(línea)
   // --------------------------
-  let $posterFrameArea = null; // área blanca (Marco)
+  let $posterFrameArea = null; // área (Marco)
   let $posterPaper = null;     // fondo interior bg
   let $posterMarginLine = null;// línea (Margen)
 
@@ -323,9 +324,6 @@
 
   function applyPosterPaddingLayout(){
     const edge = POSTER_EDGE_GAP_PX;
-
-    // ✅ Si Marco está ON, el contenido se mueve (edge + frame).
-    // ✅ Si Marco OFF, el contenido respeta solo el edge (20px).
     const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
       ? clamp(state.map.posterFrameInsetPx, 0, 160)
       : 0;
@@ -348,10 +346,6 @@
     $poster.style.setProperty("--mapH", `${size}px`);
   }
 
-  // ✅ REGLAS:
-  // - Marco (área) y Margen (línea) son independientes
-  // - PERO si Marco se activa => Margen debe desaparecer (OFF + oculto)
-  // - En estilo Poster: ambos OFF
   function enforceDecorRules(){
     if (!isPosterDecorAllowed()){
       state.map.posterFrameEnabled = false;
@@ -373,11 +367,9 @@
       ? clamp(state.map.posterFrameInsetPx, 0, 160)
       : 0;
 
-    // Fondo base
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
-    // Marco (área blanca)
     if (state.map.posterFrameEnabled){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = posterColors.star;
@@ -389,13 +381,11 @@
       $posterFrameArea.style.inset = `${edge}px`;
     }
 
-    // Papel interior (bg): edge + frame
     const innerInset = edge + frame;
     $posterPaper.style.background = posterColors.bg;
     $posterPaper.style.inset = `${innerInset}px`;
     $posterPaper.style.borderRadius = `${Math.max(6, 26 - Math.round(innerInset * 0.12))}px`;
 
-    // Margen (línea): SOLO si Marco está apagado
     const marginOn = !!state.map.posterMarginEnabled && !state.map.posterFrameEnabled && isPosterDecorAllowed();
     const thickness = clamp(state.map.posterMarginThickness || POSTER_LINE_THICK_MAX, 1, state.map.posterMarginThicknessMax);
 
@@ -848,7 +838,6 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
 
-        // ✅ En estilo Poster: decor OFF
         if (!isPosterDecorAllowed()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
@@ -893,7 +882,6 @@
       state.map.invertMapColors = pickBool();
       if (state.map.colorTheme === "white") state.map.invertMapColors = true;
 
-      // ✅ Decor random, respetando regla: si Marco ON => Margen OFF
       if (!isPosterDecorAllowed()){
         state.map.posterFrameEnabled = false;
         state.map.posterMarginEnabled = false;
@@ -902,8 +890,6 @@
         state.map.posterFrameEnabled = marco;
         state.map.posterFramePct = Math.round(pickRange(0, POSTER_FRAME_PCT_MAX) * 200) / 200;
         updatePosterFrameInsetPx();
-
-        // si marco está apagado, margen puede ser random
         state.map.posterMarginEnabled = !marco ? pickBool() : false;
         state.map.posterMarginThickness = POSTER_LINE_THICK_MAX;
       }
@@ -970,23 +956,18 @@
       renderAll();
     }));
 
-    // ✅ Marco + Margen (solo si NO es Poster)
     const showDecor = isPosterDecorAllowed();
 
     let frameRow = null, frameSizeRow = null, marginRow = null, marginThickRow = null;
 
     if (showDecor){
-      // Marco del póster = área
       frameRow = document.createElement("div");
       frameRow.className = "rowToggle";
       frameRow.classList.add("stackGap");
       frameRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Marco del póster" }));
       frameRow.appendChild(toggleSwitch(!!state.map.posterFrameEnabled, (val) => {
         state.map.posterFrameEnabled = val;
-
-        // ✅ regla: si activas Marco => Margen desaparece
         if (val) state.map.posterMarginEnabled = false;
-
         renderPosterAndMap();
         renderAll();
       }));
@@ -1009,15 +990,12 @@
       };
       frameSizeRow.appendChild(frameRange);
 
-      // Margen del póster = línea (independiente, pero oculto si Marco ON)
       marginRow = document.createElement("div");
       marginRow.className = "rowToggle";
       marginRow.classList.add("stackGap");
       marginRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Margen del póster" }));
       marginRow.appendChild(toggleSwitch(!!state.map.posterMarginEnabled, (val) => {
         state.map.posterMarginEnabled = val;
-
-        // (no forzamos apagar Marco aquí; solo la regla inversa aplica)
         renderPosterAndMap();
         renderAll();
       }));
@@ -1112,9 +1090,7 @@
       $section.appendChild(frameRow);
       if (state.map.posterFrameEnabled) {
         $section.appendChild(frameSizeRow);
-        // ✅ regla: marco ON => margen desaparece (no render margin)
       } else {
-        // ✅ marco OFF => margen visible/usable
         $section.appendChild(marginRow);
         if (state.map.posterMarginEnabled) $section.appendChild(marginThickRow);
       }
@@ -1395,7 +1371,6 @@
     const st = getStyleDef();
     const decorAllowed = (st.id !== "poster");
 
-    // ✅ regla: marco ON => margen OFF
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
     const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
 
@@ -1406,24 +1381,20 @@
     const frameX = Math.round(framePx * (W / POSTER_W));
     const frameY = Math.round(framePx * (H / POSTER_H));
 
-    // Fondo base
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Marco (área) desde edge gap
     if (frameOn){
       ctx.fillStyle = colors.star;
       ctx.fillRect(edgeX, edgeY, W - edgeX*2, H - edgeY*2);
     }
 
-    // Papel interior desde edge + frame
     const innerX = edgeX + frameX;
     const innerY = edgeY + frameY;
 
     ctx.fillStyle = colors.bg;
     ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
 
-    // Margen (línea) solo si marco OFF
     if (marginOn){
       const thick = clamp(state.map.posterMarginThickness || POSTER_LINE_THICK_MAX, 1, state.map.posterMarginThicknessMax);
       const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
@@ -1438,14 +1409,8 @@
     const sx = W / POSTER_W;
     const sy = H / POSTER_H;
 
-    let mapW, mapH;
-    if (st.shape === "rect"){
-      mapW = Math.round(820 * sx);
-      mapH = Math.round(860 * sy);
-    } else {
-      mapW = Math.round(780 * sx);
-      mapH = mapW;
-    }
+    const mapW = Math.round(780 * sx);
+    const mapH = mapW;
 
     const mapX = Math.round((W - mapW) / 2);
     const mapY = Math.round(innerY + (70 * sy));

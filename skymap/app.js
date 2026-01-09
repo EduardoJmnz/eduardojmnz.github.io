@@ -501,8 +501,12 @@
 
     if (st.shape === "heart"){
       const cx = mapW/2;
-      const cy = mapH/2 + Math.round(mapH * 0.14); // ✅ más abajo
-      const size = Math.min(mapW, mapH) * 0.31;
+
+      // ✅ Más centrado (sube un poco vs antes)
+      const cy = mapH/2 + Math.round(mapH * 0.08);
+
+      // ✅ 15% más grande vs el anterior (0.31 -> ~0.36)
+      const size = Math.min(mapW, mapH) * 0.36;
 
       ctx.save();
       heartPath(ctx, cx, cy, size);
@@ -614,8 +618,8 @@
         ctx.clip();
       } else if (st.shape === "heart"){
         const cx = mx+mw/2;
-        const cy = my+mw/2 + 10;
-        const size = mw*0.60;
+        const cy = my+mw/2 + 8;
+        const size = mw*0.52;
         heartPath(ctx, cx, cy, size);
         ctx.clip();
       } else {

@@ -1,5 +1,6 @@
 (() => {
   const POSTER_W = 900;
+  const POSTER_H = 1200;
   const POSTER_MARGIN_INSET_DEFAULT = Math.round(POSTER_W * 0.05);
 
   const state = {
@@ -21,7 +22,7 @@
     map: {
       styleId: "classic",
 
-      showGrid: false,          // ✅ Retícula solo Clásico / Moderno
+      showGrid: false,          // Retícula solo Clásico / Moderno
       showConstellations: true,
       invertMapColors: false,
 
@@ -38,6 +39,12 @@
       constellationSize: 2.0,
       seed: 12345,
     },
+
+    export: {
+      sizeKey: "digital_900x1200",
+      format: "png",
+      dpi: 300,
+    }
   };
 
   const STEPS = [
@@ -74,6 +81,45 @@
     { id: "neonBlue",  name: "Neón Azul" },
     { id: "neonGreen", name: "Neón Verde" },
     { id: "neonRose",  name: "Neón Rosa" },
+  ];
+
+  // ✅ Export sizes (3:4)
+  const EXPORT_SIZES = [
+    {
+      key: "digital_900x1200",
+      title: "Digital (900×1200 px)",
+      sub: "Ideal para pantalla / pruebas rápidas",
+      type: "px",
+      w: 900, h: 1200
+    },
+    {
+      key: "30x40cm_300dpi",
+      title: "30×40 cm (300 dpi)",
+      sub: "Calidad impresión alta",
+      type: "cm",
+      w: 30, h: 40
+    },
+    {
+      key: "45x60cm_300dpi",
+      title: "45×60 cm (300 dpi)",
+      sub: "Impresión grande, gran detalle",
+      type: "cm",
+      w: 45, h: 60
+    },
+    {
+      key: "60x80cm_300dpi",
+      title: "60×80 cm (300 dpi)",
+      sub: "Impresión XL (archivo pesado)",
+      type: "cm",
+      w: 60, h: 80
+    },
+    {
+      key: "24x32in_300dpi",
+      title: "24×32 in (300 dpi)",
+      sub: "Formato USA (archivo muy pesado)",
+      type: "in",
+      w: 24, h: 32
+    },
   ];
 
   const $tabs = document.getElementById("tabs");
@@ -291,7 +337,6 @@
     });
   }
 
-  // ✅ Retícula curvada (sin slider)
   function drawCurvedGrid(ctx, w, h, colors){
     ctx.save();
     ctx.strokeStyle = colors.line;
@@ -400,8 +445,6 @@
 
   function drawRectMap(ctx, mapW, mapH, mapColors, rand, showOutline, outlineW, conLineW, nodeR){
     ctx.save();
-
-    // Rect es rectángulo a propósito
     ctx.fillStyle = mapColors.bg;
     ctx.fillRect(0,0,mapW,mapH);
 
@@ -456,8 +499,7 @@
     const showOutline = state.map.mapCircleMarginEnabled && !state.map.invertMapColors;
     const outlineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
-    // ✅ FIX “cuadro” al invertir/neones:
-    // Deja transparente el canvas fuera de la forma (círculo/corazón).
+    // ✅ FIX “cuadro” al invertir: deja transparencia fuera de forma
     ctx.clearRect(0, 0, mapW, mapH);
 
     if (st.shape === "circle"){
@@ -484,7 +526,6 @@
       ctx.arc(cx, cy, rInner, 0, Math.PI*2);
       ctx.clip();
 
-      // Fondo SOLO dentro del círculo
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
@@ -500,17 +541,16 @@
     if (st.shape === "heart"){
       const cx = mapW/2;
 
-      // ✅ Más pegado al top (antes 0.02 y ya estaba abajo)
-      const cy = mapH/2 + Math.round(mapH * 0.00);
+      // ✅ Más pegado al top pero visualmente centrado (el corazón es "top-heavy")
+      const cy = mapH/2 - Math.round(mapH * 0.06);
 
-      // ✅ 10% más grande (antes 0.396)
-      const size = Math.min(mapW, mapH) * 0.4356; // 0.396 * 1.10
+      // Mantengo el tamaño que ya te gustó
+      const size = Math.min(mapW, mapH) * 0.4356;
 
       ctx.save();
       heartPath(ctx, cx, cy, size);
       ctx.clip();
 
-      // Fondo SOLO dentro del corazón
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
@@ -532,7 +572,6 @@
     }
 
     if (st.shape === "rect"){
-      // Rect: aquí sí es rectángulo, se pinta completo
       drawRectMap(ctx, mapW, mapH, mapColors, rand, showOutline, outlineW, conLineW, nodeR);
       return;
     }
@@ -561,6 +600,7 @@
 
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
+
     $poster.style.setProperty("--posterMarginColor", rgbaFromHex(posterColors.star, 0.28));
 
     applyPosterLayoutByStyle();
@@ -569,6 +609,52 @@
     setMapSizeFromPosterPad();
 
     drawMap();
+  }
+
+  // ✅ Radio options helper
+  function radioGroup(items, getValue, setValue){
+    const wrap = document.createElement("div");
+    wrap.className = "radioGroup";
+
+    items.forEach(it => {
+      const opt = document.createElement("div");
+      opt.className = "radioOpt" + (getValue() === it.value ? " active" : "");
+
+      const left = document.createElement("div");
+      left.className = "radioLeft";
+
+      const dot = document.createElement("div");
+      dot.className = "radioDot";
+
+      const txt = document.createElement("div");
+      txt.className = "radioText";
+
+      const title = document.createElement("div");
+      title.className = "radioTitle";
+      title.textContent = it.title;
+
+      const sub = document.createElement("div");
+      sub.className = "radioSub";
+      sub.textContent = it.sub || "";
+
+      txt.appendChild(title);
+      if (it.sub) txt.appendChild(sub);
+
+      left.appendChild(dot);
+      left.appendChild(txt);
+
+      opt.appendChild(left);
+
+      opt.onclick = () => {
+        setValue(it.value);
+        // re-render del contenedor padre (más simple y consistente)
+        renderAll();
+      };
+
+      wrap.appendChild(opt);
+    });
+
+    return wrap;
   }
 
   // --------------------------
@@ -612,14 +698,16 @@
       ctx.save();
       const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
 
+      // ✅ Preview romántico mejorado: más aire, sin corte
       if (st.shape === "circle"){
         ctx.beginPath();
         ctx.arc(mx+mw/2, my+mw/2, mw/2, 0, Math.PI*2);
         ctx.clip();
       } else if (st.shape === "heart"){
-        const cx = mx+mw/2;
-        const cy = my+mw/2 + 6;
-        const size = mw*0.55;
+        const cx = mx + mw/2;
+        // un poco más arriba y con tamaño más seguro para que no se corte
+        const cy = my + mw/2 - 6;
+        const size = mw * 0.50;
         heartPath(ctx, cx, cy, size);
         ctx.clip();
       } else {
@@ -677,9 +765,13 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
 
-        if (st.id === "poster" || st.id === "romantico") state.map.posterMarginEnabled = false;
-        if (st.id === "romantico") state.map.mapCircleMarginEnabled = false;
+        if (st.id === "poster") state.map.posterMarginEnabled = false;
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
+
+        // ✅ Romántico: por default contorno ON (solo este estilo)
+        if (st.id === "romantico") {
+          state.map.mapCircleMarginEnabled = true;
+        }
 
         renderPosterAndMap();
         renderAll();
@@ -709,7 +801,7 @@
 
       if (state.map.colorTheme === "white") {
         state.map.invertMapColors = true;
-        state.map.mapCircleMarginEnabled = false;
+        // El contorno no se dibuja cuando invert está activo (por diseño), pero el toggle puede quedar ON
       }
 
       renderPosterAndMap();
@@ -724,7 +816,6 @@
     invertRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Invertir color" }));
     invertRow.appendChild(toggleSwitch(!!state.map.invertMapColors, (val) => {
       state.map.invertMapColors = val;
-      if (val) state.map.mapCircleMarginEnabled = false;
       drawMap();
       renderAll();
     }));
@@ -767,39 +858,38 @@
 
     let mapRow = null;
     let mapThickRow = null;
-    if (!state.map.invertMapColors) {
-      mapRow = document.createElement("div");
-      mapRow.className = "rowToggle";
-      mapRow.classList.add("stackGap");
-      mapRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
-      mapRow.appendChild(toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
-        state.map.mapCircleMarginEnabled = val;
-        drawMap();
-        renderAll();
-      }));
 
-      if (state.map.mapCircleMarginEnabled) {
-        mapThickRow = document.createElement("div");
-        mapThickRow.className = "formRow";
-        mapThickRow.classList.add("stackGap");
-        mapThickRow.innerHTML = `<div class="label">Grosor del contorno</div>`;
-        const mapThick = document.createElement("input");
-        mapThick.type = "range";
-        mapThick.min = "1";
-        mapThick.max = "10";
-        mapThick.step = "1";
-        mapThick.value = String(state.map.mapCircleMarginThickness);
-        mapThick.oninput = () => {
-          state.map.mapCircleMarginThickness = Number(mapThick.value);
-          drawMap();
-        };
-        mapThickRow.appendChild(mapThick);
-      }
+    // ✅ Contorno SIEMPRE disponible (pero si invert está activo, no se dibuja; queda como estado)
+    mapRow = document.createElement("div");
+    mapRow.className = "rowToggle";
+    mapRow.classList.add("stackGap");
+    mapRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
+    mapRow.appendChild(toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
+      state.map.mapCircleMarginEnabled = val;
+      drawMap();
+      renderAll();
+    }));
+
+    if (state.map.mapCircleMarginEnabled) {
+      mapThickRow = document.createElement("div");
+      mapThickRow.className = "formRow";
+      mapThickRow.classList.add("stackGap");
+      mapThickRow.innerHTML = `<div class="label">Grosor del contorno</div>`;
+      const mapThick = document.createElement("input");
+      mapThick.type = "range";
+      mapThick.min = "1";
+      mapThick.max = "10";
+      mapThick.step = "1";
+      mapThick.value = String(state.map.mapCircleMarginThickness);
+      mapThick.oninput = () => {
+        state.map.mapCircleMarginThickness = Number(mapThick.value);
+        drawMap();
+      };
+      mapThickRow.appendChild(mapThick);
     }
 
     const stNow = getStyleDef();
-    const allowPosterMargin = (stNow.id !== "poster" && stNow.id !== "romantico");
-
+    const allowPosterMargin = (stNow.id !== "poster"); // romántico ya NO bloquea margen si quieres, pero lo dejamos como estaba antes
     let posterRow = null;
     let posterThickRow = null;
 
@@ -831,8 +921,6 @@
         };
         posterThickRow.appendChild(posterThick);
       }
-    } else {
-      state.map.posterMarginEnabled = false;
     }
 
     const seedRow = document.createElement("div");
@@ -846,56 +934,6 @@
     seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
 
-    const randomRow = document.createElement("div");
-    randomRow.className = "formRow";
-    randomRow.classList.add("stackGap");
-
-    const randomBtn = document.createElement("button");
-    randomBtn.type = "button";
-    randomBtn.className = "btn primary";
-    randomBtn.textContent = "Poster Aleatorio";
-    randomBtn.onclick = () => {
-      const r = Math.random;
-      const pick = (arr) => arr[Math.floor(r() * arr.length)];
-      const pickBool = () => r() > 0.5;
-      const pickRange = (min, max) => min + r() * (max - min);
-
-      state.map.styleId = pick(MAP_STYLES).id;
-      state.map.colorTheme = pick(COLOR_THEMES).id;
-
-      state.map.showGrid = isGridAllowedForCurrentStyle() ? pickBool() : false;
-      state.map.showConstellations = pickBool();
-
-      state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
-      state.map.posterMarginThickness = Math.round(pickRange(1, 10));
-      state.map.mapCircleMarginThickness = Math.round(pickRange(1, 10));
-
-      state.map.invertMapColors = pickBool();
-      if (state.map.colorTheme === "white") state.map.invertMapColors = true;
-
-      if (state.map.styleId === "romantico") {
-        state.map.mapCircleMarginEnabled = false;
-        state.map.showGrid = false;
-      }
-
-      if (state.map.invertMapColors || state.map.styleId === "romantico") {
-        state.map.mapCircleMarginEnabled = false;
-      } else {
-        state.map.mapCircleMarginEnabled = pickBool();
-      }
-
-      const st = getStyleDef();
-      const allowPM = (st.id !== "poster" && st.id !== "romantico");
-      state.map.posterMarginEnabled = allowPM ? pickBool() : false;
-
-      state.map.seed = (Math.random() * 1e9) | 0;
-
-      renderPosterAndMap();
-      renderAll();
-    };
-
-    randomRow.appendChild(randomBtn);
-
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(styleRow);
@@ -907,14 +945,13 @@
     $section.appendChild(conRow);
     if (state.map.showConstellations) $section.appendChild(csRow);
 
-    if (mapRow) $section.appendChild(mapRow);
+    $section.appendChild(mapRow);
     if (mapThickRow) $section.appendChild(mapThickRow);
 
     if (posterRow) $section.appendChild(posterRow);
     if (posterThickRow) $section.appendChild(posterThickRow);
 
     $section.appendChild(seedRow);
-    $section.appendChild(randomRow);
 
     $section.appendChild(navButtons({
       showPrev: false,
@@ -1019,26 +1056,48 @@
 
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Selecciona formato y exporta tu póster.";
+    s.textContent = "Selecciona tamaño y formato (selector de puntos).";
 
+    // ✅ Tamaño (radio)
+    const sizeRow = document.createElement("div");
+    sizeRow.className = "formRow";
+    sizeRow.innerHTML = `<div class="label">Medidas de exportación</div>`;
+
+    const sizeItems = EXPORT_SIZES.map(sz => ({
+      value: sz.key,
+      title: sz.title,
+      sub: sz.sub
+    }));
+
+    sizeRow.appendChild(radioGroup(
+      sizeItems,
+      () => state.export.sizeKey,
+      (val) => { state.export.sizeKey = val; }
+    ));
+
+    // ✅ Formato (radio)
     const formatRow = document.createElement("div");
     formatRow.className = "formRow";
+    formatRow.classList.add("stackGap");
     formatRow.innerHTML = `<div class="label">Formato</div>`;
-    const formatSel = document.createElement("select");
-    formatSel.className = "select";
-    [["png","PNG"],["jpg","JPG"],["pdf","PDF"]].forEach(([v,n]) => {
-      const opt = document.createElement("option");
-      opt.value = v;
-      opt.textContent = n;
-      formatSel.appendChild(opt);
-    });
-    formatRow.appendChild(formatSel);
+
+    const formatItems = [
+      { value: "png", title: "PNG", sub: "Mejor calidad / transparencia" },
+      { value: "jpg", title: "JPG", sub: "Archivo más ligero (sin transparencia)" },
+      { value: "pdf", title: "PDF", sub: "Abre una ventana para imprimir/guardar" },
+    ];
+
+    formatRow.appendChild(radioGroup(
+      formatItems,
+      () => state.export.format,
+      (val) => { state.export.format = val; }
+    ));
 
     const exportBtn = document.createElement("button");
     exportBtn.type = "button";
     exportBtn.className = "btn primary";
     exportBtn.textContent = "Exportar";
-    exportBtn.onclick = () => exportPoster(formatSel.value);
+    exportBtn.onclick = () => exportPoster(state.export.format, state.export.sizeKey);
 
     const actions = document.createElement("div");
     actions.className = "navBtns";
@@ -1059,50 +1118,89 @@
 
     $section.appendChild(t);
     $section.appendChild(s);
+    $section.appendChild(sizeRow);
     $section.appendChild(formatRow);
     $section.appendChild(actions);
   }
 
-  function exportPoster(format){
-    const W = 900, H = 1200;
-    const scale = 2;
+  function cmToPx(cm, dpi){
+    const inches = cm / 2.54;
+    return Math.round(inches * dpi);
+  }
+  function inToPx(inches, dpi){
+    return Math.round(inches * dpi);
+  }
 
+  function exportPoster(format, sizeKey){
+    const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
+    const dpi = state.export.dpi || 300;
+
+    let W, H;
+    if (sz.type === "px"){
+      W = sz.w; H = sz.h;
+    } else if (sz.type === "cm"){
+      W = cmToPx(sz.w, dpi);
+      H = cmToPx(sz.h, dpi);
+    } else if (sz.type === "in"){
+      W = inToPx(sz.w, dpi);
+      H = inToPx(sz.h, dpi);
+    } else {
+      W = 900; H = 1200;
+    }
+
+    // Protección: siempre mantener 3:4 (por si metes presets después)
+    const targetRatio = 3/4;
+    const ratio = W / H;
+    if (Math.abs(ratio - targetRatio) > 0.001){
+      H = Math.round(W / targetRatio);
+    }
+
+    // Exporta render a alta resolución
+    const scale = 1; // ya estamos exportando a W,H grandes
     const out = document.createElement("canvas");
-    out.width = W * scale;
-    out.height = H * scale;
+    out.width = Math.round(W * scale);
+    out.height = Math.round(H * scale);
 
     const ctx = out.getContext("2d");
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
     const colors = colorsFor(state.map.colorTheme);
 
+    // Fondo del poster (siempre)
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
     const st = getStyleDef();
 
+    // Proporciones basadas en el diseño original (900×1200)
+    const sx = W / POSTER_W;
+    const sy = H / POSTER_H;
+
     let mapW, mapH;
-    if (st.shape === "rect"){ mapW = 820; mapH = 860; }
-    else { mapW = clamp(780 - Math.round(pad * 0.6), 640, 780); mapH = mapW; }
+    if (st.shape === "rect"){
+      mapW = Math.round(820 * sx);
+      mapH = Math.round(860 * sy);
+    } else {
+      // mapa circular/heart se escala similar a tu layout
+      const base = 780 * sx;
+      const padEffect = Math.round((pad * 0.6) * sx);
+      mapW = clamp(Math.round(base - padEffect), Math.round(640 * sx), Math.round(780 * sx));
+      mapH = mapW;
+    }
 
-    const mapX = (W - mapW) / 2;
-    const mapY = pad + 70;
+    const mapX = Math.round((W - mapW) / 2);
+    const mapY = Math.round((pad + 70) * sy);
 
-    // ✅ El canvas ahora puede tener transparencia fuera de la forma.
-    // Al dibujarlo aquí, queda perfecto sobre el fondo del poster.
+    // Importante: el canvas puede tener transparencia fuera de la forma
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
     if (state.map.posterMarginEnabled){
       ctx.save();
       ctx.strokeStyle = rgbaFromHex(colors.star, 0.28);
-      ctx.lineWidth = clamp(state.map.posterMarginThickness, 1, 10);
-      ctx.strokeRect(
-        state.map.posterMarginInsetPx,
-        state.map.posterMarginInsetPx,
-        W - state.map.posterMarginInsetPx * 2,
-        H - state.map.posterMarginInsetPx * 2
-      );
+      ctx.lineWidth = clamp(Math.round(state.map.posterMarginThickness * sx), 1, 14);
+      const inset = Math.round(state.map.posterMarginInsetPx * sx);
+      ctx.strokeRect(inset, inset, W - inset * 2, H - inset * 2);
       ctx.restore();
     }
 
@@ -1114,8 +1212,8 @@
       ctx.globalAlpha = alpha;
       ctx.textAlign = align;
       ctx.textBaseline = "alphabetic";
-      ctx.font = `${weight} ${sizePx}px ${fontFamily}`;
-      ctx.fillText(text, x, y);
+      ctx.font = `${weight} ${Math.round(sizePx)}px ${fontFamily}`;
+      ctx.fillText(text, Math.round(x), Math.round(y));
       ctx.restore();
     }
 
@@ -1124,47 +1222,51 @@
       ctx.globalAlpha = 0.82;
       ctx.textAlign = align;
       ctx.textBaseline = "alphabetic";
-      ctx.font = `650 ${sizePx}px ${fontFamily}`;
-      ctx.fillText(text, x, y);
+      ctx.font = `650 ${Math.round(sizePx)}px ${fontFamily}`;
+      ctx.fillText(text, Math.round(x), Math.round(y));
       ctx.restore();
     }
 
     const show = state.visible;
 
+    // Texto (manteniendo tu lógica, escalada)
     if (st.layout === "minimal"){
-      const left = pad + 80;
+      const left = (pad + 80) * sx;
 
-      let top = H - (pad + 64) - 160;
-      top = Math.max(top, mapY + mapH + 40);
+      let top = H - ((pad + 64) * sy) - (160 * sy);
+      top = Math.max(top, mapY + mapH + Math.round(40 * sy));
       let ty = top;
 
-      if (show.title) { drawText(state.text.title, left, ty + 54, 54, 900, "left", 1); ty += 54 + 10; }
-      if (show.subtitle) { drawText(state.text.subtitle, left, ty + 18, 18, 600, "left", 0.85); ty += 18 + 22; }
+      if (show.title) { drawText(state.text.title, left, ty + (54 * sy), 54 * sy, 900, "left", 1); ty += (54 * sy) + (10 * sy); }
+      if (show.subtitle) { drawText(state.text.subtitle, left, ty + (18 * sy), 18 * sy, 600, "left", 0.85); ty += (18 * sy) + (22 * sy); }
 
-      const metaY1 = ty + 14;
-      const metaY2 = metaY1 + 20;
-      const metaY3 = metaY2 + 20;
+      const metaY1 = ty + (14 * sy);
+      const metaY2 = metaY1 + (20 * sy);
+      const metaY3 = metaY2 + (20 * sy);
 
-      if (show.place) metaText(state.text.place, left, metaY1, 14, "left");
-      if (show.coords) metaText(state.text.coords, left, metaY2, 14, "left");
-      if (show.datetime) metaText(state.text.datetime, left, metaY3, 14, "left");
+      if (show.place) metaText(state.text.place, left, metaY1, 14 * sy, "left");
+      if (show.coords) metaText(state.text.coords, left, metaY2, 14 * sy, "left");
+      if (show.datetime) metaText(state.text.datetime, left, metaY3, 14 * sy, "left");
     } else {
       const centerX = W / 2;
       const isPosterRect = (st.shape === "rect" && state.map.styleId === "poster");
 
-      const titleSize = isPosterRect ? 44 : 54;
-      const subSize   = isPosterRect ? 16 : 18;
-      const metaSize  = isPosterRect ? 12 : 14;
+      const titleSize = (isPosterRect ? 44 : 54) * sy;
+      const subSize   = (isPosterRect ? 16 : 18) * sy;
+      const metaSize  = (isPosterRect ? 12 : 14) * sy;
 
-      let ty = isPosterRect ? (H - (pad + 70)) : (H - (pad + 90) - 80);
-      if (show.subtitle) ty -= isPosterRect ? 18 : 24;
+      let ty = isPosterRect
+        ? (H - ((pad + 70) * sy))
+        : (H - ((pad + 90) * sy) - (80 * sy));
 
-      if (show.title) { drawText(state.text.title, centerX, ty, titleSize, 900, "center", 1); ty += isPosterRect ? 30 : 36; }
-      if (show.subtitle) { drawText(state.text.subtitle, centerX, ty, subSize, 650, "center", 0.85); ty += isPosterRect ? 26 : 36; }
+      if (show.subtitle) ty -= isPosterRect ? (18 * sy) : (24 * sy);
 
-      const metaY1 = ty + (isPosterRect ? 22 : 34);
-      const metaY2 = metaY1 + (isPosterRect ? 18 : 22);
-      const metaY3 = metaY2 + (isPosterRect ? 18 : 22);
+      if (show.title) { drawText(state.text.title, centerX, ty, titleSize, 900, "center", 1); ty += isPosterRect ? (30 * sy) : (36 * sy); }
+      if (show.subtitle) { drawText(state.text.subtitle, centerX, ty, subSize, 650, "center", 0.85); ty += isPosterRect ? (26 * sy) : (36 * sy); }
+
+      const metaY1 = ty + (isPosterRect ? (22 * sy) : (34 * sy));
+      const metaY2 = metaY1 + (isPosterRect ? (18 * sy) : (22 * sy));
+      const metaY3 = metaY2 + (isPosterRect ? (18 * sy) : (22 * sy));
 
       if (show.place) metaText(state.text.place, centerX, metaY1, metaSize, "center");
       if (show.coords) metaText(state.text.coords, centerX, metaY2, metaSize, "center");
@@ -1175,7 +1277,7 @@
       const mime = format === "png" ? "image/png" : "image/jpeg";
       const quality = format === "jpg" ? 0.95 : undefined;
       const url = out.toDataURL(mime, quality);
-      downloadDataURL(url, `poster.${format}`);
+      downloadDataURL(url, `poster_${sizeKey}.${format}`);
       return;
     }
 

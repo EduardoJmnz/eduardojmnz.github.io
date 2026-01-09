@@ -2,15 +2,15 @@
   const POSTER_W = 900;
   const POSTER_H = 1200;
 
-  // ✅ Marco (ÁREA) desde borde del póster
-  const POSTER_FRAME_EDGE_GAP_PX = 0;
+  // ✅ Separación fija desde el borde del poster (25px)
+  const POSTER_EDGE_GAP_PX = 25;
 
-  // ✅ Margen (LÍNEA) separado a 50px
-  const POSTER_MARGIN_EDGE_GAP_PX = 50;
-
+  // ✅ Marco (área) máximo = la MITAD de antes (0.12 -> 0.06)
+  // ✅ Valor inicial del marco = máximo permitido
   const POSTER_FRAME_PCT_MAX = 0.06;
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
+  // ✅ Grosor máximo del margen (línea)
   const POSTER_LINE_THICK_MAX = 12;
 
   const state = {
@@ -38,16 +38,19 @@
       invertMapColors: false,
 
       colorTheme: "mono",
+
+      // ✅ Zoom interno (solo IN)
       mapZoom: 1.0,
 
-      // Marco (ÁREA)
+      // ✅ Marco del póster (ÁREA)
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
-      // Margen (LÍNEA)
+      // ✅ Margen del póster (LÍNEA)
+      // Independiente, pero si Marco se enciende => el Margen se apaga/oculta.
       posterMarginEnabled: false,
-      posterMarginThickness: 2,
+      posterMarginThickness: 2, // fino por default (como ejemplo)
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
       mapCircleMarginEnabled: false,
@@ -203,10 +206,12 @@
     return state.map.styleId === "poster";
   }
 
+  // ✅ Marco/Margen NO aplican al estilo Poster
   function isPosterDecorAllowed(){
     return !isPosterStyle();
   }
 
+  // ✅ Corazón estable
   function heartPath(ctx, cx, cy, size){
     const s = size / 18;
     ctx.beginPath();
@@ -238,9 +243,12 @@
     applyZoom();
   });
 
-  let $posterFrameArea = null;
-  let $posterPaper = null;
-  let $posterMarginLine = null;
+  // --------------------------
+  // ✅ CAPAS: edge gap + marco(área) + margen(línea)
+  // --------------------------
+  let $posterFrameArea = null; // área (Marco)
+  let $posterPaper = null;     // fondo interior bg
+  let $posterMarginLine = null;// línea (Margen)
 
   function ensurePosterLayers(){
     if (!$posterFrameArea){
@@ -278,7 +286,7 @@
       Object.assign($posterMarginLine.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: "0px",
+        borderRadius: "0px", // ✅ recto como la imagen
         zIndex: "2",
         pointerEvents: "none",
         border: "0px solid transparent",
@@ -308,47 +316,52 @@
     }
   }
 
+  // ✅ Margen (línea) como tu ejemplo: recto, sólido, a 25px del borde.
   function applyPosterFrameAndMargin(posterColors){
     ensurePosterLayers();
     updatePosterFrameInsetPx();
     enforceDecorRules();
 
-    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;   // 0
-    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX; // 50
+    const edge = POSTER_EDGE_GAP_PX; // ✅ 25px siempre
 
     const decorAllowed = isPosterDecorAllowed();
-    const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
-    const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
+    const frameOn = decorAllowed && !!state.map.posterFrameEnabled;                 // Marco (área)
+    const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;  // Margen (línea)
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
+    // Fondo general
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
+    // ---------- MARCO (ÁREA) ----------
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
-      $posterFrameArea.style.background = posterColors.star;
-      $posterFrameArea.style.inset = `${frameEdge}px`;
+      $posterFrameArea.style.background = posterColors.star; // color texto
+      $posterFrameArea.style.inset = `${edge}px`;
       $posterFrameArea.style.borderRadius = "0px";
     } else {
       $posterFrameArea.style.opacity = "0";
       $posterFrameArea.style.background = "transparent";
-      $posterFrameArea.style.inset = `${frameEdge}px`;
+      $posterFrameArea.style.inset = `${edge}px`;
       $posterFrameArea.style.borderRadius = "0px";
     }
 
-    const innerInset = frameEdge + framePx;
+    // ---------- PAPEL (ÁREA INTERIOR) ----------
+    const innerInset = edge + framePx;
     $posterPaper.style.background = posterColors.bg;
     $posterPaper.style.inset = `${innerInset}px`;
     $posterPaper.style.borderRadius = "0px";
 
+    // ---------- MARGEN (LÍNEA) ----------
     const thickness = clamp(
       state.map.posterMarginThickness || 2,
       1,
       state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX
     );
 
-    $posterMarginLine.style.inset = `${marginEdge}px`;
+    // ✅ Margen siempre a 25px del borde (como tu imagen)
+    $posterMarginLine.style.inset = `${edge}px`;
     $posterMarginLine.style.borderRadius = "0px";
     $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
     $posterMarginLine.style.borderStyle = "solid";
@@ -373,7 +386,8 @@
   }
 
   function applyPosterPaddingLayout(){
-    const edge = POSTER_FRAME_EDGE_GAP_PX; // 0
+    // ✅ padding interno = edge(25) + framePx (si marco está activo)
+    const edge = POSTER_EDGE_GAP_PX;
     const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
       ? clamp(state.map.posterFrameInsetPx, 0, 160)
       : 0;
@@ -394,6 +408,72 @@
     const size = clamp(base - Math.round(frame * 0.6), 640, 780);
     $poster.style.setProperty("--mapW", `${size}px`);
     $poster.style.setProperty("--mapH", `${size}px`);
+  }
+
+  function toggleSwitch(checked, onChange){
+    const t = document.createElement("div");
+    t.className = "toggle" + (checked ? " on" : "");
+    t.role = "switch";
+    t.tabIndex = 0;
+    t.setAttribute("aria-checked", String(!!checked));
+
+    function set(val){
+      checked = !!val;
+      t.className = "toggle" + (checked ? " on" : "");
+      t.setAttribute("aria-checked", String(checked));
+      onChange(checked);
+    }
+
+    t.onclick = () => set(!checked);
+    t.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        set(!checked);
+      }
+    };
+    return t;
+  }
+
+  function navButtons({ showPrev, showNext, prevText="← Anterior", nextText="Siguiente →", onPrev, onNext }){
+    const wrap = document.createElement("div");
+    wrap.className = "navBtns";
+
+    const left = document.createElement("div");
+    const right = document.createElement("div");
+
+    if (showPrev) {
+      const prev = document.createElement("button");
+      prev.type = "button";
+      prev.className = "btn ghost";
+      prev.textContent = prevText;
+      prev.onclick = onPrev;
+      left.appendChild(prev);
+    }
+
+    if (showNext) {
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "btn primary";
+      next.textContent = nextText;
+      next.onclick = onNext;
+      right.appendChild(next);
+    }
+
+    wrap.appendChild(left);
+    wrap.appendChild(right);
+    return wrap;
+  }
+
+  function renderTabs(){
+    $tabs.innerHTML = "";
+    STEPS.forEach((s, idx) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "tab" + (idx === state.step ? " active" : "");
+      b.textContent = s.label;
+      b.onclick = () => { state.step = idx; renderAll(); };
+      $tabs.appendChild(b);
+    });
   }
 
   function drawCurvedGrid(ctx, w, h, colors){
@@ -568,16 +648,10 @@
 
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
 
-    const shouldInsetLikeMapControl =
-      !!state.map.mapCircleMarginEnabled ||
-      (isPosterDecorAllowed() && !!state.map.posterFrameEnabled) ||
-      (isPosterDecorAllowed() && !!state.map.posterMarginEnabled);
-
-    const insetPad = shouldInsetLikeMapControl
-      ? Math.round(Math.min(mapW, mapH) * (state.map.mapCircleInsetPct || 0.10))
-      : 0;
-
     if (st.shape === "circle"){
+      const shouldInsetLikeMapMargin = state.map.mapCircleMarginEnabled || (state.map.posterFrameEnabled && isPosterDecorAllowed());
+      const insetPad = shouldInsetLikeMapMargin ? Math.round(Math.min(mapW,mapH) * state.map.mapCircleInsetPct) : 0;
+
       const cx = mapW/2, cy = mapH/2;
       const rOuter = Math.min(mapW,mapH)/2;
       const rInner = rOuter - insetPad;
@@ -619,9 +693,8 @@
       const cx = mapW/2;
       const cy = mapH/2 - Math.round(mapH * 0.06);
 
-      // ✅ 20% más grande (base)
-      const baseSize = Math.min(mapW, mapH) * 0.5227;
-      const size = clamp(baseSize - insetPad * 0.95, baseSize * 0.70, baseSize);
+      // ✅ 20% más grande (respecto al “perfecto” previo)
+      const size = Math.min(mapW, mapH) * 0.5227;
 
       ctx.save();
       heartPath(ctx, cx, cy, size);
@@ -654,16 +727,7 @@
     }
 
     if (st.shape === "rect"){
-      if (insetPad > 0){
-        ctx.save();
-        ctx.translate(insetPad, insetPad);
-        const w = Math.max(1, mapW - insetPad * 2);
-        const h = Math.max(1, mapH - insetPad * 2);
-        drawRectMap(ctx, w, h, mapColors, rand, showOutline, outlineW, conLineW, nodeR);
-        ctx.restore();
-      } else {
-        drawRectMap(ctx, mapW, mapH, mapColors, rand, showOutline, outlineW, conLineW, nodeR);
-      }
+      drawRectMap(ctx, mapW, mapH, mapColors, rand, showOutline, outlineW, conLineW, nodeR);
       return;
     }
   }
@@ -698,74 +762,8 @@
   }
 
   // --------------------------
-  // UI
+  // UI: Secciones
   // --------------------------
-  function toggleSwitch(checked, onChange){
-    const t = document.createElement("div");
-    t.className = "toggle" + (checked ? " on" : "");
-    t.role = "switch";
-    t.tabIndex = 0;
-    t.setAttribute("aria-checked", String(!!checked));
-
-    function set(val){
-      checked = !!val;
-      t.className = "toggle" + (checked ? " on" : "");
-      t.setAttribute("aria-checked", String(checked));
-      onChange(checked);
-    }
-
-    t.onclick = () => set(!checked);
-    t.onkeydown = (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        set(!checked);
-      }
-    };
-    return t;
-  }
-
-  function navButtons({ showPrev, showNext, prevText="← Anterior", nextText="Siguiente →", onPrev, onNext }){
-    const wrap = document.createElement("div");
-    wrap.className = "navBtns";
-
-    const left = document.createElement("div");
-    const right = document.createElement("div");
-
-    if (showPrev) {
-      const prev = document.createElement("button");
-      prev.type = "button";
-      prev.className = "btn ghost";
-      prev.textContent = prevText;
-      prev.onclick = onPrev;
-      left.appendChild(prev);
-    }
-
-    if (showNext) {
-      const next = document.createElement("button");
-      next.type = "button";
-      next.className = "btn primary";
-      next.textContent = nextText;
-      next.onclick = onNext;
-      right.appendChild(next);
-    }
-
-    wrap.appendChild(left);
-    wrap.appendChild(right);
-    return wrap;
-  }
-
-  function renderTabs(){
-    $tabs.innerHTML = "";
-    STEPS.forEach((s, idx) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "tab" + (idx === state.step ? " active" : "");
-      b.textContent = s.label;
-      b.onclick = () => { state.step = idx; renderAll(); };
-      $tabs.appendChild(b);
-    });
-  }
-
   function renderSectionDesign(){
     $section.innerHTML = "";
 
@@ -856,12 +854,15 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
 
+        // ✅ Poster: no decor
         if (!isPosterDecorAllowed()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
         }
 
+        // ✅ Romántico: contorno ON por default
         if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;
+
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
         renderPosterAndMap();
@@ -872,6 +873,60 @@
     });
 
     styleRow.appendChild(grid);
+
+    // ✅ Random (arriba de color y abajo de estilos)
+    const randomRow = document.createElement("div");
+    randomRow.className = "formRow";
+    randomRow.classList.add("stackGap");
+
+    const randomBtn = document.createElement("button");
+    randomBtn.type = "button";
+    randomBtn.className = "btn primary";
+    randomBtn.textContent = "Poster Aleatorio";
+    randomBtn.onclick = () => {
+      const r = Math.random;
+      const pick = (arr) => arr[Math.floor(r() * arr.length)];
+      const pickBool = () => r() > 0.5;
+      const pickRange = (min, max) => min + r() * (max - min);
+
+      state.map.styleId = pick(MAP_STYLES).id;
+      state.map.colorTheme = pick(COLOR_THEMES).id;
+
+      const allowG = isGridAllowedForCurrentStyle();
+      state.map.showGrid = allowG ? pickBool() : false;
+
+      state.map.showConstellations = pickBool();
+      state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
+      state.map.mapZoom = Math.round(pickRange(1.0, 1.6) * 20) / 20;
+
+      state.map.invertMapColors = pickBool();
+      if (state.map.colorTheme === "white") state.map.invertMapColors = true;
+
+      if (!isPosterDecorAllowed()){
+        state.map.posterFrameEnabled = false;
+        state.map.posterMarginEnabled = false;
+      } else {
+        const marco = pickBool();
+        state.map.posterFrameEnabled = marco;
+        state.map.posterFramePct = marco ? POSTER_FRAME_PCT_MAX : state.map.posterFramePct;
+        updatePosterFrameInsetPx();
+        state.map.posterMarginEnabled = !marco ? pickBool() : false;
+        state.map.posterMarginThickness = 2;
+      }
+
+      if (state.map.styleId === "romantico") {
+        state.map.mapCircleMarginEnabled = true;
+        state.map.showGrid = false;
+      } else {
+        state.map.mapCircleMarginEnabled = pickBool();
+      }
+
+      state.map.seed = (Math.random() * 1e9) | 0;
+
+      renderPosterAndMap();
+      renderAll();
+    };
+    randomRow.appendChild(randomBtn);
 
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
@@ -895,11 +950,39 @@
     };
     colorRow.appendChild(colorSel);
 
+    // ✅ Zoom interno (solo IN)
+    const mapZoomRow = document.createElement("div");
+    mapZoomRow.className = "formRow";
+    mapZoomRow.classList.add("stackGap");
+    mapZoomRow.innerHTML = `<div class="label">Zoom</div>`;
+    const mapZoomRange = document.createElement("input");
+    mapZoomRange.type = "range";
+    mapZoomRange.min = "1.00";
+    mapZoomRange.max = "1.60";
+    mapZoomRange.step = "0.05";
+    mapZoomRange.value = String(state.map.mapZoom);
+    mapZoomRange.oninput = () => {
+      state.map.mapZoom = Number(mapZoomRange.value);
+      drawMap();
+    };
+    mapZoomRow.appendChild(mapZoomRange);
+
+    const invertRow = document.createElement("div");
+    invertRow.className = "rowToggle";
+    invertRow.classList.add("stackGap");
+    invertRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Invertir color" }));
+    invertRow.appendChild(toggleSwitch(!!state.map.invertMapColors, (val) => {
+      state.map.invertMapColors = val;
+      drawMap();
+      renderAll();
+    }));
+
     const showDecor = isPosterDecorAllowed();
 
     let frameRow = null, frameSizeRow = null, marginRow = null, marginThickRow = null;
 
     if (showDecor){
+      // ✅ Marco (área)
       frameRow = document.createElement("div");
       frameRow.className = "rowToggle";
       frameRow.classList.add("stackGap");
@@ -929,6 +1012,7 @@
       };
       frameSizeRow.appendChild(frameRange);
 
+      // ✅ Margen (línea)
       marginRow = document.createElement("div");
       marginRow.className = "rowToggle";
       marginRow.classList.add("stackGap");
@@ -960,11 +1044,72 @@
       state.map.posterMarginEnabled = false;
     }
 
+    const allowGrid = isGridAllowedForCurrentStyle();
+    if (!allowGrid) state.map.showGrid = false;
+
+    const gridRow = document.createElement("div");
+    gridRow.className = "rowToggle";
+    gridRow.classList.add("stackGap");
+    gridRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Retícula" }));
+    gridRow.appendChild(toggleSwitch(!!state.map.showGrid, (val) => {
+      state.map.showGrid = val;
+      drawMap();
+      renderAll();
+    }));
+
+    const conRow = document.createElement("div");
+    conRow.className = "rowToggle";
+    conRow.classList.add("stackGap");
+    conRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Constelaciones" }));
+    conRow.appendChild(toggleSwitch(!!state.map.showConstellations, (val) => {
+      state.map.showConstellations = val;
+      drawMap();
+      renderAll();
+    }));
+
+    const csRow = document.createElement("div");
+    csRow.className = "formRow";
+    csRow.classList.add("stackGap");
+    csRow.innerHTML = `<div class="label">Tamaño de constelaciones</div>`;
+    const csRange = document.createElement("input");
+    csRange.type = "range";
+    csRange.min = "1";
+    csRange.max = "4";
+    csRange.step = "0.5";
+    csRange.value = String(state.map.constellationSize);
+    csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
+    csRow.appendChild(csRange);
+
+    const mapRow = document.createElement("div");
+    mapRow.className = "rowToggle";
+    mapRow.classList.add("stackGap");
+    mapRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
+    mapRow.appendChild(toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
+      state.map.mapCircleMarginEnabled = val;
+      drawMap();
+      renderAll();
+    }));
+
+    const seedRow = document.createElement("div");
+    seedRow.className = "formRow";
+    seedRow.classList.add("stackGap");
+    seedRow.innerHTML = `<div class="label">Variación del cielo</div>`;
+    const seedBtn = document.createElement("button");
+    seedBtn.type = "button";
+    seedBtn.className = "btn ghost";
+    seedBtn.textContent = "Generar nuevo cielo";
+    seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
+    seedRow.appendChild(seedBtn);
+
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(styleRow);
+    $section.appendChild(randomRow);
     $section.appendChild(colorRow);
+    $section.appendChild(mapZoomRow);
+    $section.appendChild(invertRow);
 
+    // ✅ Decor solo si NO es Poster
     if (showDecor){
       $section.appendChild(frameRow);
       if (state.map.posterFrameEnabled) {
@@ -974,6 +1119,14 @@
         if (state.map.posterMarginEnabled) $section.appendChild(marginThickRow);
       }
     }
+
+    if (allowGrid) $section.appendChild(gridRow);
+
+    $section.appendChild(conRow);
+    if (state.map.showConstellations) $section.appendChild(csRow);
+
+    $section.appendChild(mapRow);
+    $section.appendChild(seedRow);
 
     $section.appendChild(navButtons({
       showPrev: false,
@@ -1216,15 +1369,6 @@
     return Math.round(inches * dpi);
   }
 
-  function downloadDataURL(dataURL, filename){
-    const a = document.createElement("a");
-    a.href = dataURL;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }
-
   function exportPoster(format, sizeKey){
     const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
     const dpi = state.export.dpi || 300;
@@ -1254,10 +1398,8 @@
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
     const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
 
-    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W)); // 0
-    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H)); // 0
-    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W)); // 50
-    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H)); // 50
+    const edgeX = Math.round(POSTER_EDGE_GAP_PX * (W / POSTER_W));
+    const edgeY = Math.round(POSTER_EDGE_GAP_PX * (H / POSTER_H));
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
     const frameX = Math.round(framePx * (W / POSTER_W));
@@ -1267,20 +1409,20 @@
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Marco (área) desde borde
+    // Marco (área) en export
     if (frameOn){
       ctx.fillStyle = colors.star;
-      ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
+      ctx.fillRect(edgeX, edgeY, W - edgeX*2, H - edgeY*2);
     }
 
     // Papel interior
-    const innerX = edgeFrameX + frameX;
-    const innerY = edgeFrameY + frameY;
+    const innerX = edgeX + frameX;
+    const innerY = edgeY + frameY;
 
     ctx.fillStyle = colors.bg;
     ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
 
-    // Margen (línea) a 50px
+    // Margen (línea) en export
     if (marginOn){
       const thick = clamp(state.map.posterMarginThickness || 2, 1, state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX);
       const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
@@ -1288,12 +1430,7 @@
       ctx.strokeStyle = rgbaFromHex(colors.star, 1);
       ctx.lineWidth = thickScaled;
       const half = thickScaled / 2;
-      ctx.strokeRect(
-        edgeMarginX + half,
-        edgeMarginY + half,
-        W - (edgeMarginX * 2) - thickScaled,
-        H - (edgeMarginY * 2) - thickScaled
-      );
+      ctx.strokeRect(edgeX + half, edgeY + half, W - (edgeX * 2) - thickScaled, H - (edgeY * 2) - thickScaled);
       ctx.restore();
     }
 
@@ -1305,6 +1442,7 @@
 
     const mapX = Math.round((W - mapW) / 2);
     const mapY = Math.round(innerY + (70 * sy));
+
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
     const fontFamily = state.text.fontFamily;
@@ -1320,22 +1458,18 @@
       ctx.restore();
     }
 
-    // ✅ Export alineado con bottom=100 (sube el bloque ~60px vs la versión bottom=40)
     const show = state.visible;
     const centerX = W / 2;
 
-    const yTitle    = Math.round(1000 * sy);
-    const ySubtitle = Math.round(1038 * sy);
-    const yPlace    = Math.round(1082 * sy);
-    const yCoords   = Math.round(1105 * sy);
-    const yDT       = Math.round(1128 * sy);
+    // ✅ CAMBIO: antes equivalía a bottom=40; ahora bottom=100 => subimos el bloque 60px
+    const deltaY = Math.round(60 * sy);
 
-    if (show.title)    drawText(state.text.title, centerX, yTitle, 54 * sy, 900, "center", 1);
-    if (show.subtitle) drawText(state.text.subtitle, centerX, ySubtitle, 18 * sy, 650, "center", 0.85);
+    if (show.title)    drawText(state.text.title, centerX, Math.round(1040 * sy) - deltaY, 54 * sy, 900, "center", 1);
+    if (show.subtitle) drawText(state.text.subtitle, centerX, Math.round(1085 * sy) - deltaY, 18 * sy, 650, "center", 0.85);
 
-    if (show.place)    drawText(state.text.place, centerX, yPlace, 14 * sy, 650, "center", 0.82);
-    if (show.coords)   drawText(state.text.coords, centerX, yCoords, 14 * sy, 650, "center", 0.82);
-    if (show.datetime) drawText(getDateTimeString(), centerX, yDT, 14 * sy, 650, "center", 0.82);
+    if (show.place)    drawText(state.text.place, centerX, Math.round(1135 * sy) - deltaY, 14 * sy, 650, "center", 0.82);
+    if (show.coords)   drawText(state.text.coords, centerX, Math.round(1160 * sy) - deltaY, 14 * sy, 650, "center", 0.82);
+    if (show.datetime) drawText(getDateTimeString(), centerX, Math.round(1185 * sy) - deltaY, 14 * sy, 650, "center", 0.82);
 
     if (format === "png" || format === "jpg"){
       const mime = format === "png" ? "image/png" : "image/jpeg";
@@ -1362,6 +1496,15 @@
       </body></html>
     `);
     w.document.close();
+  }
+
+  function downloadDataURL(dataURL, filename){
+    const a = document.createElement("a");
+    a.href = dataURL;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 
   function renderSection(){

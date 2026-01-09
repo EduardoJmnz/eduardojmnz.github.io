@@ -24,7 +24,6 @@
       grid-template-columns: 420px 1fr;
     }
 
-    /* Left */
     .left{
       border-right:1px solid var(--stroke);
       background: linear-gradient(180deg, var(--panel), var(--panel2));
@@ -125,7 +124,6 @@
       color:var(--text);
     }
 
-    /* Toggle switch */
     .toggle{
       width: 44px;
       height: 24px;
@@ -227,7 +225,6 @@
       opacity: .92;
     }
 
-    /* Right / Preview */
     .right{
       display:flex;
       align-items:center;
@@ -297,7 +294,6 @@
       align-items:center;
     }
 
-    /* Poster */
     .poster{
       width: 900px;
       height: 1200px;
@@ -350,7 +346,6 @@
       display:block;
     }
 
-    /* Minimalista */
     .bottomText{
       position:absolute;
       left: calc(var(--posterPad) + 80px);
@@ -383,7 +378,6 @@
       text-overflow:ellipsis;
     }
 
-    /* Clásico */
     .poster.classic .bottomText{
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
@@ -394,7 +388,7 @@
     .poster.classic .metaCol{ align-items:center; text-align:center; }
     .poster.classic .tTitle{ letter-spacing:1.6px; }
 
-    /* ✅ Poster (rect): NO pegado al bottom, textos más pequeños */
+    /* ✅ Poster (rect): textos más pequeños y con aire al bottom */
     .poster.rectStyle .bottomText{
       bottom: calc(var(--posterPad) + 46px);
       left: calc(var(--posterPad) + 110px);

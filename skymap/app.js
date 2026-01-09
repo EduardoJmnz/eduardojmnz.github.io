@@ -503,10 +503,10 @@
       const cx = mapW/2;
 
       // ✅ Más centrado (sube un poco vs antes)
-      const cy = mapH/2 + Math.round(mapH * 0.08);
+      const cy = mapH/2 + Math.round(mapH * 0.02);
 
       // ✅ 15% más grande vs el anterior (0.31 -> ~0.36)
-      const size = Math.min(mapW, mapH) * 0.36;
+      const size = Math.min(mapW, mapH) * 0.396;
 
       ctx.save();
       heartPath(ctx, cx, cy, size);
@@ -605,9 +605,7 @@
       const ctx = c.getContext("2d");
       const pc = colorsFor(state.map.colorTheme);
 
-      ctx.clearRect(0,0,180,240);
-      ctx.fillStyle = pc.bg;
-      ctx.fillRect(0,0,180,240);
+      ctx.clearRect(0, 0, mapW, mapH); // deja transparente (sin fondo cuadrado)
 
       ctx.save();
       const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;

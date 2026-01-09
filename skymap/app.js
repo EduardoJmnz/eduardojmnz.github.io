@@ -10,7 +10,7 @@
   const POSTER_FRAME_PCT_MAX = 0.06;
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
-  // ✅ Margen (línea) default = máximo del slider
+  // ✅ Grosor máximo del margen (línea)
   const POSTER_LINE_THICK_MAX = 12;
 
   const state = {
@@ -42,15 +42,15 @@
       // ✅ Zoom interno (solo IN)
       mapZoom: 1.0,
 
-      // ✅ Marco del póster (área)
+      // ✅ Marco del póster (ÁREA)
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
-      // ✅ Margen del póster (línea)
+      // ✅ Margen del póster (LÍNEA)
       // Independiente, pero si Marco se enciende => el Margen se apaga/oculta.
       posterMarginEnabled: false,
-      posterMarginThickness: POSTER_LINE_THICK_MAX,
+      posterMarginThickness: 2, // fino por default (como ejemplo)
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
       mapCircleMarginEnabled: false,
@@ -106,7 +106,6 @@
 
   const EXPORT_SIZES = [
     { key: "digital_900x1200", title: "Digital (900×1200 px)", sub: "Ideal para pantalla / pruebas rápidas", type: "px", w: 900, h: 1200 },
-    { key: "30x40cm_300dpi",   title: "30×40 cm (300 dpi)",    sub: "Calidad impresión alta", type: "cm", w: 30, h: 40 },
     { key: "45x60cm_300dpi",   title: "45×60 cm (300 dpi)",    sub: "Impresión normal", type: "cm", w: 45, h: 60 },
     { key: "60x80cm_300dpi",   title: "60×80 cm (300 dpi)",    sub: "Impresión grande", type: "cm", w: 60, h: 80 },
     { key: "90x120cm_300dpi",  title: "90×120 cm (300 dpi)",   sub: "Impresión premium", type: "cm", w: 90, h: 120 },
@@ -258,7 +257,7 @@
       Object.assign($posterFrameArea.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: "26px",
+        borderRadius: "0px",
         zIndex: "0",
         pointerEvents: "none",
         background: "transparent",
@@ -273,7 +272,7 @@
       Object.assign($posterPaper.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: "26px",
+        borderRadius: "0px",
         zIndex: "1",
         pointerEvents: "none",
         background: "transparent",
@@ -287,7 +286,7 @@
       Object.assign($posterMarginLine.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: "26px",
+        borderRadius: "0px", // ✅ recto como la imagen
         zIndex: "2",
         pointerEvents: "none",
         border: "0px solid transparent",
@@ -306,8 +305,72 @@
     state.map.posterFrameInsetPx = Math.round(POSTER_W * pct);
   }
 
+  function enforceDecorRules(){
+    if (!isPosterDecorAllowed()){
+      state.map.posterFrameEnabled = false;
+      state.map.posterMarginEnabled = false;
+      return;
+    }
+    if (state.map.posterFrameEnabled){
+      state.map.posterMarginEnabled = false;
+    }
+  }
+
+  // ✅ Margen (línea) como tu ejemplo: recto, sólido, a 25px del borde.
+  function applyPosterFrameAndMargin(posterColors){
+    ensurePosterLayers();
+    updatePosterFrameInsetPx();
+    enforceDecorRules();
+
+    const edge = POSTER_EDGE_GAP_PX; // ✅ 25px siempre
+
+    const decorAllowed = isPosterDecorAllowed();
+    const frameOn = decorAllowed && !!state.map.posterFrameEnabled;                 // Marco (área)
+    const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;  // Margen (línea)
+
+    const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
+
+    // Fondo general
+    $poster.style.background = posterColors.bg;
+    $poster.style.color = posterColors.star;
+
+    // ---------- MARCO (ÁREA) ----------
+    if (frameOn){
+      $posterFrameArea.style.opacity = "1";
+      $posterFrameArea.style.background = posterColors.star; // color texto
+      $posterFrameArea.style.inset = `${edge}px`;
+      $posterFrameArea.style.borderRadius = "0px";
+    } else {
+      $posterFrameArea.style.opacity = "0";
+      $posterFrameArea.style.background = "transparent";
+      $posterFrameArea.style.inset = `${edge}px`;
+      $posterFrameArea.style.borderRadius = "0px";
+    }
+
+    // ---------- PAPEL (ÁREA INTERIOR) ----------
+    const innerInset = edge + framePx;
+    $posterPaper.style.background = posterColors.bg;
+    $posterPaper.style.inset = `${innerInset}px`;
+    $posterPaper.style.borderRadius = "0px";
+
+    // ---------- MARGEN (LÍNEA) ----------
+    const thickness = clamp(
+      state.map.posterMarginThickness || 2,
+      1,
+      state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX
+    );
+
+    // ✅ Margen siempre a 25px del borde (como tu imagen)
+    $posterMarginLine.style.inset = `${edge}px`;
+    $posterMarginLine.style.borderRadius = "0px";
+    $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
+    $posterMarginLine.style.borderStyle = "solid";
+    $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(posterColors.star, 1) : "transparent";
+  }
+
   function applyPosterLayoutByStyle(){
     const st = getStyleDef();
+
     if (st.layout === "classic") $poster.classList.add("classic");
     else $poster.classList.remove("classic");
 
@@ -323,6 +386,7 @@
   }
 
   function applyPosterPaddingLayout(){
+    // ✅ padding interno = edge(25) + framePx (si marco está activo)
     const edge = POSTER_EDGE_GAP_PX;
     const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
       ? clamp(state.map.posterFrameInsetPx, 0, 160)
@@ -344,56 +408,6 @@
     const size = clamp(base - Math.round(frame * 0.6), 640, 780);
     $poster.style.setProperty("--mapW", `${size}px`);
     $poster.style.setProperty("--mapH", `${size}px`);
-  }
-
-  function enforceDecorRules(){
-    if (!isPosterDecorAllowed()){
-      state.map.posterFrameEnabled = false;
-      state.map.posterMarginEnabled = false;
-      return;
-    }
-    if (state.map.posterFrameEnabled){
-      state.map.posterMarginEnabled = false;
-    }
-  }
-
-  function applyPosterFrameAndMargin(posterColors){
-    ensurePosterLayers();
-    updatePosterFrameInsetPx();
-    enforceDecorRules();
-
-    const edge = POSTER_EDGE_GAP_PX;
-    const frame = (state.map.posterFrameEnabled && isPosterDecorAllowed())
-      ? clamp(state.map.posterFrameInsetPx, 0, 160)
-      : 0;
-
-    $poster.style.background = posterColors.bg;
-    $poster.style.color = posterColors.star;
-
-    if (state.map.posterFrameEnabled){
-      $posterFrameArea.style.opacity = "1";
-      $posterFrameArea.style.background = posterColors.star;
-      $posterFrameArea.style.inset = `${edge}px`;
-      $posterFrameArea.style.borderRadius = `${Math.max(6, 26 - Math.round(edge * 0.12))}px`;
-    } else {
-      $posterFrameArea.style.opacity = "0";
-      $posterFrameArea.style.background = "transparent";
-      $posterFrameArea.style.inset = `${edge}px`;
-    }
-
-    const innerInset = edge + frame;
-    $posterPaper.style.background = posterColors.bg;
-    $posterPaper.style.inset = `${innerInset}px`;
-    $posterPaper.style.borderRadius = `${Math.max(6, 26 - Math.round(innerInset * 0.12))}px`;
-
-    const marginOn = !!state.map.posterMarginEnabled && !state.map.posterFrameEnabled && isPosterDecorAllowed();
-    const thickness = clamp(state.map.posterMarginThickness || POSTER_LINE_THICK_MAX, 1, state.map.posterMarginThicknessMax);
-
-    $posterMarginLine.style.inset = `${innerInset}px`;
-    $posterMarginLine.style.borderRadius = $posterPaper.style.borderRadius;
-    $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
-    $posterMarginLine.style.borderStyle = "solid";
-    $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(posterColors.star, 0.92) : "transparent";
   }
 
   function toggleSwitch(checked, onChange){
@@ -568,6 +582,7 @@
 
   function drawRectMap(ctx, mapW, mapH, mapColors, rand, showOutline, outlineW, conLineW, nodeR){
     ctx.save();
+
     ctx.fillStyle = mapColors.bg;
     ctx.fillRect(0,0,mapW,mapH);
 
@@ -676,7 +691,11 @@
 
     if (st.shape === "heart"){
       const cx = mapW/2;
+
+      // ✅ centrado un poco más al top (para que no se vea abajo)
       const cy = mapH/2 - Math.round(mapH * 0.06);
+
+      // ✅ tamaño ajustado (no se corta) + un poco más grande que “muy pequeño”
       const size = Math.min(mapW, mapH) * 0.4356;
 
       ctx.save();
@@ -737,7 +756,6 @@
     const posterColors = colorsFor(state.map.colorTheme);
 
     applyPosterFrameAndMargin(posterColors);
-
     applyPosterLayoutByStyle();
     applyPosterPaddingLayout();
     setMapSizeFromPosterPad();
@@ -838,13 +856,16 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
 
+        // ✅ Poster: no decor
         if (!isPosterDecorAllowed()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
         }
 
-        if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
+        // ✅ Romántico: contorno ON por default
         if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;
+
+        if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
         renderPosterAndMap();
         renderAll();
@@ -855,6 +876,7 @@
 
     styleRow.appendChild(grid);
 
+    // ✅ Random (arriba de color y abajo de estilos)
     const randomRow = document.createElement("div");
     randomRow.className = "formRow";
     randomRow.classList.add("stackGap");
@@ -888,10 +910,10 @@
       } else {
         const marco = pickBool();
         state.map.posterFrameEnabled = marco;
-        state.map.posterFramePct = Math.round(pickRange(0, POSTER_FRAME_PCT_MAX) * 200) / 200;
+        state.map.posterFramePct = marco ? POSTER_FRAME_PCT_MAX : state.map.posterFramePct;
         updatePosterFrameInsetPx();
         state.map.posterMarginEnabled = !marco ? pickBool() : false;
-        state.map.posterMarginThickness = POSTER_LINE_THICK_MAX;
+        state.map.posterMarginThickness = 2;
       }
 
       if (state.map.styleId === "romantico") {
@@ -930,6 +952,7 @@
     };
     colorRow.appendChild(colorSel);
 
+    // ✅ Zoom interno (solo IN)
     const mapZoomRow = document.createElement("div");
     mapZoomRow.className = "formRow";
     mapZoomRow.classList.add("stackGap");
@@ -961,6 +984,7 @@
     let frameRow = null, frameSizeRow = null, marginRow = null, marginThickRow = null;
 
     if (showDecor){
+      // ✅ Marco (área)
       frameRow = document.createElement("div");
       frameRow.className = "rowToggle";
       frameRow.classList.add("stackGap");
@@ -990,6 +1014,7 @@
       };
       frameSizeRow.appendChild(frameRange);
 
+      // ✅ Margen (línea)
       marginRow = document.createElement("div");
       marginRow.className = "rowToggle";
       marginRow.classList.add("stackGap");
@@ -1009,7 +1034,7 @@
       marginThick.min = "1";
       marginThick.max = String(state.map.posterMarginThicknessMax);
       marginThick.step = "1";
-      marginThick.value = String(state.map.posterMarginThickness || POSTER_LINE_THICK_MAX);
+      marginThick.value = String(state.map.posterMarginThickness || 2);
       marginThick.oninput = () => {
         state.map.posterMarginThickness = Number(marginThick.value);
         renderPosterAndMap();
@@ -1086,6 +1111,7 @@
     $section.appendChild(mapZoomRow);
     $section.appendChild(invertRow);
 
+    // ✅ Decor solo si NO es Poster
     if (showDecor){
       $section.appendChild(frameRow);
       if (state.map.posterFrameEnabled) {
@@ -1381,28 +1407,32 @@
     const frameX = Math.round(framePx * (W / POSTER_W));
     const frameY = Math.round(framePx * (H / POSTER_H));
 
+    // Fondo
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
+    // Marco (área) en export
     if (frameOn){
       ctx.fillStyle = colors.star;
       ctx.fillRect(edgeX, edgeY, W - edgeX*2, H - edgeY*2);
     }
 
+    // Papel interior
     const innerX = edgeX + frameX;
     const innerY = edgeY + frameY;
 
     ctx.fillStyle = colors.bg;
     ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
 
+    // Margen (línea) en export: SIEMPRE a 25px (edgeX/edgeY)
     if (marginOn){
-      const thick = clamp(state.map.posterMarginThickness || POSTER_LINE_THICK_MAX, 1, state.map.posterMarginThicknessMax);
+      const thick = clamp(state.map.posterMarginThickness || 2, 1, state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX);
       const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
       ctx.save();
-      ctx.strokeStyle = rgbaFromHex(colors.star, 0.92);
+      ctx.strokeStyle = rgbaFromHex(colors.star, 1);
       ctx.lineWidth = thickScaled;
       const half = thickScaled / 2;
-      ctx.strokeRect(innerX + half, innerY + half, W - (innerX * 2) - thickScaled, H - (innerY * 2) - thickScaled);
+      ctx.strokeRect(edgeX + half, edgeY + half, W - (edgeX * 2) - thickScaled, H - (edgeY * 2) - thickScaled);
       ctx.restore();
     }
 

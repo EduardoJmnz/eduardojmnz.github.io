@@ -331,12 +331,12 @@
       display:block;
     }
 
-    /* ✅ Textos subidos vs versión anterior (no tan abajo) */
+    /* ✅ 100px desde bottom para TODOS los estilos */
     .bottomText{
       position:absolute;
       left: calc(var(--posterPad) + 80px);
       right: calc(var(--posterPad) + 80px);
-      bottom: calc(var(--posterPad) + 40px);
+      bottom: calc(var(--posterPad) + 100px);
       padding:0;
     }
     .tTitle{
@@ -364,18 +364,20 @@
       text-overflow:ellipsis;
     }
 
+    /* ✅ Igual: 100px también en classic */
     .poster.classic .bottomText{
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
-      bottom: calc(var(--posterPad) + 60px);
+      bottom: calc(var(--posterPad) + 100px);
       text-align:center;
     }
     .poster.classic .meta{ justify-content:center; }
     .poster.classic .metaCol{ align-items:center; text-align:center; }
     .poster.classic .tTitle{ letter-spacing:1.6px; }
 
+    /* ✅ Igual: 100px también en rectStyle */
     .poster.rectStyle .bottomText{
-      bottom: calc(var(--posterPad) + 40px);
+      bottom: calc(var(--posterPad) + 100px);
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
       text-align:center;
@@ -410,7 +412,7 @@
           <div class="dot"></div>
           <div>
             <div class="brandTitle">Sky Art Creator</div>
-            <div class="brandSub">v2.090126.3</div>
+            <div class="brandSub">v2.090126.1</div>
           </div>
         </div>
       </div>

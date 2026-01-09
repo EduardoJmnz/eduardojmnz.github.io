@@ -14,7 +14,8 @@
       subtitle: "A moment to remember",
       place: "Mexico City, MX",
       coords: "19.4326, -99.1332",
-      datetime: "2026-01-07 19:30",
+      date: "2026-01-07",     // ✅ fecha separada
+      time: "19:30",          // ✅ hora separada
       fontKey: "system",
       fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
     },
@@ -22,14 +23,14 @@
     map: {
       styleId: "classic",
 
-      showGrid: false,          // Retícula solo Clásico / Moderno
+      showGrid: false,
       showConstellations: true,
       invertMapColors: false,
 
       colorTheme: "mono",
 
-      // ✅ Zoom interno del mapa (NO cambia la forma)
-      mapZoom: 1.0, // 1 = normal
+      // ✅ Solo zoom IN: mínimo 1.0 (no zoom out)
+      mapZoom: 1.0,
 
       posterMarginEnabled: false,
       posterMarginInsetPx: POSTER_MARGIN_INSET_DEFAULT,
@@ -40,6 +41,8 @@
       mapCircleMarginThickness: 2,
 
       constellationSize: 2.0,
+
+      // ✅ seed derivado de fecha/hora (y coords)
       seed: 12345,
     },
 
@@ -86,44 +89,12 @@
     { id: "neonRose",  name: "Neón Rosa" },
   ];
 
-  // ✅ Export sizes (3:4)
   const EXPORT_SIZES = [
-    {
-      key: "digital_900x1200",
-      title: "Digital (900×1200 px)",
-      sub: "Ideal para pantalla / pruebas rápidas",
-      type: "px",
-      w: 900, h: 1200
-    },
-    {
-      key: "30x40cm_300dpi",
-      title: "30×40 cm (300 dpi)",
-      sub: "Calidad impresión alta",
-      type: "cm",
-      w: 30, h: 40
-    },
-    {
-      key: "45x60cm_300dpi",
-      title: "45×60 cm (300 dpi)",
-      sub: "Impresión grande, gran detalle",
-      type: "cm",
-      w: 45, h: 60
-    },
-    {
-      key: "60x80cm_300dpi",
-      title: "60×80 cm (300 dpi)",
-      sub: "Impresión XL (archivo pesado)",
-      type: "cm",
-      w: 60, h: 80
-    },
-    // ✅ reemplazo del “USA” por uno MÁS GRANDE
-    {
-      key: "90x120cm_300dpi",
-      title: "90×120 cm (300 dpi)",
-      sub: "Gigante (archivo muy pesado)",
-      type: "cm",
-      w: 90, h: 120
-    },
+    { key: "digital_900x1200", title: "Digital (900×1200 px)", sub: "Ideal para pantalla / pruebas rápidas", type: "px", w: 900, h: 1200 },
+    { key: "30x40cm_300dpi",   title: "30×40 cm (300 dpi)",    sub: "Calidad impresión alta", type: "cm", w: 30, h: 40 },
+    { key: "45x60cm_300dpi",   title: "45×60 cm (300 dpi)",    sub: "Impresión grande, gran detalle", type: "cm", w: 45, h: 60 },
+    { key: "60x80cm_300dpi",   title: "60×80 cm (300 dpi)",    sub: "Impresión XL (archivo pesado)", type: "cm", w: 60, h: 80 },
+    { key: "90x120cm_300dpi",  title: "90×120 cm (300 dpi)",   sub: "Gigante (archivo muy pesado)", type: "cm", w: 90, h: 120 },
   ];
 
   const $tabs = document.getElementById("tabs");
@@ -153,6 +124,31 @@
       r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
       return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
     };
+  }
+
+  // ✅ FNV-1a hash (string -> uint32)
+  function hash32(str){
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 0x01000193);
+    }
+    return h >>> 0;
+  }
+
+  function getDateTimeString(){
+    const d = (state.text.date || "").trim();
+    const t = (state.text.time || "").trim();
+    if (!d && !t) return "";
+    if (d && t) return `${d} ${t}`;
+    return d || t;
+  }
+
+  // ✅ Regenera seed basado en fecha/hora (y coords)
+  function updateSeedFromDateTime(){
+    const key = `${(state.text.coords||"").trim()}|${(state.text.date||"").trim()}|${(state.text.time||"").trim()}`;
+    const h = hash32(key);
+    state.map.seed = h;
   }
 
   function hexToRgb(hex){
@@ -195,20 +191,16 @@
     return (state.map.styleId === "classic" || state.map.styleId === "moderno");
   }
 
-  // ✅ Corazón paramétrico estable
   function heartPath(ctx, cx, cy, size){
     const s = size / 18;
     ctx.beginPath();
-
     const steps = 220;
     for (let i = 0; i <= steps; i++){
       const t = (i / steps) * Math.PI * 2;
       const x = 16 * Math.pow(Math.sin(t), 3);
       const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-
       const px = cx + x * s * 1.10;
       const py = cy - y * s * 1.15;
-
       if (i === 0) ctx.moveTo(px, py);
       else ctx.lineTo(px, py);
     }
@@ -232,7 +224,6 @@
 
   function applyPosterLayoutByStyle(){
     const st = getStyleDef();
-
     if (st.layout === "classic") $poster.classList.add("classic");
     else $poster.classList.remove("classic");
 
@@ -353,7 +344,6 @@
     for (let i = 0; i < meridians; i++){
       const t = i / (meridians - 1);
       const x = w * (0.12 + t * 0.76);
-
       const bend = (Math.abs(t - 0.5) / 0.5);
       const curve = (1 - bend) * (w * 0.18);
 
@@ -366,7 +356,6 @@
     for (let j = 0; j < parallels; j++){
       const t = j / (parallels - 1);
       const y = h * (0.16 + t * 0.68);
-
       const bend = (Math.abs(t - 0.5) / 0.5);
       const curve = (1 - bend) * (h * 0.16);
 
@@ -452,7 +441,7 @@
     ctx.fillStyle = mapColors.bg;
     ctx.fillRect(0,0,mapW,mapH);
 
-    const z = clamp(state.map.mapZoom || 1, 0.6, 2.0);
+    const z = clamp(state.map.mapZoom || 1, 1.0, 1.6); // ✅ no zoom out
     if (z !== 1){
       ctx.translate(mapW/2, mapH/2);
       ctx.scale(z, z);
@@ -492,6 +481,7 @@
 
     const st = getStyleDef();
     const posterColors = colorsFor(state.map.colorTheme);
+
     const rand = mulberry32(state.map.seed);
 
     let mapColors = { ...posterColors };
@@ -510,10 +500,9 @@
     const showOutline = state.map.mapCircleMarginEnabled && !state.map.invertMapColors;
     const outlineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
-    // ✅ evita “cuadro” extraño: canvas transparente fuera de forma
     ctx.clearRect(0, 0, mapW, mapH);
 
-    const z = clamp(state.map.mapZoom || 1, 0.6, 2.0);
+    const z = clamp(state.map.mapZoom || 1, 1.0, 1.6); // ✅ no zoom out
 
     if (st.shape === "circle"){
       const shouldInsetLikeMapMargin = state.map.mapCircleMarginEnabled || state.map.posterMarginEnabled;
@@ -542,7 +531,6 @@
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
-      // ✅ zoom interno (no cambia forma)
       if (z !== 1){
         ctx.translate(cx, cy);
         ctx.scale(z, z);
@@ -569,7 +557,6 @@
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
-      // ✅ zoom interno (no cambia forma)
       if (z !== 1){
         ctx.translate(cx, cy);
         ctx.scale(z, z);
@@ -614,7 +601,7 @@
     $pSubtitle.textContent = state.text.subtitle || "";
     $pPlace.textContent = state.text.place || "";
     $pCoords.textContent = state.text.coords || "";
-    $pDatetime.textContent = state.text.datetime || "";
+    $pDatetime.textContent = getDateTimeString();
   }
 
   function renderPosterAndMap(){
@@ -622,60 +609,14 @@
 
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
-
     $poster.style.setProperty("--posterMarginColor", rgbaFromHex(posterColors.star, 0.28));
 
     applyPosterLayoutByStyle();
-    applyPosterMarginLine();
     applyPosterPaddingLayout();
+    applyPosterMarginLine();
     setMapSizeFromPosterPad();
 
     drawMap();
-  }
-
-  // ✅ Radio options helper
-  function radioGroup(items, getValue, setValue){
-    const wrap = document.createElement("div");
-    wrap.className = "radioGroup";
-
-    items.forEach(it => {
-      const opt = document.createElement("div");
-      opt.className = "radioOpt" + (getValue() === it.value ? " active" : "");
-
-      const left = document.createElement("div");
-      left.className = "radioLeft";
-
-      const dot = document.createElement("div");
-      dot.className = "radioDot";
-
-      const txt = document.createElement("div");
-      txt.className = "radioText";
-
-      const title = document.createElement("div");
-      title.className = "radioTitle";
-      title.textContent = it.title;
-
-      const sub = document.createElement("div");
-      sub.className = "radioSub";
-      sub.textContent = it.sub || "";
-
-      txt.appendChild(title);
-      if (it.sub) txt.appendChild(sub);
-
-      left.appendChild(dot);
-      left.appendChild(txt);
-
-      opt.appendChild(left);
-
-      opt.onclick = () => {
-        setValue(it.value);
-        renderAll();
-      };
-
-      wrap.appendChild(opt);
-    });
-
-    return wrap;
   }
 
   // --------------------------
@@ -787,7 +728,7 @@
         if (st.id === "poster") state.map.posterMarginEnabled = false;
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
-        // ✅ Romántico: por default contorno ON
+        // Romántico: contorno ON por default
         if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;
 
         renderPosterAndMap();
@@ -815,25 +756,21 @@
 
     colorSel.onchange = () => {
       state.map.colorTheme = colorSel.value;
-
-      if (state.map.colorTheme === "white") {
-        state.map.invertMapColors = true;
-      }
-
+      if (state.map.colorTheme === "white") state.map.invertMapColors = true;
       renderPosterAndMap();
       renderAll();
     };
 
     colorRow.appendChild(colorSel);
 
-    // ✅ Zoom interno del mapa (después del color)
+    // ✅ Zoom interno: SOLO IN (min 1)
     const mapZoomRow = document.createElement("div");
     mapZoomRow.className = "formRow";
     mapZoomRow.classList.add("stackGap");
     mapZoomRow.innerHTML = `<div class="label">Zoom</div>`;
     const mapZoomRange = document.createElement("input");
     mapZoomRange.type = "range";
-    mapZoomRange.min = "0.70";
+    mapZoomRange.min = "1.00";
     mapZoomRange.max = "1.60";
     mapZoomRange.step = "0.05";
     mapZoomRange.value = String(state.map.mapZoom);
@@ -899,61 +836,6 @@
       renderAll();
     }));
 
-    let mapThickRow = null;
-    if (state.map.mapCircleMarginEnabled) {
-      mapThickRow = document.createElement("div");
-      mapThickRow.className = "formRow";
-      mapThickRow.classList.add("stackGap");
-      mapThickRow.innerHTML = `<div class="label">Grosor del contorno</div>`;
-      const mapThick = document.createElement("input");
-      mapThick.type = "range";
-      mapThick.min = "1";
-      mapThick.max = "10";
-      mapThick.step = "1";
-      mapThick.value = String(state.map.mapCircleMarginThickness);
-      mapThick.oninput = () => {
-        state.map.mapCircleMarginThickness = Number(mapThick.value);
-        drawMap();
-      };
-      mapThickRow.appendChild(mapThick);
-    }
-
-    const stNow = getStyleDef();
-    const allowPosterMargin = (stNow.id !== "poster");
-
-    let posterRow = null;
-    let posterThickRow = null;
-
-    if (allowPosterMargin) {
-      posterRow = document.createElement("div");
-      posterRow.className = "rowToggle";
-      posterRow.classList.add("stackGap");
-      posterRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Margen del póster" }));
-      posterRow.appendChild(toggleSwitch(!!state.map.posterMarginEnabled, (val) => {
-        state.map.posterMarginEnabled = val;
-        renderPosterAndMap();
-        renderAll();
-      }));
-
-      if (state.map.posterMarginEnabled) {
-        posterThickRow = document.createElement("div");
-        posterThickRow.className = "formRow";
-        posterThickRow.classList.add("stackGap");
-        posterThickRow.innerHTML = `<div class="label">Grosor de la línea (póster)</div>`;
-        const posterThick = document.createElement("input");
-        posterThick.type = "range";
-        posterThick.min = "1";
-        posterThick.max = "10";
-        posterThick.step = "1";
-        posterThick.value = String(state.map.posterMarginThickness);
-        posterThick.oninput = () => {
-          state.map.posterMarginThickness = Number(posterThick.value);
-          applyPosterMarginLine();
-        };
-        posterThickRow.appendChild(posterThick);
-      }
-    }
-
     const seedRow = document.createElement("div");
     seedRow.className = "formRow";
     seedRow.classList.add("stackGap");
@@ -965,64 +847,11 @@
     seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
 
-    // ✅ Regresó el random
-    const randomRow = document.createElement("div");
-    randomRow.className = "formRow";
-    randomRow.classList.add("stackGap");
-    const randomBtn = document.createElement("button");
-    randomBtn.type = "button";
-    randomBtn.className = "btn primary";
-    randomBtn.textContent = "Poster Aleatorio";
-    randomBtn.onclick = () => {
-      const r = Math.random;
-
-      const pick = (arr) => arr[Math.floor(r() * arr.length)];
-      const pickBool = () => r() > 0.5;
-      const pickRange = (min, max) => min + r() * (max - min);
-
-      state.map.styleId = pick(MAP_STYLES).id;
-      state.map.colorTheme = pick(COLOR_THEMES).id;
-
-      const allowG = isGridAllowedForCurrentStyle();
-      state.map.showGrid = allowG ? pickBool() : false;
-
-      state.map.showConstellations = pickBool();
-      state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
-
-      state.map.mapZoom = Math.round(pickRange(0.8, 1.5) * 20) / 20;
-
-      state.map.posterMarginThickness = Math.round(pickRange(1, 10));
-      state.map.mapCircleMarginThickness = Math.round(pickRange(1, 10));
-
-      state.map.invertMapColors = pickBool();
-      if (state.map.colorTheme === "white") state.map.invertMapColors = true;
-
-      // Romántico: contorno ON, retícula OFF
-      if (state.map.styleId === "romantico") {
-        state.map.mapCircleMarginEnabled = true;
-        state.map.showGrid = false;
-      } else {
-        state.map.mapCircleMarginEnabled = pickBool();
-      }
-
-      const st = getStyleDef();
-      state.map.posterMarginEnabled = (st.id !== "poster") ? pickBool() : false;
-
-      state.map.seed = (Math.random() * 1e9) | 0;
-
-      renderPosterAndMap();
-      renderAll();
-    };
-    randomRow.appendChild(randomBtn);
-
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(styleRow);
     $section.appendChild(colorRow);
-
-    // ✅ Zoom después de color
     $section.appendChild(mapZoomRow);
-
     $section.appendChild(invertRow);
 
     if (allowGrid) $section.appendChild(gridRow);
@@ -1031,13 +860,7 @@
     if (state.map.showConstellations) $section.appendChild(csRow);
 
     $section.appendChild(mapRow);
-    if (mapThickRow) $section.appendChild(mapThickRow);
-
-    if (posterRow) $section.appendChild(posterRow);
-    if (posterThickRow) $section.appendChild(posterThickRow);
-
     $section.appendChild(seedRow);
-    $section.appendChild(randomRow);
 
     $section.appendChild(navButtons({
       showPrev: false,
@@ -1115,15 +938,81 @@
       return card;
     }
 
+    function dateTimeCard(){
+      const card = document.createElement("div");
+      card.className = "fieldCard";
+
+      const header = document.createElement("div");
+      header.className = "fieldHeader";
+
+      const lab = document.createElement("div");
+      lab.className = "fieldLabel";
+      lab.textContent = "Fecha / hora";
+
+      const toggle = toggleSwitch(!!state.visible.datetime, (val) => {
+        state.visible.datetime = val;
+        renderPosterText();
+        renderAll();
+      });
+
+      header.appendChild(lab);
+      header.appendChild(toggle);
+      card.appendChild(header);
+
+      if (state.visible.datetime){
+        const body = document.createElement("div");
+        body.className = "fieldBody";
+
+        // ✅ Fecha (calendario moderno)
+        const dateInp = document.createElement("input");
+        dateInp.className = "fieldInput";
+        dateInp.type = "date";
+        dateInp.value = state.text.date || "";
+        dateInp.oninput = () => {
+          state.text.date = dateInp.value;
+          updateSeedFromDateTime();
+          renderPosterText();
+          drawMap();
+        };
+        body.appendChild(dateInp);
+
+        const spacer = document.createElement("div");
+        spacer.style.height = "10px";
+        body.appendChild(spacer);
+
+        // ✅ Hora (campo separado)
+        const timeInp = document.createElement("input");
+        timeInp.className = "fieldInput";
+        timeInp.type = "time";
+        timeInp.value = state.text.time || "";
+        timeInp.oninput = () => {
+          state.text.time = timeInp.value;
+          updateSeedFromDateTime();
+          renderPosterText();
+          drawMap();
+        };
+        body.appendChild(timeInp);
+
+        card.appendChild(body);
+      }
+
+      return card;
+    }
+
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(fontRow);
 
-    $section.appendChild(fieldCard("title", "Título", () => state.text.title, (v) => state.text.title = v));
-    $section.appendChild(fieldCard("subtitle", "Subtítulo", () => state.text.subtitle, (v) => state.text.subtitle = v));
-    $section.appendChild(fieldCard("place", "Lugar", () => state.text.place, (v) => state.text.place = v));
-    $section.appendChild(fieldCard("coords", "Coordenadas", () => state.text.coords, (v) => state.text.coords = v));
-    $section.appendChild(fieldCard("datetime", "Fecha / hora", () => state.text.datetime, (v) => state.text.datetime = v, "YYYY-MM-DD HH:mm"));
+    $section.appendChild(fieldCard("title", "Título", () => state.text.title, (v) => { state.text.title = v; }));
+    $section.appendChild(fieldCard("subtitle", "Subtítulo", () => state.text.subtitle, (v) => { state.text.subtitle = v; }));
+    $section.appendChild(fieldCard("place", "Lugar", () => state.text.place, (v) => { state.text.place = v; }));
+    $section.appendChild(fieldCard("coords", "Coordenadas", () => state.text.coords, (v) => {
+      state.text.coords = v;
+      updateSeedFromDateTime();
+      drawMap();
+    }));
+
+    $section.appendChild(dateTimeCard());
 
     $section.appendChild(navButtons({
       showPrev: true,
@@ -1142,40 +1031,46 @@
 
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Selecciona tamaño y formato (selector de puntos).";
-
-    const sizeRow = document.createElement("div");
-    sizeRow.className = "formRow";
-    sizeRow.innerHTML = `<div class="label">Medidas de exportación</div>`;
-
-    const sizeItems = EXPORT_SIZES.map(sz => ({
-      value: sz.key,
-      title: sz.title,
-      sub: sz.sub
-    }));
-
-    sizeRow.appendChild(radioGroup(
-      sizeItems,
-      () => state.export.sizeKey,
-      (val) => { state.export.sizeKey = val; }
-    ));
+    s.textContent = "Selecciona formato y exporta tu póster.";
 
     const formatRow = document.createElement("div");
     formatRow.className = "formRow";
-    formatRow.classList.add("stackGap");
     formatRow.innerHTML = `<div class="label">Formato</div>`;
 
-    const formatItems = [
-      { value: "png", title: "PNG", sub: "Mejor calidad" },
-      { value: "jpg", title: "JPG", sub: "Archivo más ligero" },
-      { value: "pdf", title: "PDF", sub: "Perfecto para imprimir" },
-    ];
+    const formatSel = document.createElement("select");
+    formatSel.className = "select";
+    [
+      ["png","PNG · Mejor calidad"],
+      ["jpg","JPG · Archivo más ligero"],
+      ["pdf","PDF · Perfecto para imprimir"]
+    ].forEach(([v,n]) => {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = n;
+      formatSel.appendChild(opt);
+    });
+    formatSel.value = state.export.format;
+    formatSel.onchange = () => { state.export.format = formatSel.value; };
 
-    formatRow.appendChild(radioGroup(
-      formatItems,
-      () => state.export.format,
-      (val) => { state.export.format = val; }
-    ));
+    formatRow.appendChild(formatSel);
+
+    const sizeRow = document.createElement("div");
+    sizeRow.className = "formRow";
+    sizeRow.classList.add("stackGap");
+    sizeRow.innerHTML = `<div class="label">Medidas</div>`;
+
+    const sizeSel = document.createElement("select");
+    sizeSel.className = "select";
+    EXPORT_SIZES.forEach(sz => {
+      const opt = document.createElement("option");
+      opt.value = sz.key;
+      opt.textContent = `${sz.title} — ${sz.sub}`;
+      sizeSel.appendChild(opt);
+    });
+    sizeSel.value = state.export.sizeKey;
+    sizeSel.onchange = () => { state.export.sizeKey = sizeSel.value; };
+
+    sizeRow.appendChild(sizeSel);
 
     const exportBtn = document.createElement("button");
     exportBtn.type = "button";
@@ -1219,17 +1114,9 @@
     let W, H;
     if (sz.type === "px"){
       W = sz.w; H = sz.h;
-    } else if (sz.type === "cm"){
+    } else {
       W = cmToPx(sz.w, dpi);
       H = cmToPx(sz.h, dpi);
-    } else {
-      W = 900; H = 1200;
-    }
-
-    const targetRatio = 3/4;
-    const ratio = W / H;
-    if (Math.abs(ratio - targetRatio) > 0.001){
-      H = Math.round(W / targetRatio);
     }
 
     const out = document.createElement("canvas");
@@ -1240,40 +1127,27 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     const colors = colorsFor(state.map.colorTheme);
-
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
-    const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
-    const st = getStyleDef();
-
     const sx = W / POSTER_W;
     const sy = H / POSTER_H;
+
+    const st = getStyleDef();
 
     let mapW, mapH;
     if (st.shape === "rect"){
       mapW = Math.round(820 * sx);
       mapH = Math.round(860 * sy);
     } else {
-      const base = 780 * sx;
-      const padEffect = Math.round((pad * 0.6) * sx);
-      mapW = clamp(Math.round(base - padEffect), Math.round(640 * sx), Math.round(780 * sx));
+      mapW = Math.round(780 * sx);
       mapH = mapW;
     }
 
     const mapX = Math.round((W - mapW) / 2);
-    const mapY = Math.round((pad + 70) * sy);
+    const mapY = Math.round(70 * sy);
 
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
-
-    if (state.map.posterMarginEnabled){
-      ctx.save();
-      ctx.strokeStyle = rgbaFromHex(colors.star, 0.28);
-      ctx.lineWidth = clamp(Math.round(state.map.posterMarginThickness * sx), 1, 14);
-      const inset = Math.round(state.map.posterMarginInsetPx * sx);
-      ctx.strokeRect(inset, inset, W - inset * 2, H - inset * 2);
-      ctx.restore();
-    }
 
     const fontFamily = state.text.fontFamily;
     ctx.fillStyle = colors.star;
@@ -1288,60 +1162,15 @@
       ctx.restore();
     }
 
-    function metaText(text, x, y, sizePx, align){
-      ctx.save();
-      ctx.globalAlpha = 0.82;
-      ctx.textAlign = align;
-      ctx.textBaseline = "alphabetic";
-      ctx.font = `650 ${Math.round(sizePx)}px ${fontFamily}`;
-      ctx.fillText(text, Math.round(x), Math.round(y));
-      ctx.restore();
-    }
-
     const show = state.visible;
+    const centerX = W / 2;
 
-    if (st.layout === "minimal"){
-      const left = (pad + 80) * sx;
+    if (show.title) drawText(state.text.title, centerX, Math.round(1040 * sy), 54 * sy, 900, "center", 1);
+    if (show.subtitle) drawText(state.text.subtitle, centerX, Math.round(1085 * sy), 18 * sy, 650, "center", 0.85);
 
-      let top = H - ((pad + 64) * sy) - (160 * sy);
-      top = Math.max(top, mapY + mapH + Math.round(40 * sy));
-      let ty = top;
-
-      if (show.title) { drawText(state.text.title, left, ty + (54 * sy), 54 * sy, 900, "left", 1); ty += (54 * sy) + (10 * sy); }
-      if (show.subtitle) { drawText(state.text.subtitle, left, ty + (18 * sy), 18 * sy, 600, "left", 0.85); ty += (18 * sy) + (22 * sy); }
-
-      const metaY1 = ty + (14 * sy);
-      const metaY2 = metaY1 + (20 * sy);
-      const metaY3 = metaY2 + (20 * sy);
-
-      if (show.place) metaText(state.text.place, left, metaY1, 14 * sy, "left");
-      if (show.coords) metaText(state.text.coords, left, metaY2, 14 * sy, "left");
-      if (show.datetime) metaText(state.text.datetime, left, metaY3, 14 * sy, "left");
-    } else {
-      const centerX = W / 2;
-      const isPosterRect = (st.shape === "rect" && state.map.styleId === "poster");
-
-      const titleSize = (isPosterRect ? 44 : 54) * sy;
-      const subSize   = (isPosterRect ? 16 : 18) * sy;
-      const metaSize  = (isPosterRect ? 12 : 14) * sy;
-
-      let ty = isPosterRect
-        ? (H - ((pad + 70) * sy))
-        : (H - ((pad + 90) * sy) - (80 * sy));
-
-      if (show.subtitle) ty -= isPosterRect ? (18 * sy) : (24 * sy);
-
-      if (show.title) { drawText(state.text.title, centerX, ty, titleSize, 900, "center", 1); ty += isPosterRect ? (30 * sy) : (36 * sy); }
-      if (show.subtitle) { drawText(state.text.subtitle, centerX, ty, subSize, 650, "center", 0.85); ty += isPosterRect ? (26 * sy) : (36 * sy); }
-
-      const metaY1 = ty + (isPosterRect ? (22 * sy) : (34 * sy));
-      const metaY2 = metaY1 + (isPosterRect ? (18 * sy) : (22 * sy));
-      const metaY3 = metaY2 + (isPosterRect ? (18 * sy) : (22 * sy));
-
-      if (show.place) metaText(state.text.place, centerX, metaY1, metaSize, "center");
-      if (show.coords) metaText(state.text.coords, centerX, metaY2, metaSize, "center");
-      if (show.datetime) metaText(state.text.datetime, centerX, metaY3, metaSize, "center");
-    }
+    if (show.place) drawText(state.text.place, centerX, Math.round(1135 * sy), 14 * sy, 650, "center", 0.82);
+    if (show.coords) drawText(state.text.coords, centerX, Math.round(1160 * sy), 14 * sy, 650, "center", 0.82);
+    if (show.datetime) drawText(getDateTimeString(), centerX, Math.round(1185 * sy), 14 * sy, 650, "center", 0.82);
 
     if (format === "png" || format === "jpg"){
       const mime = format === "png" ? "image/png" : "image/jpeg";
@@ -1394,6 +1223,7 @@
   }
 
   // Init
+  updateSeedFromDateTime();
   applyPosterLayoutByStyle();
   applyPosterMarginLine();
   applyPosterPaddingLayout();
@@ -1403,4 +1233,3 @@
   renderAll();
   window.addEventListener("resize", () => drawMap());
 })();
-

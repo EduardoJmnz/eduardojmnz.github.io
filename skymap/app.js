@@ -23,7 +23,7 @@
 
       // toggles
       showGrid: false,          // ✅ Retícula
-      gridSize: 2,              // ✅ Slider tamaño retícula
+      gridSize: 2,              // ✅ Slider tamaño (grosor) retícula
       showConstellations: true,
       invertMapColors: false,
 
@@ -144,14 +144,13 @@
     return MAP_STYLES.find(s => s.id === state.map.styleId) || MAP_STYLES[0];
   }
 
-  // ✅ Heart “clásico” (arcos + Q) como un corazón normal
-  // Basado en el path tipo corazón de ejemplo (arcos superiores + curvas inferiores). :contentReference[oaicite:1]{index=1}
-  function heartPath(ctx, cx, cy, size){
-    // path base en un “viewBox” virtual 0..100
+  // ✅ Heart “clásico”, pero ajustable (más ancho y centrable)
+  function heartPath(ctx, cx, cy, size, wideFactor=1.18, tallFactor=0.96){
+    // Path base en espacio virtual
     // x: 10..90 (80 ancho), y: 30..90 (60 alto)
-    // Centramos en (50, 60)
-    const sx = size / 80;        // ancho
-    const sy = (size * 0.92) / 60; // alto (ligeramente menos alto para que no se deforme)
+    // centro aprox (50, 60)
+    const sx = (size * wideFactor) / 80;          // más ancho
+    const sy = (size * tallFactor) / 60;          // un poco menos alto para que no se “estire” raro
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -159,23 +158,13 @@
     ctx.translate(-50, -60);
 
     ctx.beginPath();
-
-    // M 10,30
     ctx.moveTo(10, 30);
-
-    // A 20,20 ... 50,30  (lóbulo izq)
     ctx.arc(30, 30, 20, Math.PI, 0, false);
-
-    // A 20,20 ... 90,30  (lóbulo der)
     ctx.arc(70, 30, 20, Math.PI, 0, false);
-
-    // Q 90,60 50,90
     ctx.quadraticCurveTo(90, 60, 50, 90);
-
-    // Q 10,60 10,30
     ctx.quadraticCurveTo(10, 60, 10, 30);
-
     ctx.closePath();
+
     ctx.restore();
   }
 
@@ -200,7 +189,7 @@
     if (st.layout === "classic") $poster.classList.add("classic");
     else $poster.classList.remove("classic");
 
-    // ✅ clase extra para “Poster” (rect) para ajustar el bottom text
+    // ✅ clase extra para “Poster” (rect) para CSS especial
     $poster.classList.toggle("rectStyle", st.shape === "rect");
 
     // map dims per style
@@ -307,46 +296,48 @@
     });
   }
 
-  // ✅ Retícula “tipo globo” (proyección ortográfica) como tu imagen:
-  // - meridianos: curvas verticales
-  // - paralelos: curvas horizontales (más “aplanadas” hacia arriba/abajo)
+  // ✅ Retícula como tu imagen (tipo “mapa mundial” curvo en rectángulo)
+  // Reglas pedidas: 11 paralelos y 7 meridianos
+  // Slider "Tamaño de retícula" controla el grosor.
   function drawCurvedGrid(ctx, w, h, colors){
-    const gridSize = clamp(state.map.gridSize, 1, 6);
+    const parallels = 11;
+    const meridians = 7;
 
-    const R = Math.min(w, h) * 0.47;
+    const thickness = clamp(state.map.gridSize, 1, 6);
+    const lineW = 0.6 + thickness * 0.35;
+
     const cx = w / 2;
     const cy = h / 2;
 
-    const lineW = 0.6 + gridSize * 0.35;
+    // margen interno para que no toque bordes
+    const halfW = w * 0.44;
+    const halfH = h * 0.42;
+
+    // Curvatura: más curva = más parecido a “malla” de tu ejemplo
+    const lonCurve = 1.0; // meridianos convergen a polos
+    const latCurve = 1.0; // paralelos se arquean en laterales
 
     ctx.save();
     ctx.strokeStyle = colors.line;
     ctx.lineWidth = lineW;
-    ctx.globalAlpha = 0.28;
+    ctx.globalAlpha = 0.30;
 
-    const deg = (d) => d * Math.PI / 180;
-
-    // Dibuja una línea de grilla (lon/lat) en proyección ortográfica
-    function drawLon(lonDeg){
-      const lon = deg(lonDeg);
+    // Meridianos: x se “encoge” hacia polos con cos(pi/2 * |t|)
+    // t = -1..1 (vertical)
+    for (let i = 0; i < meridians; i++){
+      const u = meridians === 1 ? 0 : (i / (meridians - 1)) * 2 - 1; // -1..1
+      const x0 = u * 0.92; // base
       let started = false;
 
       ctx.beginPath();
-      for (let latDeg = -80; latDeg <= 80; latDeg += 2){
-        const lat = deg(latDeg);
+      for (let s = -1; s <= 1.0001; s += 0.02){
+        const t = s; // vertical
+        const shrink = Math.cos(Math.abs(t) * Math.PI / 2); // 1 en ecuador, 0 en polos
+        const x = x0 * Math.pow(shrink, lonCurve);
+        const y = t * 0.96;
 
-        // esfera (radio 1) -> ortográfica
-        // x = cos(lat) * sin(lon)
-        // y = -sin(lat)
-        // visible si z = cos(lat) * cos(lon) >= 0
-        const z = Math.cos(lat) * Math.cos(lon);
-        if (z < 0) { started = false; continue; }
-
-        const x = Math.cos(lat) * Math.sin(lon);
-        const y = -Math.sin(lat);
-
-        const px = cx + x * R;
-        const py = cy + y * R;
+        const px = cx + x * halfW;
+        const py = cy + y * halfH;
 
         if (!started){ ctx.moveTo(px, py); started = true; }
         else ctx.lineTo(px, py);
@@ -354,33 +345,29 @@
       ctx.stroke();
     }
 
-    function drawLat(latDeg){
-      const lat = deg(latDeg);
+    // Paralelos: y se “amplifica” hacia laterales (para formar arco)
+    // x = -1..1
+    for (let j = 0; j < parallels; j++){
+      const v = parallels === 1 ? 0 : (j / (parallels - 1)) * 2 - 1; // -1..1
+      const y0 = v * 0.78; // evita tocar borde superior/inferior
       let started = false;
 
       ctx.beginPath();
-      for (let lonDeg = -180; lonDeg <= 180; lonDeg += 2){
-        const lon = deg(lonDeg);
-        const z = Math.cos(lat) * Math.cos(lon);
-        if (z < 0) { started = false; continue; }
+      for (let s = -1; s <= 1.0001; s += 0.02){
+        const xN = s * 0.96;
+        // factor crece hacia lados (cos -> 0 en extremos => amplifica)
+        const denom = Math.max(0.42, Math.cos(Math.abs(xN) * Math.PI / 2));
+        const amp = Math.pow(1 / denom, latCurve);
+        const y = clamp(y0 * amp, -0.98, 0.98);
 
-        const x = Math.cos(lat) * Math.sin(lon);
-        const y = -Math.sin(lat);
-
-        const px = cx + x * R;
-        const py = cy + y * R;
+        const px = cx + xN * halfW;
+        const py = cy + y * halfH;
 
         if (!started){ ctx.moveTo(px, py); started = true; }
         else ctx.lineTo(px, py);
       }
       ctx.stroke();
     }
-
-    // Meridianos
-    [-60,-30,0,30,60].forEach(drawLon);
-
-    // Paralelos
-    [-60,-30,0,30,60].forEach(drawLat);
 
     ctx.restore();
   }
@@ -470,7 +457,6 @@
     const posterColors = colorsFor(state.map.colorTheme);
     const rand = mulberry32(state.map.seed);
 
-    // colores del mapa (posible inversión)
     let mapColors = { ...posterColors };
     if (state.map.invertMapColors){
       mapColors = {
@@ -487,7 +473,6 @@
     const showOutline = state.map.mapCircleMarginEnabled && !state.map.invertMapColors;
     const outlineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
-    // fondo del canvas = fondo del póster
     ctx.clearRect(0, 0, mapW, mapH);
     ctx.fillStyle = posterColors.bg;
     ctx.fillRect(0, 0, mapW, mapH);
@@ -530,13 +515,15 @@
 
     // ----- HEART -----
     if (st.shape === "heart"){
-      const cx = mapW/2, cy = mapH/2;
+      // ✅ más centrado hacia abajo para que no se corte
+      const cx = mapW/2;
+      const cy = mapH/2 + Math.round(mapH * 0.055);
 
-      // ✅ tamaño equilibrado (no “apachurrado” ni “deformado”)
-      const size = Math.min(mapW, mapH) * 0.70;
+      // ✅ tamaño ligeramente mayor
+      const size = Math.min(mapW, mapH) * 0.72;
 
       ctx.save();
-      heartPath(ctx, cx, cy, size);
+      heartPath(ctx, cx, cy, size, 1.22, 0.94); // ✅ más ancho, un poco menos alto
       ctx.clip();
 
       ctx.fillStyle = mapColors.bg;
@@ -553,7 +540,7 @@
         ctx.strokeStyle = mapColors.line;
         ctx.lineWidth = outlineW;
         ctx.globalAlpha = 0.85;
-        heartPath(ctx, cx, cy, size);
+        heartPath(ctx, cx, cy, size, 1.22, 0.94);
         ctx.stroke();
         ctx.restore();
       }
@@ -610,7 +597,6 @@
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
-    // margen del póster = mismo color de texto
     $poster.style.setProperty("--posterMarginColor", rgbaFromHex(posterColors.star, 0.28));
 
     applyPosterLayoutByStyle();
@@ -656,12 +642,10 @@
       const ctx = c.getContext("2d");
       const pc = colorsFor(state.map.colorTheme);
 
-      // bg
       ctx.clearRect(0,0,180,240);
       ctx.fillStyle = pc.bg;
       ctx.fillRect(0,0,180,240);
 
-      // map frame area
       ctx.save();
       const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
 
@@ -671,9 +655,9 @@
         ctx.clip();
       } else if (st.shape === "heart"){
         const cx = mx+mw/2;
-        const cy = my+mw/2;
-        const size = mw*0.78;
-        heartPath(ctx, cx, cy, size);
+        const cy = my+mw/2 + 4; // mini offset
+        const size = mw*0.82;
+        heartPath(ctx, cx, cy, size, 1.15, 0.96);
         ctx.clip();
       } else {
         ctx.beginPath();
@@ -705,7 +689,6 @@
       ctx.globalAlpha = 1;
       ctx.restore();
 
-      // skeleton text
       ctx.save();
       ctx.fillStyle = rgbaFromHex(pc.star, 0.45);
       if (st.layout === "minimal"){
@@ -730,10 +713,7 @@
 
       tile.onclick = () => {
         state.map.styleId = st.id;
-
-        // reglas: Poster y Romántico sin margen del póster
         if (st.id === "poster" || st.id === "romantico") state.map.posterMarginEnabled = false;
-
         renderPosterAndMap();
         renderAll();
       };
@@ -743,7 +723,7 @@
 
     styleRow.appendChild(grid);
 
-    // Color picker
+    // Color
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
     colorRow.innerHTML = `<div class="label">Color del póster</div>`;
@@ -760,13 +740,10 @@
 
     colorSel.onchange = () => {
       state.map.colorTheme = colorSel.value;
-
-      // Blanco => auto invertir + ocultar contorno
       if (state.map.colorTheme === "white") {
         state.map.invertMapColors = true;
         state.map.mapCircleMarginEnabled = false;
       }
-
       renderPosterAndMap();
       renderAll();
     };
@@ -785,7 +762,7 @@
       renderAll();
     }));
 
-    // ✅ Retícula toggle
+    // Retícula toggle
     const gridRow = document.createElement("div");
     gridRow.className = "rowToggle";
     gridRow.classList.add("stackGap");
@@ -796,7 +773,7 @@
       renderAll();
     }));
 
-    // ✅ Slider tamaño retícula (solo cuando está ON)
+    // Slider tamaño retícula
     const gridSizeRow = document.createElement("div");
     gridSizeRow.className = "formRow";
     gridSizeRow.classList.add("stackGap");
@@ -810,7 +787,7 @@
     gridRange.oninput = () => { state.map.gridSize = Number(gridRange.value); drawMap(); };
     gridSizeRow.appendChild(gridRange);
 
-    // Constellations toggle
+    // Constellations
     const conRow = document.createElement("div");
     conRow.className = "rowToggle";
     conRow.classList.add("stackGap");
@@ -834,7 +811,7 @@
     csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
     csRow.appendChild(csRange);
 
-    // Contorno del mapa (oculto si invertir ON)
+    // Contorno del mapa
     let mapRow = null;
     let mapThickRow = null;
     if (!state.map.invertMapColors) {
@@ -867,7 +844,7 @@
       }
     }
 
-    // Margen del póster (oculto en Poster y Romántico)
+    // Margen del póster
     const stNow = getStyleDef();
     const allowPosterMargin = (stNow.id !== "poster" && stNow.id !== "romantico");
 
@@ -918,7 +895,7 @@
     seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
 
-    // ✅ Poster aleatorio
+    // Poster aleatorio
     const randomRow = document.createElement("div");
     randomRow.className = "formRow";
     randomRow.classList.add("stackGap");
@@ -1229,13 +1206,15 @@
       if (show.datetime) metaText(state.text.datetime, left, metaY3, "left");
     } else {
       const centerX = W / 2;
-      let ty = H - (pad + 70) - 60; // un poco más abajo para export
+
+      // ✅ export: también más pegado al bottom para estilo “poster”
+      let ty = H - (pad + 54) - 40;
       if (show.subtitle) ty -= 18;
 
       if (show.title) { drawText(state.text.title, centerX, ty, 54, 900, "center", 1); ty += 36; }
       if (show.subtitle) { drawText(state.text.subtitle, centerX, ty, 18, 650, "center", 0.85); ty += 34; }
 
-      const metaY1 = ty + 30;
+      const metaY1 = ty + 28;
       const metaY2 = metaY1 + 22;
       const metaY3 = metaY2 + 22;
 

@@ -23,6 +23,7 @@
 
       // toggles
       showGrid: false,          // ✅ Retícula
+      gridSize: 2,              // ✅ Slider tamaño retícula
       showConstellations: true,
       invertMapColors: false,
 
@@ -143,53 +144,39 @@
     return MAP_STYLES.find(s => s.id === state.map.styleId) || MAP_STYLES[0];
   }
 
-  // ✅ Heart path (más alto y sin “panzón lateral”)
-  // Usamos un corazón clásico con cubics y escalado vertical.
+  // ✅ Heart “clásico” (arcos + Q) como un corazón normal
+  // Basado en el path tipo corazón de ejemplo (arcos superiores + curvas inferiores). :contentReference[oaicite:1]{index=1}
   function heartPath(ctx, cx, cy, size){
-    // size = base scale
-    const w = size;
-    const h = size * 1.18; // ✅ más alto
+    // path base en un “viewBox” virtual 0..100
+    // x: 10..90 (80 ancho), y: 30..90 (60 alto)
+    // Centramos en (50, 60)
+    const sx = size / 80;        // ancho
+    const sy = (size * 0.92) / 60; // alto (ligeramente menos alto para que no se deforme)
 
-    // ancla superior más arriba
-    const topY = cy - h * 0.62;
-    const bottomY = cy + h * 0.62;
-
-    // control lateral reducido para que no “explote” de los lados
-    const leftX = cx - w * 0.78;
-    const rightX = cx + w * 0.78;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(sx, sy);
+    ctx.translate(-50, -60);
 
     ctx.beginPath();
-    ctx.moveTo(cx, bottomY);
 
-    // Izq abajo -> izq medio
-    ctx.bezierCurveTo(
-      cx - w * 0.92, cy + h * 0.30,
-      leftX,         cy - h * 0.08,
-      cx - w * 0.44, cy - h * 0.12
-    );
+    // M 10,30
+    ctx.moveTo(10, 30);
 
-    // Lóbulo izq
-    ctx.bezierCurveTo(
-      cx - w * 0.10, cy - h * 0.60,
-      cx - w * 0.55, topY,
-      cx,            cy - h * 0.28
-    );
+    // A 20,20 ... 50,30  (lóbulo izq)
+    ctx.arc(30, 30, 20, Math.PI, 0, false);
 
-    // Lóbulo der
-    ctx.bezierCurveTo(
-      cx + w * 0.55, topY,
-      cx + w * 0.10, cy - h * 0.60,
-      cx + w * 0.44, cy - h * 0.12
-    );
+    // A 20,20 ... 90,30  (lóbulo der)
+    ctx.arc(70, 30, 20, Math.PI, 0, false);
 
-    // Der medio -> abajo
-    ctx.bezierCurveTo(
-      rightX,        cy - h * 0.08,
-      cx + w * 0.92, cy + h * 0.30,
-      cx,            bottomY
-    );
+    // Q 90,60 50,90
+    ctx.quadraticCurveTo(90, 60, 50, 90);
+
+    // Q 10,60 10,30
+    ctx.quadraticCurveTo(10, 60, 10, 30);
 
     ctx.closePath();
+    ctx.restore();
   }
 
   function applyZoom(){
@@ -212,6 +199,9 @@
 
     if (st.layout === "classic") $poster.classList.add("classic");
     else $poster.classList.remove("classic");
+
+    // ✅ clase extra para “Poster” (rect) para ajustar el bottom text
+    $poster.classList.toggle("rectStyle", st.shape === "rect");
 
     // map dims per style
     if (st.shape === "rect") {
@@ -317,43 +307,80 @@
     });
   }
 
+  // ✅ Retícula “tipo globo” (proyección ortográfica) como tu imagen:
+  // - meridianos: curvas verticales
+  // - paralelos: curvas horizontales (más “aplanadas” hacia arriba/abajo)
   function drawCurvedGrid(ctx, w, h, colors){
-    // ✅ “paralelos y meridianos” curvos (tipo globo)
+    const gridSize = clamp(state.map.gridSize, 1, 6);
+
+    const R = Math.min(w, h) * 0.47;
+    const cx = w / 2;
+    const cy = h / 2;
+
+    const lineW = 0.6 + gridSize * 0.35;
+
     ctx.save();
     ctx.strokeStyle = colors.line;
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.22;
+    ctx.lineWidth = lineW;
+    ctx.globalAlpha = 0.28;
 
-    const meridians = 7; // incluye centro
-    const parallels = 6;
+    const deg = (d) => d * Math.PI / 180;
 
-    // Meridianos (curvas verticales)
-    for (let i = 0; i < meridians; i++){
-      const t = i / (meridians - 1);
-      const x = w * (0.12 + t * 0.76);
-
-      const bend = (Math.abs(t - 0.5) / 0.5); // 0 centro, 1 extremos
-      const curve = (1 - bend) * (w * 0.18);  // más curva en centro
+    // Dibuja una línea de grilla (lon/lat) en proyección ortográfica
+    function drawLon(lonDeg){
+      const lon = deg(lonDeg);
+      let started = false;
 
       ctx.beginPath();
-      ctx.moveTo(x, h * 0.06);
-      ctx.quadraticCurveTo(x + curve * (t < 0.5 ? -1 : 1), h * 0.50, x, h * 0.94);
+      for (let latDeg = -80; latDeg <= 80; latDeg += 2){
+        const lat = deg(latDeg);
+
+        // esfera (radio 1) -> ortográfica
+        // x = cos(lat) * sin(lon)
+        // y = -sin(lat)
+        // visible si z = cos(lat) * cos(lon) >= 0
+        const z = Math.cos(lat) * Math.cos(lon);
+        if (z < 0) { started = false; continue; }
+
+        const x = Math.cos(lat) * Math.sin(lon);
+        const y = -Math.sin(lat);
+
+        const px = cx + x * R;
+        const py = cy + y * R;
+
+        if (!started){ ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
       ctx.stroke();
     }
 
-    // Paralelos (curvas horizontales)
-    for (let j = 0; j < parallels; j++){
-      const t = j / (parallels - 1);
-      const y = h * (0.16 + t * 0.68);
-
-      const bend = (Math.abs(t - 0.5) / 0.5);
-      const curve = (1 - bend) * (h * 0.16);
+    function drawLat(latDeg){
+      const lat = deg(latDeg);
+      let started = false;
 
       ctx.beginPath();
-      ctx.moveTo(w * 0.06, y);
-      ctx.quadraticCurveTo(w * 0.50, y + curve * (t < 0.5 ? 1 : -1), w * 0.94, y);
+      for (let lonDeg = -180; lonDeg <= 180; lonDeg += 2){
+        const lon = deg(lonDeg);
+        const z = Math.cos(lat) * Math.cos(lon);
+        if (z < 0) { started = false; continue; }
+
+        const x = Math.cos(lat) * Math.sin(lon);
+        const y = -Math.sin(lat);
+
+        const px = cx + x * R;
+        const py = cy + y * R;
+
+        if (!started){ ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
       ctx.stroke();
     }
+
+    // Meridianos
+    [-60,-30,0,30,60].forEach(drawLon);
+
+    // Paralelos
+    [-60,-30,0,30,60].forEach(drawLat);
 
     ctx.restore();
   }
@@ -505,8 +532,8 @@
     if (st.shape === "heart"){
       const cx = mapW/2, cy = mapH/2;
 
-      // ✅ más grande y más alto
-      const size = Math.min(mapW,mapH) * 0.66;
+      // ✅ tamaño equilibrado (no “apachurrado” ni “deformado”)
+      const size = Math.min(mapW, mapH) * 0.70;
 
       ctx.save();
       heartPath(ctx, cx, cy, size);
@@ -645,7 +672,7 @@
       } else if (st.shape === "heart"){
         const cx = mx+mw/2;
         const cy = my+mw/2;
-        const size = mw*0.60;
+        const size = mw*0.78;
         heartPath(ctx, cx, cy, size);
         ctx.clip();
       } else {
@@ -758,7 +785,7 @@
       renderAll();
     }));
 
-    // ✅ Retícula (arriba de constelaciones, sin slider)
+    // ✅ Retícula toggle
     const gridRow = document.createElement("div");
     gridRow.className = "rowToggle";
     gridRow.classList.add("stackGap");
@@ -768,6 +795,20 @@
       drawMap();
       renderAll();
     }));
+
+    // ✅ Slider tamaño retícula (solo cuando está ON)
+    const gridSizeRow = document.createElement("div");
+    gridSizeRow.className = "formRow";
+    gridSizeRow.classList.add("stackGap");
+    gridSizeRow.innerHTML = `<div class="label">Tamaño de retícula</div>`;
+    const gridRange = document.createElement("input");
+    gridRange.type = "range";
+    gridRange.min = "1";
+    gridRange.max = "6";
+    gridRange.step = "1";
+    gridRange.value = String(state.map.gridSize);
+    gridRange.oninput = () => { state.map.gridSize = Number(gridRange.value); drawMap(); };
+    gridSizeRow.appendChild(gridRange);
 
     // Constellations toggle
     const conRow = document.createElement("div");
@@ -893,26 +934,21 @@
       const pickBool = () => r() > 0.5;
       const pickRange = (min, max) => min + r() * (max - min);
 
-      // random style + color
       state.map.styleId = pick(MAP_STYLES).id;
       state.map.colorTheme = pick(COLOR_THEMES).id;
 
-      // random toggles
       state.map.showGrid = pickBool();
+      state.map.gridSize = Math.round(pickRange(1, 6));
       state.map.showConstellations = pickBool();
 
-      // random size step 0.5
       const cs = Math.round(pickRange(1, 4) * 2) / 2;
       state.map.constellationSize = cs;
 
-      // random thickness
       state.map.posterMarginThickness = Math.round(pickRange(1, 10));
       state.map.mapCircleMarginThickness = Math.round(pickRange(1, 10));
 
-      // random invert
       state.map.invertMapColors = pickBool();
 
-      // white => force invert + hide outline
       if (state.map.colorTheme === "white") {
         state.map.invertMapColors = true;
       }
@@ -922,12 +958,10 @@
         state.map.mapCircleMarginEnabled = pickBool();
       }
 
-      // poster margin allowed only if not poster/romantico
       const st = getStyleDef();
       const allowPM = (st.id !== "poster" && st.id !== "romantico");
       state.map.posterMarginEnabled = allowPM ? pickBool() : false;
 
-      // seed random
       state.map.seed = (Math.random() * 1e9) | 0;
 
       renderPosterAndMap();
@@ -943,11 +977,11 @@
 
     $section.appendChild(invertRow);
     $section.appendChild(gridRow);
+    if (state.map.showGrid) $section.appendChild(gridSizeRow);
 
     $section.appendChild(conRow);
     if (state.map.showConstellations) $section.appendChild(csRow);
 
-    // Contorno arriba de margen del poster
     if (mapRow) $section.appendChild(mapRow);
     if (mapThickRow) $section.appendChild(mapThickRow);
 
@@ -1105,7 +1139,6 @@
   }
 
   function exportPoster(format){
-    // Conservamos tu export “lo que ves es lo que exportas”
     const W = 900, H = 1200;
     const scale = 2;
 
@@ -1196,13 +1229,13 @@
       if (show.datetime) metaText(state.text.datetime, left, metaY3, "left");
     } else {
       const centerX = W / 2;
-      let ty = H - (pad + 90) - 80;
-      if (show.subtitle) ty -= 24;
+      let ty = H - (pad + 70) - 60; // un poco más abajo para export
+      if (show.subtitle) ty -= 18;
 
       if (show.title) { drawText(state.text.title, centerX, ty, 54, 900, "center", 1); ty += 36; }
-      if (show.subtitle) { drawText(state.text.subtitle, centerX, ty, 18, 650, "center", 0.85); ty += 36; }
+      if (show.subtitle) { drawText(state.text.subtitle, centerX, ty, 18, 650, "center", 0.85); ty += 34; }
 
-      const metaY1 = ty + 34;
+      const metaY1 = ty + 30;
       const metaY2 = metaY1 + 22;
       const metaY3 = metaY2 + 22;
 

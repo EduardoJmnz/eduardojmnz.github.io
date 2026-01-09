@@ -2,11 +2,11 @@
   const POSTER_W = 900;
   const POSTER_H = 1200;
 
-  // ✅ IMPORTANTE:
-  // - Marco (área) NO se mueve: se queda como estaba (25px)
-  // - Margen (línea) SÍ va a 50px (lo que pediste)
-  const POSTER_FRAME_EDGE_GAP_PX = 25;  // Marco (área) y "papel" interior
-  const POSTER_MARGIN_EDGE_GAP_PX = 50; // Margen (línea)
+  // ✅ Marco (ÁREA) ahora arranca desde el borde del póster (sin fondo antes)
+  const POSTER_FRAME_EDGE_GAP_PX = 0;
+
+  // ✅ Margen (LÍNEA) separado a 50px como pediste
+  const POSTER_MARGIN_EDGE_GAP_PX = 50;
 
   // ✅ Marco (área) máximo = la MITAD de antes (0.12 -> 0.06)
   // ✅ Valor inicial del marco = máximo permitido
@@ -209,6 +209,7 @@
     return state.map.styleId === "poster";
   }
 
+  // ✅ Marco/Margen NO aplican al estilo Poster
   function isPosterDecorAllowed(){
     return !isPosterStyle();
   }
@@ -317,15 +318,13 @@
     }
   }
 
-  // ✅ Marco NO se mueve: usa POSTER_FRAME_EDGE_GAP_PX
-  // ✅ Margen sí va a 50: usa POSTER_MARGIN_EDGE_GAP_PX
   function applyPosterFrameAndMargin(posterColors){
     ensurePosterLayers();
     updatePosterFrameInsetPx();
     enforceDecorRules();
 
-    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
-    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX;
+    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;   // ✅ 0
+    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX; // ✅ 50
 
     const decorAllowed = isPosterDecorAllowed();
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
@@ -341,17 +340,17 @@
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = posterColors.star;
-      $posterFrameArea.style.inset = `${frameEdge}px`;
+      $posterFrameArea.style.inset = `${frameEdge}px`; // ✅ 0px
       $posterFrameArea.style.borderRadius = "0px";
     } else {
       $posterFrameArea.style.opacity = "0";
       $posterFrameArea.style.background = "transparent";
-      $posterFrameArea.style.inset = `${frameEdge}px`;
+      $posterFrameArea.style.inset = `${frameEdge}px`; // ✅ 0px
       $posterFrameArea.style.borderRadius = "0px";
     }
 
     // ---------- PAPEL (ÁREA INTERIOR) ----------
-    const innerInset = frameEdge + framePx;
+    const innerInset = frameEdge + framePx; // ✅ con edge 0
     $posterPaper.style.background = posterColors.bg;
     $posterPaper.style.inset = `${innerInset}px`;
     $posterPaper.style.borderRadius = "0px";
@@ -363,7 +362,7 @@
       state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX
     );
 
-    $posterMarginLine.style.inset = `${marginEdge}px`; // ✅ 50px SOLO para el margen
+    $posterMarginLine.style.inset = `${marginEdge}px`; // ✅ 50px
     $posterMarginLine.style.borderRadius = "0px";
     $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
     $posterMarginLine.style.borderStyle = "solid";
@@ -388,8 +387,8 @@
   }
 
   function applyPosterPaddingLayout(){
-    // ✅ posterPad debe basarse en el edge del MARCO (para NO mover textos/inner)
-    const edge = POSTER_FRAME_EDGE_GAP_PX;
+    // ✅ posterPad se basa en edge del marco (ahora 0) + framePx si marco activo
+    const edge = POSTER_FRAME_EDGE_GAP_PX; // 0
     const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
       ? clamp(state.map.posterFrameInsetPx, 0, 160)
       : 0;
@@ -650,7 +649,6 @@
 
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
 
-    // ✅ Cuando se activa el Margen, el mapa también hace inset como "control de mapa"
     const shouldInsetLikeMapControl =
       !!state.map.mapCircleMarginEnabled ||
       (isPosterDecorAllowed() && !!state.map.posterFrameEnabled) ||
@@ -702,7 +700,9 @@
       const cx = mapW/2;
       const cy = mapH/2 - Math.round(mapH * 0.06);
 
-      const baseSize = Math.min(mapW, mapH) * 0.4356;
+      // ✅ 20% más grande
+      const baseSize = Math.min(mapW, mapH) * 0.5227;
+
       const size = clamp(baseSize - insetPad * 0.95, baseSize * 0.70, baseSize);
 
       ctx.save();
@@ -1409,11 +1409,10 @@
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
     const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
 
-    // ✅ Frame edge (25) vs Margin edge (50)
-    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
-    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H));
+    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W)); // 0
+    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H)); // 0
+    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W)); // 50
+    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H)); // 50
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
     const frameX = Math.round(framePx * (W / POSTER_W));
@@ -1423,7 +1422,7 @@
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Marco (área)
+    // Marco (área) desde el borde
     if (frameOn){
       ctx.fillStyle = colors.star;
       ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
@@ -1460,7 +1459,7 @@
     const mapH = mapW;
 
     const mapX = Math.round((W - mapW) / 2);
-    const mapY = Math.round(innerY + (70 * sy)); // ✅ como estaba (NO muevo el mapa)
+    const mapY = Math.round(innerY + (70 * sy));
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
     const fontFamily = state.text.fontFamily;
@@ -1476,17 +1475,17 @@
       ctx.restore();
     }
 
-    // ✅ BAJO EL TEXTO EN EXPORT sin cortar (subo poquito cada línea, no uniforme)
+    // ✅ Textos más abajo en export también (más espacio mapa-texto)
     const show = state.visible;
     const centerX = W / 2;
 
-    const yTitle    = Math.round(1065 * sy);
-    const ySubtitle = Math.round(1105 * sy);
-    const yPlace    = Math.round(1150 * sy);
-    const yCoords   = Math.round(1172 * sy);
-    const yDT       = Math.round(1192 * sy); // casi al fondo pero seguro
+    const yTitle    = Math.round(1085 * sy);
+    const ySubtitle = Math.round(1122 * sy);
+    const yPlace    = Math.round(1162 * sy);
+    const yCoords   = Math.round(1180 * sy);
+    const yDT       = Math.round(1196 * sy);
 
-    if (show.title)    drawText(state.text.title, centerX, yTitle,    54 * sy, 900, "center", 1);
+    if (show.title)    drawText(state.text.title, centerX, yTitle, 54 * sy, 900, "center", 1);
     if (show.subtitle) drawText(state.text.subtitle, centerX, ySubtitle, 18 * sy, 650, "center", 0.85);
 
     if (show.place)    drawText(state.text.place, centerX, yPlace, 14 * sy, 650, "center", 0.82);

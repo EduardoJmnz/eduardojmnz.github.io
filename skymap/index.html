@@ -315,9 +315,8 @@
       flex-direction:column;
       align-items:center;
       justify-content:flex-start;
-
-      /* ✅ antes: calc(var(--posterPad) + 70px) */
-      padding-top: calc(var(--posterPad) + 50px);
+      /* ✅ como lo tenías */
+      padding-top: calc(var(--posterPad) + 70px);
     }
 
     .mapFrame{
@@ -337,7 +336,10 @@
       position:absolute;
       left: calc(var(--posterPad) + 80px);
       right: calc(var(--posterPad) + 80px);
-      bottom: calc(var(--posterPad) + 64px);
+
+      /* ✅ BAJA EL TEXTO (más pegado al bottom) */
+      bottom: calc(var(--posterPad) + 30px);
+
       padding:0;
     }
     .tTitle{
@@ -368,7 +370,10 @@
     .poster.classic .bottomText{
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
-      bottom: calc(var(--posterPad) + 90px);
+
+      /* ✅ BAJA EL TEXTO EN CLÁSICO */
+      bottom: calc(var(--posterPad) + 55px);
+
       text-align:center;
     }
     .poster.classic .meta{ justify-content:center; }
@@ -377,7 +382,9 @@
 
     /* Poster (rect): textos más pequeños */
     .poster.rectStyle .bottomText{
-      bottom: calc(var(--posterPad) + 46px);
+      /* ✅ BAJA EL TEXTO EN RECT */
+      bottom: calc(var(--posterPad) + 24px);
+
       left: calc(var(--posterPad) + 110px);
       right: calc(var(--posterPad) + 110px);
       text-align:center;

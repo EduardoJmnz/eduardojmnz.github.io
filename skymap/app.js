@@ -21,8 +21,7 @@
     map: {
       styleId: "classic",
 
-      // toggles
-      showGrid: false,          // ✅ Retícula (solo Clásico / Moderno)
+      showGrid: false,          // ✅ Retícula solo Clásico / Moderno
       showConstellations: true,
       invertMapColors: false,
 
@@ -32,7 +31,6 @@
       posterMarginInsetPx: POSTER_MARGIN_INSET_DEFAULT,
       posterMarginThickness: 2,
 
-      // Contorno del mapa
       mapCircleMarginEnabled: false,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: 2,
@@ -147,16 +145,14 @@
     return (state.map.styleId === "classic" || state.map.styleId === "moderno");
   }
 
-  // ✅ Corazón sencillo y estable (paramétrico clásico)
+  // ✅ Corazón paramétrico estable
   function heartPath(ctx, cx, cy, size){
     const s = size / 18;
-
     ctx.beginPath();
-    const steps = 220;
 
+    const steps = 220;
     for (let i = 0; i <= steps; i++){
       const t = (i / steps) * Math.PI * 2;
-
       const x = 16 * Math.pow(Math.sin(t), 3);
       const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
 
@@ -295,7 +291,7 @@
     });
   }
 
-  // ✅ Retícula (sin slider): paralelos/meridianos curvos
+  // ✅ Retícula curvada (sin slider)
   function drawCurvedGrid(ctx, w, h, colors){
     ctx.save();
     ctx.strokeStyle = colors.line;
@@ -405,6 +401,7 @@
   function drawRectMap(ctx, mapW, mapH, mapColors, rand, showOutline, outlineW, conLineW, nodeR){
     ctx.save();
 
+    // Rect es rectángulo a propósito
     ctx.fillStyle = mapColors.bg;
     ctx.fillRect(0,0,mapW,mapH);
 
@@ -459,9 +456,9 @@
     const showOutline = state.map.mapCircleMarginEnabled && !state.map.invertMapColors;
     const outlineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
+    // ✅ FIX “cuadro” al invertir/neones:
+    // Deja transparente el canvas fuera de la forma (círculo/corazón).
     ctx.clearRect(0, 0, mapW, mapH);
-    ctx.fillStyle = posterColors.bg;
-    ctx.fillRect(0, 0, mapW, mapH);
 
     if (st.shape === "circle"){
       const shouldInsetLikeMapMargin = state.map.mapCircleMarginEnabled || state.map.posterMarginEnabled;
@@ -487,6 +484,7 @@
       ctx.arc(cx, cy, rInner, 0, Math.PI*2);
       ctx.clip();
 
+      // Fondo SOLO dentro del círculo
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
@@ -502,16 +500,17 @@
     if (st.shape === "heart"){
       const cx = mapW/2;
 
-      // ✅ Más centrado (sube un poco vs antes)
-      const cy = mapH/2 + Math.round(mapH * 0.02);
+      // ✅ Más pegado al top (antes 0.02 y ya estaba abajo)
+      const cy = mapH/2 + Math.round(mapH * 0.00);
 
-      // ✅ 15% más grande vs el anterior (0.31 -> ~0.36)
-      const size = Math.min(mapW, mapH) * 0.396;
+      // ✅ 10% más grande (antes 0.396)
+      const size = Math.min(mapW, mapH) * 0.4356; // 0.396 * 1.10
 
       ctx.save();
       heartPath(ctx, cx, cy, size);
       ctx.clip();
 
+      // Fondo SOLO dentro del corazón
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
@@ -533,6 +532,7 @@
     }
 
     if (st.shape === "rect"){
+      // Rect: aquí sí es rectángulo, se pinta completo
       drawRectMap(ctx, mapW, mapH, mapColors, rand, showOutline, outlineW, conLineW, nodeR);
       return;
     }
@@ -605,7 +605,9 @@
       const ctx = c.getContext("2d");
       const pc = colorsFor(state.map.colorTheme);
 
-      ctx.clearRect(0, 0, mapW, mapH); // deja transparente (sin fondo cuadrado)
+      ctx.clearRect(0,0,180,240);
+      ctx.fillStyle = pc.bg;
+      ctx.fillRect(0,0,180,240);
 
       ctx.save();
       const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
@@ -616,8 +618,8 @@
         ctx.clip();
       } else if (st.shape === "heart"){
         const cx = mx+mw/2;
-        const cy = my+mw/2 + 8;
-        const size = mw*0.52;
+        const cy = my+mw/2 + 6;
+        const size = mw*0.55;
         heartPath(ctx, cx, cy, size);
         ctx.clip();
       } else {
@@ -676,8 +678,7 @@
         state.map.styleId = st.id;
 
         if (st.id === "poster" || st.id === "romantico") state.map.posterMarginEnabled = false;
-        if (st.id === "romantico") state.map.mapCircleMarginEnabled = false; // ✅ romántico no activa contorno
-
+        if (st.id === "romantico") state.map.mapCircleMarginEnabled = false;
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
         renderPosterAndMap();
@@ -1088,6 +1089,8 @@
     const mapX = (W - mapW) / 2;
     const mapY = pad + 70;
 
+    // ✅ El canvas ahora puede tener transparencia fuera de la forma.
+    // Al dibujarlo aquí, queda perfecto sobre el fondo del poster.
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
     if (state.map.posterMarginEnabled){

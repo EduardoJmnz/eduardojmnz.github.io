@@ -2,18 +2,15 @@
   const POSTER_W = 900;
   const POSTER_H = 1200;
 
-  // ✅ Marco (ÁREA) ahora arranca desde el borde del póster (sin fondo antes)
+  // ✅ Marco (ÁREA) desde borde del póster
   const POSTER_FRAME_EDGE_GAP_PX = 0;
 
-  // ✅ Margen (LÍNEA) separado a 50px como pediste
+  // ✅ Margen (LÍNEA) separado a 50px
   const POSTER_MARGIN_EDGE_GAP_PX = 50;
 
-  // ✅ Marco (área) máximo = la MITAD de antes (0.12 -> 0.06)
-  // ✅ Valor inicial del marco = máximo permitido
   const POSTER_FRAME_PCT_MAX = 0.06;
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
-  // ✅ Grosor máximo del margen (línea)
   const POSTER_LINE_THICK_MAX = 12;
 
   const state = {
@@ -41,17 +38,14 @@
       invertMapColors: false,
 
       colorTheme: "mono",
-
-      // ✅ Zoom interno (solo IN)
       mapZoom: 1.0,
 
-      // ✅ Marco del póster (ÁREA)
+      // Marco (ÁREA)
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
-      // ✅ Margen del póster (LÍNEA)
-      // Independiente, pero si Marco se enciende => el Margen se apaga/oculta.
+      // Margen (LÍNEA)
       posterMarginEnabled: false,
       posterMarginThickness: 2,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
@@ -209,7 +203,6 @@
     return state.map.styleId === "poster";
   }
 
-  // ✅ Marco/Margen NO aplican al estilo Poster
   function isPosterDecorAllowed(){
     return !isPosterStyle();
   }
@@ -245,9 +238,6 @@
     applyZoom();
   });
 
-  // --------------------------
-  // CAPAS: marco(área) + papel + margen(línea)
-  // --------------------------
   let $posterFrameArea = null;
   let $posterPaper = null;
   let $posterMarginLine = null;
@@ -323,8 +313,8 @@
     updatePosterFrameInsetPx();
     enforceDecorRules();
 
-    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;   // ✅ 0
-    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX; // ✅ 50
+    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;   // 0
+    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX; // 50
 
     const decorAllowed = isPosterDecorAllowed();
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
@@ -332,37 +322,33 @@
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
-    // Fondo general
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
-    // ---------- MARCO (ÁREA) ----------
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = posterColors.star;
-      $posterFrameArea.style.inset = `${frameEdge}px`; // ✅ 0px
+      $posterFrameArea.style.inset = `${frameEdge}px`;
       $posterFrameArea.style.borderRadius = "0px";
     } else {
       $posterFrameArea.style.opacity = "0";
       $posterFrameArea.style.background = "transparent";
-      $posterFrameArea.style.inset = `${frameEdge}px`; // ✅ 0px
+      $posterFrameArea.style.inset = `${frameEdge}px`;
       $posterFrameArea.style.borderRadius = "0px";
     }
 
-    // ---------- PAPEL (ÁREA INTERIOR) ----------
-    const innerInset = frameEdge + framePx; // ✅ con edge 0
+    const innerInset = frameEdge + framePx;
     $posterPaper.style.background = posterColors.bg;
     $posterPaper.style.inset = `${innerInset}px`;
     $posterPaper.style.borderRadius = "0px";
 
-    // ---------- MARGEN (LÍNEA) ----------
     const thickness = clamp(
       state.map.posterMarginThickness || 2,
       1,
       state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX
     );
 
-    $posterMarginLine.style.inset = `${marginEdge}px`; // ✅ 50px
+    $posterMarginLine.style.inset = `${marginEdge}px`;
     $posterMarginLine.style.borderRadius = "0px";
     $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
     $posterMarginLine.style.borderStyle = "solid";
@@ -387,7 +373,6 @@
   }
 
   function applyPosterPaddingLayout(){
-    // ✅ posterPad se basa en edge del marco (ahora 0) + framePx si marco activo
     const edge = POSTER_FRAME_EDGE_GAP_PX; // 0
     const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
       ? clamp(state.map.posterFrameInsetPx, 0, 160)
@@ -409,72 +394,6 @@
     const size = clamp(base - Math.round(frame * 0.6), 640, 780);
     $poster.style.setProperty("--mapW", `${size}px`);
     $poster.style.setProperty("--mapH", `${size}px`);
-  }
-
-  function toggleSwitch(checked, onChange){
-    const t = document.createElement("div");
-    t.className = "toggle" + (checked ? " on" : "");
-    t.role = "switch";
-    t.tabIndex = 0;
-    t.setAttribute("aria-checked", String(!!checked));
-
-    function set(val){
-      checked = !!val;
-      t.className = "toggle" + (checked ? " on" : "");
-      t.setAttribute("aria-checked", String(checked));
-      onChange(checked);
-    }
-
-    t.onclick = () => set(!checked);
-    t.onkeydown = (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        set(!checked);
-      }
-    };
-    return t;
-  }
-
-  function navButtons({ showPrev, showNext, prevText="← Anterior", nextText="Siguiente →", onPrev, onNext }){
-    const wrap = document.createElement("div");
-    wrap.className = "navBtns";
-
-    const left = document.createElement("div");
-    const right = document.createElement("div");
-
-    if (showPrev) {
-      const prev = document.createElement("button");
-      prev.type = "button";
-      prev.className = "btn ghost";
-      prev.textContent = prevText;
-      prev.onclick = onPrev;
-      left.appendChild(prev);
-    }
-
-    if (showNext) {
-      const next = document.createElement("button");
-      next.type = "button";
-      next.className = "btn primary";
-      next.textContent = nextText;
-      next.onclick = onNext;
-      right.appendChild(next);
-    }
-
-    wrap.appendChild(left);
-    wrap.appendChild(right);
-    return wrap;
-  }
-
-  function renderTabs(){
-    $tabs.innerHTML = "";
-    STEPS.forEach((s, idx) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "tab" + (idx === state.step ? " active" : "");
-      b.textContent = s.label;
-      b.onclick = () => { state.step = idx; renderAll(); };
-      $tabs.appendChild(b);
-    });
   }
 
   function drawCurvedGrid(ctx, w, h, colors){
@@ -700,9 +619,8 @@
       const cx = mapW/2;
       const cy = mapH/2 - Math.round(mapH * 0.06);
 
-      // ✅ 20% más grande
+      // ✅ 20% más grande (base)
       const baseSize = Math.min(mapW, mapH) * 0.5227;
-
       const size = clamp(baseSize - insetPad * 0.95, baseSize * 0.70, baseSize);
 
       ctx.save();
@@ -780,8 +698,74 @@
   }
 
   // --------------------------
-  // UI: Secciones
+  // UI
   // --------------------------
+  function toggleSwitch(checked, onChange){
+    const t = document.createElement("div");
+    t.className = "toggle" + (checked ? " on" : "");
+    t.role = "switch";
+    t.tabIndex = 0;
+    t.setAttribute("aria-checked", String(!!checked));
+
+    function set(val){
+      checked = !!val;
+      t.className = "toggle" + (checked ? " on" : "");
+      t.setAttribute("aria-checked", String(checked));
+      onChange(checked);
+    }
+
+    t.onclick = () => set(!checked);
+    t.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        set(!checked);
+      }
+    };
+    return t;
+  }
+
+  function navButtons({ showPrev, showNext, prevText="← Anterior", nextText="Siguiente →", onPrev, onNext }){
+    const wrap = document.createElement("div");
+    wrap.className = "navBtns";
+
+    const left = document.createElement("div");
+    const right = document.createElement("div");
+
+    if (showPrev) {
+      const prev = document.createElement("button");
+      prev.type = "button";
+      prev.className = "btn ghost";
+      prev.textContent = prevText;
+      prev.onclick = onPrev;
+      left.appendChild(prev);
+    }
+
+    if (showNext) {
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "btn primary";
+      next.textContent = nextText;
+      next.onclick = onNext;
+      right.appendChild(next);
+    }
+
+    wrap.appendChild(left);
+    wrap.appendChild(right);
+    return wrap;
+  }
+
+  function renderTabs(){
+    $tabs.innerHTML = "";
+    STEPS.forEach((s, idx) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "tab" + (idx === state.step ? " active" : "");
+      b.textContent = s.label;
+      b.onclick = () => { state.step = idx; renderAll(); };
+      $tabs.appendChild(b);
+    });
+  }
+
   function renderSectionDesign(){
     $section.innerHTML = "";
 
@@ -878,7 +862,6 @@
         }
 
         if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;
-
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
         renderPosterAndMap();
@@ -889,59 +872,6 @@
     });
 
     styleRow.appendChild(grid);
-
-    const randomRow = document.createElement("div");
-    randomRow.className = "formRow";
-    randomRow.classList.add("stackGap");
-
-    const randomBtn = document.createElement("button");
-    randomBtn.type = "button";
-    randomBtn.className = "btn primary";
-    randomBtn.textContent = "Poster Aleatorio";
-    randomBtn.onclick = () => {
-      const r = Math.random;
-      const pick = (arr) => arr[Math.floor(r() * arr.length)];
-      const pickBool = () => r() > 0.5;
-      const pickRange = (min, max) => min + r() * (max - min);
-
-      state.map.styleId = pick(MAP_STYLES).id;
-      state.map.colorTheme = pick(COLOR_THEMES).id;
-
-      const allowG = isGridAllowedForCurrentStyle();
-      state.map.showGrid = allowG ? pickBool() : false;
-
-      state.map.showConstellations = pickBool();
-      state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
-      state.map.mapZoom = Math.round(pickRange(1.0, 1.6) * 20) / 20;
-
-      state.map.invertMapColors = pickBool();
-      if (state.map.colorTheme === "white") state.map.invertMapColors = true;
-
-      if (!isPosterDecorAllowed()){
-        state.map.posterFrameEnabled = false;
-        state.map.posterMarginEnabled = false;
-      } else {
-        const marco = pickBool();
-        state.map.posterFrameEnabled = marco;
-        state.map.posterFramePct = marco ? POSTER_FRAME_PCT_MAX : state.map.posterFramePct;
-        updatePosterFrameInsetPx();
-        state.map.posterMarginEnabled = !marco ? pickBool() : false;
-        state.map.posterMarginThickness = 2;
-      }
-
-      if (state.map.styleId === "romantico") {
-        state.map.mapCircleMarginEnabled = true;
-        state.map.showGrid = false;
-      } else {
-        state.map.mapCircleMarginEnabled = pickBool();
-      }
-
-      state.map.seed = (Math.random() * 1e9) | 0;
-
-      renderPosterAndMap();
-      renderAll();
-    };
-    randomRow.appendChild(randomBtn);
 
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
@@ -964,32 +894,6 @@
       renderAll();
     };
     colorRow.appendChild(colorSel);
-
-    const mapZoomRow = document.createElement("div");
-    mapZoomRow.className = "formRow";
-    mapZoomRow.classList.add("stackGap");
-    mapZoomRow.innerHTML = `<div class="label">Zoom</div>`;
-    const mapZoomRange = document.createElement("input");
-    mapZoomRange.type = "range";
-    mapZoomRange.min = "1.00";
-    mapZoomRange.max = "1.60";
-    mapZoomRange.step = "0.05";
-    mapZoomRange.value = String(state.map.mapZoom);
-    mapZoomRange.oninput = () => {
-      state.map.mapZoom = Number(mapZoomRange.value);
-      drawMap();
-    };
-    mapZoomRow.appendChild(mapZoomRange);
-
-    const invertRow = document.createElement("div");
-    invertRow.className = "rowToggle";
-    invertRow.classList.add("stackGap");
-    invertRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Invertir color" }));
-    invertRow.appendChild(toggleSwitch(!!state.map.invertMapColors, (val) => {
-      state.map.invertMapColors = val;
-      drawMap();
-      renderAll();
-    }));
 
     const showDecor = isPosterDecorAllowed();
 
@@ -1056,70 +960,10 @@
       state.map.posterMarginEnabled = false;
     }
 
-    const allowGrid = isGridAllowedForCurrentStyle();
-    if (!allowGrid) state.map.showGrid = false;
-
-    const gridRow = document.createElement("div");
-    gridRow.className = "rowToggle";
-    gridRow.classList.add("stackGap");
-    gridRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Retícula" }));
-    gridRow.appendChild(toggleSwitch(!!state.map.showGrid, (val) => {
-      state.map.showGrid = val;
-      drawMap();
-      renderAll();
-    }));
-
-    const conRow = document.createElement("div");
-    conRow.className = "rowToggle";
-    conRow.classList.add("stackGap");
-    conRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Constelaciones" }));
-    conRow.appendChild(toggleSwitch(!!state.map.showConstellations, (val) => {
-      state.map.showConstellations = val;
-      drawMap();
-      renderAll();
-    }));
-
-    const csRow = document.createElement("div");
-    csRow.className = "formRow";
-    csRow.classList.add("stackGap");
-    csRow.innerHTML = `<div class="label">Tamaño de constelaciones</div>`;
-    const csRange = document.createElement("input");
-    csRange.type = "range";
-    csRange.min = "1";
-    csRange.max = "4";
-    csRange.step = "0.5";
-    csRange.value = String(state.map.constellationSize);
-    csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
-    csRow.appendChild(csRange);
-
-    const mapRow = document.createElement("div");
-    mapRow.className = "rowToggle";
-    mapRow.classList.add("stackGap");
-    mapRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
-    mapRow.appendChild(toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
-      state.map.mapCircleMarginEnabled = val;
-      drawMap();
-      renderAll();
-    }));
-
-    const seedRow = document.createElement("div");
-    seedRow.className = "formRow";
-    seedRow.classList.add("stackGap");
-    seedRow.innerHTML = `<div class="label">Variación del cielo</div>`;
-    const seedBtn = document.createElement("button");
-    seedBtn.type = "button";
-    seedBtn.className = "btn ghost";
-    seedBtn.textContent = "Generar nuevo cielo";
-    seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
-    seedRow.appendChild(seedBtn);
-
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(styleRow);
-    $section.appendChild(randomRow);
     $section.appendChild(colorRow);
-    $section.appendChild(mapZoomRow);
-    $section.appendChild(invertRow);
 
     if (showDecor){
       $section.appendChild(frameRow);
@@ -1130,14 +974,6 @@
         if (state.map.posterMarginEnabled) $section.appendChild(marginThickRow);
       }
     }
-
-    if (allowGrid) $section.appendChild(gridRow);
-
-    $section.appendChild(conRow);
-    if (state.map.showConstellations) $section.appendChild(csRow);
-
-    $section.appendChild(mapRow);
-    $section.appendChild(seedRow);
 
     $section.appendChild(navButtons({
       showPrev: false,
@@ -1380,6 +1216,15 @@
     return Math.round(inches * dpi);
   }
 
+  function downloadDataURL(dataURL, filename){
+    const a = document.createElement("a");
+    a.href = dataURL;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
   function exportPoster(format, sizeKey){
     const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
     const dpi = state.export.dpi || 300;
@@ -1422,7 +1267,7 @@
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Marco (área) desde el borde
+    // Marco (área) desde borde
     if (frameOn){
       ctx.fillStyle = colors.star;
       ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
@@ -1435,7 +1280,7 @@
     ctx.fillStyle = colors.bg;
     ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
 
-    // Margen (línea) a 50
+    // Margen (línea) a 50px
     if (marginOn){
       const thick = clamp(state.map.posterMarginThickness || 2, 1, state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX);
       const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
@@ -1475,15 +1320,15 @@
       ctx.restore();
     }
 
-    // ✅ Textos más abajo en export también (más espacio mapa-texto)
+    // ✅ Export alineado con bottom=100 (sube el bloque ~60px vs la versión bottom=40)
     const show = state.visible;
     const centerX = W / 2;
 
-    const yTitle    = Math.round(1085 * sy);
-    const ySubtitle = Math.round(1122 * sy);
-    const yPlace    = Math.round(1162 * sy);
-    const yCoords   = Math.round(1180 * sy);
-    const yDT       = Math.round(1196 * sy);
+    const yTitle    = Math.round(1000 * sy);
+    const ySubtitle = Math.round(1038 * sy);
+    const yPlace    = Math.round(1082 * sy);
+    const yCoords   = Math.round(1105 * sy);
+    const yDT       = Math.round(1128 * sy);
 
     if (show.title)    drawText(state.text.title, centerX, yTitle, 54 * sy, 900, "center", 1);
     if (show.subtitle) drawText(state.text.subtitle, centerX, ySubtitle, 18 * sy, 650, "center", 0.85);
@@ -1517,15 +1362,6 @@
       </body></html>
     `);
     w.document.close();
-  }
-
-  function downloadDataURL(dataURL, filename){
-    const a = document.createElement("a");
-    a.href = dataURL;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
   }
 
   function renderSection(){

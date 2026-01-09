@@ -502,7 +502,7 @@
     if (st.shape === "heart"){
       const cx = mapW/2;
       const cy = mapH/2 + Math.round(mapH * 0.14); // ✅ más abajo
-      const size = Math.min(mapW, mapH) * 0.62;
+      const size = Math.min(mapW, mapH) * 0.31;
 
       ctx.save();
       heartPath(ctx, cx, cy, size);

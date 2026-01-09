@@ -212,7 +212,6 @@
     return !isPosterStyle();
   }
 
-  // ✅ Corazón estable
   function heartPath(ctx, cx, cy, size){
     const s = size / 18;
     ctx.beginPath();
@@ -245,11 +244,11 @@
   });
 
   // --------------------------
-  // ✅ CAPAS: edge gap + marco(área) + margen(línea)
+  // CAPAS: edge gap + marco(área) + margen(línea)
   // --------------------------
-  let $posterFrameArea = null; // área (Marco)
-  let $posterPaper = null;     // fondo interior bg
-  let $posterMarginLine = null;// línea (Margen)
+  let $posterFrameArea = null;
+  let $posterPaper = null;
+  let $posterMarginLine = null;
 
   function ensurePosterLayers(){
     if (!$posterFrameArea){
@@ -317,25 +316,22 @@
     }
   }
 
-  // ✅ Margen (línea): recto, sólido, a 50px del borde.
   function applyPosterFrameAndMargin(posterColors){
     ensurePosterLayers();
     updatePosterFrameInsetPx();
     enforceDecorRules();
 
-    const edge = POSTER_EDGE_GAP_PX; // ✅ 50px siempre
+    const edge = POSTER_EDGE_GAP_PX;
 
     const decorAllowed = isPosterDecorAllowed();
-    const frameOn = decorAllowed && !!state.map.posterFrameEnabled;                 // Marco (área)
-    const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;  // Margen (línea)
+    const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
+    const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
-    // Fondo general
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
-    // ---------- MARCO (ÁREA) ----------
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = posterColors.star;
@@ -348,20 +344,18 @@
       $posterFrameArea.style.borderRadius = "0px";
     }
 
-    // ---------- PAPEL (ÁREA INTERIOR) ----------
     const innerInset = edge + framePx;
     $posterPaper.style.background = posterColors.bg;
     $posterPaper.style.inset = `${innerInset}px`;
     $posterPaper.style.borderRadius = "0px";
 
-    // ---------- MARGEN (LÍNEA) ----------
     const thickness = clamp(
       state.map.posterMarginThickness || 2,
       1,
       state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX
     );
 
-    $posterMarginLine.style.inset = `${edge}px`; // ✅ 50px (antes 25)
+    $posterMarginLine.style.inset = `${edge}px`;
     $posterMarginLine.style.borderRadius = "0px";
     $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
     $posterMarginLine.style.borderStyle = "solid";
@@ -386,7 +380,6 @@
   }
 
   function applyPosterPaddingLayout(){
-    // ✅ padding interno = edge(50) + framePx (si marco está activo)
     const edge = POSTER_EDGE_GAP_PX;
     const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
       ? clamp(state.map.posterFrameInsetPx, 0, 160)
@@ -580,13 +573,11 @@
     ctx.globalAlpha = 1;
   }
 
-  // ✅ Rect map con soporte de insetPad (para igualar el comportamiento del control de mapa)
-  function drawRectMap(ctx, mapW, mapH, mapColors, rand, showOutline, outlineW, conLineW, nodeR, insetPad){
+  function drawRectMap(ctx, mapW, mapH, mapColors, rand, showOutline, outlineW, conLineW, nodeR){
     ctx.save();
 
-    // Fondo (si hay insetPad, el fondo del canvas completo ya viene en clearRect; aquí pintamos solo el área útil)
     ctx.fillStyle = mapColors.bg;
-    ctx.fillRect(0, 0, mapW, mapH);
+    ctx.fillRect(0,0,mapW,mapH);
 
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
     if (z !== 1){
@@ -614,14 +605,14 @@
   }
 
   function drawMap(){
-    const mapW0 = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) || 780);
-    const mapH0 = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) || 780);
+    const mapW = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) || 780);
+    const mapH = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) || 780);
 
     const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
-    $canvas.width = mapW0 * dpr;
-    $canvas.height = mapH0 * dpr;
-    $canvas.style.width = mapW0 + "px";
-    $canvas.style.height = mapH0 + "px";
+    $canvas.width = mapW * dpr;
+    $canvas.height = mapH * dpr;
+    $canvas.style.width = mapW + "px";
+    $canvas.style.height = mapH + "px";
 
     const ctx = $canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -646,25 +637,26 @@
     const showOutline = state.map.mapCircleMarginEnabled && !state.map.invertMapColors;
     const outlineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
-    ctx.clearRect(0, 0, mapW0, mapH0);
+    ctx.clearRect(0, 0, mapW, mapH);
 
-    // ✅ REGLA NUEVA:
-    // Si se activa el MARGEN del póster, el mapa y el “invert shape” deben reducirse
-    // igual que cuando está activo el control de mapa (mapCircleMarginEnabled).
+    const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
+
+    // ✅ inset como “control de mapa” si:
+    // - contorno del mapa ON
+    // - o marco ON
+    // - o margen ON (NUEVO)
     const shouldInsetLikeMapControl =
       !!state.map.mapCircleMarginEnabled ||
       (isPosterDecorAllowed() && !!state.map.posterFrameEnabled) ||
       (isPosterDecorAllowed() && !!state.map.posterMarginEnabled);
 
     const insetPad = shouldInsetLikeMapControl
-      ? Math.round(Math.min(mapW0, mapH0) * (state.map.mapCircleInsetPct || 0.10))
+      ? Math.round(Math.min(mapW, mapH) * (state.map.mapCircleInsetPct || 0.10))
       : 0;
 
-    const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
-
     if (st.shape === "circle"){
-      const cx = mapW0/2, cy = mapH0/2;
-      const rOuter = Math.min(mapW0,mapH0)/2;
+      const cx = mapW/2, cy = mapH/2;
+      const rOuter = Math.min(mapW,mapH)/2;
       const rInner = rOuter - insetPad;
 
       if (showOutline){
@@ -684,7 +676,7 @@
       ctx.clip();
 
       ctx.fillStyle = mapColors.bg;
-      ctx.fillRect(0,0,mapW0,mapH0);
+      ctx.fillRect(0,0,mapW,mapH);
 
       if (z !== 1){
         ctx.translate(cx, cy);
@@ -692,22 +684,19 @@
         ctx.translate(-cx, -cy);
       }
 
-      if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawCurvedGrid(ctx, mapW0, mapH0, mapColors);
-      drawStars(ctx, mapW0, mapH0, rand, mapColors);
-      if (state.map.showConstellations) drawConstellations(ctx, mapW0, mapH0, rand, mapColors, conLineW, nodeR);
+      if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawCurvedGrid(ctx, mapW, mapH, mapColors);
+      drawStars(ctx, mapW, mapH, rand, mapColors);
+      if (state.map.showConstellations) drawConstellations(ctx, mapW, mapH, rand, mapColors, conLineW, nodeR);
 
       ctx.restore();
       return;
     }
 
     if (st.shape === "heart"){
-      const cx = mapW0/2;
+      const cx = mapW/2;
+      const cy = mapH/2 - Math.round(mapH * 0.06);
 
-      // centrado un poco más al top
-      const cy = mapH0/2 - Math.round(mapH0 * 0.06);
-
-      // ✅ heart ahora también respeta insetPad (reduce “igual que control de mapa”)
-      const baseSize = Math.min(mapW0, mapH0) * 0.4356;
+      const baseSize = Math.min(mapW, mapH) * 0.4356;
       const size = clamp(baseSize - insetPad * 0.95, baseSize * 0.70, baseSize);
 
       ctx.save();
@@ -715,7 +704,7 @@
       ctx.clip();
 
       ctx.fillStyle = mapColors.bg;
-      ctx.fillRect(0,0,mapW0,mapH0);
+      ctx.fillRect(0,0,mapW,mapH);
 
       if (z !== 1){
         ctx.translate(cx, cy);
@@ -723,8 +712,8 @@
         ctx.translate(-cx, -cy);
       }
 
-      drawStars(ctx, mapW0, mapH0, rand, mapColors);
-      if (state.map.showConstellations) drawConstellations(ctx, mapW0, mapH0, rand, mapColors, conLineW, nodeR);
+      drawStars(ctx, mapW, mapH, rand, mapColors);
+      if (state.map.showConstellations) drawConstellations(ctx, mapW, mapH, rand, mapColors, conLineW, nodeR);
 
       ctx.restore();
 
@@ -741,16 +730,15 @@
     }
 
     if (st.shape === "rect"){
-      // ✅ rect ahora también respeta insetPad (reduce “igual que control de mapa”)
       if (insetPad > 0){
         ctx.save();
         ctx.translate(insetPad, insetPad);
-        const w = Math.max(1, mapW0 - insetPad * 2);
-        const h = Math.max(1, mapH0 - insetPad * 2);
-        drawRectMap(ctx, w, h, mapColors, rand, showOutline, outlineW, conLineW, nodeR, insetPad);
+        const w = Math.max(1, mapW - insetPad * 2);
+        const h = Math.max(1, mapH - insetPad * 2);
+        drawRectMap(ctx, w, h, mapColors, rand, showOutline, outlineW, conLineW, nodeR);
         ctx.restore();
       } else {
-        drawRectMap(ctx, mapW0, mapH0, mapColors, rand, showOutline, outlineW, conLineW, nodeR, 0);
+        drawRectMap(ctx, mapW, mapH, mapColors, rand, showOutline, outlineW, conLineW, nodeR);
       }
       return;
     }
@@ -1415,7 +1403,6 @@
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
     const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
 
-    // ✅ edge ahora 50px (escalado)
     const edgeX = Math.round(POSTER_EDGE_GAP_PX * (W / POSTER_W));
     const edgeY = Math.round(POSTER_EDGE_GAP_PX * (H / POSTER_H));
 
@@ -1455,7 +1442,10 @@
     const mapH = mapW;
 
     const mapX = Math.round((W - mapW) / 2);
-    const mapY = Math.round(innerY + (70 * sy));
+
+    // ✅ Antes: innerY + (70*sy) → Ahora: innerY + (50*sy)
+    // Esto sube el mapa y deja MÁS aire para el texto sin mover el texto fuera del canvas.
+    const mapY = Math.round(innerY + (50 * sy));
 
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
@@ -1532,6 +1522,7 @@
     renderPosterAndMap();
   }
 
+  // Init
   updateSeedFromDateTime();
   ensurePosterLayers();
   applyPosterLayoutByStyle();

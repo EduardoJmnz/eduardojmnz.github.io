@@ -28,6 +28,9 @@
 
       colorTheme: "mono",
 
+      // ✅ Zoom interno del mapa (NO cambia la forma)
+      mapZoom: 1.0, // 1 = normal
+
       posterMarginEnabled: false,
       posterMarginInsetPx: POSTER_MARGIN_INSET_DEFAULT,
       posterMarginThickness: 2,
@@ -113,12 +116,13 @@
       type: "cm",
       w: 60, h: 80
     },
+    // ✅ reemplazo del “USA” por uno MÁS GRANDE
     {
-      key: "24x32in_300dpi",
-      title: "24×32 in (300 dpi)",
-      sub: "Formato USA (archivo muy pesado)",
-      type: "in",
-      w: 24, h: 32
+      key: "90x120cm_300dpi",
+      title: "90×120 cm (300 dpi)",
+      sub: "Gigante (archivo muy pesado)",
+      type: "cm",
+      w: 90, h: 120
     },
   ];
 
@@ -448,10 +452,19 @@
     ctx.fillStyle = mapColors.bg;
     ctx.fillRect(0,0,mapW,mapH);
 
+    const z = clamp(state.map.mapZoom || 1, 0.6, 2.0);
+    if (z !== 1){
+      ctx.translate(mapW/2, mapH/2);
+      ctx.scale(z, z);
+      ctx.translate(-mapW/2, -mapH/2);
+    }
+
     if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawCurvedGrid(ctx, mapW, mapH, mapColors);
 
     drawStars(ctx, mapW, mapH, rand, mapColors);
     if (state.map.showConstellations) drawConstellations(ctx, mapW, mapH, rand, mapColors, conLineW, nodeR);
+
+    ctx.restore();
 
     if (showOutline){
       ctx.save();
@@ -462,8 +475,6 @@
       ctx.strokeRect(half, half, mapW - outlineW, mapH - outlineW);
       ctx.restore();
     }
-
-    ctx.restore();
   }
 
   function drawMap(){
@@ -499,8 +510,10 @@
     const showOutline = state.map.mapCircleMarginEnabled && !state.map.invertMapColors;
     const outlineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
-    // ✅ FIX “cuadro” al invertir: deja transparencia fuera de forma
+    // ✅ evita “cuadro” extraño: canvas transparente fuera de forma
     ctx.clearRect(0, 0, mapW, mapH);
+
+    const z = clamp(state.map.mapZoom || 1, 0.6, 2.0);
 
     if (st.shape === "circle"){
       const shouldInsetLikeMapMargin = state.map.mapCircleMarginEnabled || state.map.posterMarginEnabled;
@@ -529,8 +542,14 @@
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
-      if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawCurvedGrid(ctx, mapW, mapH, mapColors);
+      // ✅ zoom interno (no cambia forma)
+      if (z !== 1){
+        ctx.translate(cx, cy);
+        ctx.scale(z, z);
+        ctx.translate(-cx, -cy);
+      }
 
+      if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawCurvedGrid(ctx, mapW, mapH, mapColors);
       drawStars(ctx, mapW, mapH, rand, mapColors);
       if (state.map.showConstellations) drawConstellations(ctx, mapW, mapH, rand, mapColors, conLineW, nodeR);
 
@@ -540,11 +559,7 @@
 
     if (st.shape === "heart"){
       const cx = mapW/2;
-
-      // ✅ Más pegado al top pero visualmente centrado (el corazón es "top-heavy")
       const cy = mapH/2 - Math.round(mapH * 0.06);
-
-      // Mantengo el tamaño que ya te gustó
       const size = Math.min(mapW, mapH) * 0.4356;
 
       ctx.save();
@@ -553,6 +568,13 @@
 
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
+
+      // ✅ zoom interno (no cambia forma)
+      if (z !== 1){
+        ctx.translate(cx, cy);
+        ctx.scale(z, z);
+        ctx.translate(-cx, -cy);
+      }
 
       drawStars(ctx, mapW, mapH, rand, mapColors);
       if (state.map.showConstellations) drawConstellations(ctx, mapW, mapH, rand, mapColors, conLineW, nodeR);
@@ -647,7 +669,6 @@
 
       opt.onclick = () => {
         setValue(it.value);
-        // re-render del contenedor padre (más simple y consistente)
         renderAll();
       };
 
@@ -698,14 +719,12 @@
       ctx.save();
       const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
 
-      // ✅ Preview romántico mejorado: más aire, sin corte
       if (st.shape === "circle"){
         ctx.beginPath();
         ctx.arc(mx+mw/2, my+mw/2, mw/2, 0, Math.PI*2);
         ctx.clip();
       } else if (st.shape === "heart"){
         const cx = mx + mw/2;
-        // un poco más arriba y con tamaño más seguro para que no se corte
         const cy = my + mw/2 - 6;
         const size = mw * 0.50;
         heartPath(ctx, cx, cy, size);
@@ -768,10 +787,8 @@
         if (st.id === "poster") state.map.posterMarginEnabled = false;
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
-        // ✅ Romántico: por default contorno ON (solo este estilo)
-        if (st.id === "romantico") {
-          state.map.mapCircleMarginEnabled = true;
-        }
+        // ✅ Romántico: por default contorno ON
+        if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;
 
         renderPosterAndMap();
         renderAll();
@@ -801,7 +818,6 @@
 
       if (state.map.colorTheme === "white") {
         state.map.invertMapColors = true;
-        // El contorno no se dibuja cuando invert está activo (por diseño), pero el toggle puede quedar ON
       }
 
       renderPosterAndMap();
@@ -809,6 +825,23 @@
     };
 
     colorRow.appendChild(colorSel);
+
+    // ✅ Zoom interno del mapa (después del color)
+    const mapZoomRow = document.createElement("div");
+    mapZoomRow.className = "formRow";
+    mapZoomRow.classList.add("stackGap");
+    mapZoomRow.innerHTML = `<div class="label">Zoom</div>`;
+    const mapZoomRange = document.createElement("input");
+    mapZoomRange.type = "range";
+    mapZoomRange.min = "0.70";
+    mapZoomRange.max = "1.60";
+    mapZoomRange.step = "0.05";
+    mapZoomRange.value = String(state.map.mapZoom);
+    mapZoomRange.oninput = () => {
+      state.map.mapZoom = Number(mapZoomRange.value);
+      drawMap();
+    };
+    mapZoomRow.appendChild(mapZoomRange);
 
     const invertRow = document.createElement("div");
     invertRow.className = "rowToggle";
@@ -856,11 +889,7 @@
     csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
     csRow.appendChild(csRange);
 
-    let mapRow = null;
-    let mapThickRow = null;
-
-    // ✅ Contorno SIEMPRE disponible (pero si invert está activo, no se dibuja; queda como estado)
-    mapRow = document.createElement("div");
+    const mapRow = document.createElement("div");
     mapRow.className = "rowToggle";
     mapRow.classList.add("stackGap");
     mapRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
@@ -870,6 +899,7 @@
       renderAll();
     }));
 
+    let mapThickRow = null;
     if (state.map.mapCircleMarginEnabled) {
       mapThickRow = document.createElement("div");
       mapThickRow.className = "formRow";
@@ -889,7 +919,8 @@
     }
 
     const stNow = getStyleDef();
-    const allowPosterMargin = (stNow.id !== "poster"); // romántico ya NO bloquea margen si quieres, pero lo dejamos como estaba antes
+    const allowPosterMargin = (stNow.id !== "poster");
+
     let posterRow = null;
     let posterThickRow = null;
 
@@ -934,10 +965,64 @@
     seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
 
+    // ✅ Regresó el random
+    const randomRow = document.createElement("div");
+    randomRow.className = "formRow";
+    randomRow.classList.add("stackGap");
+    const randomBtn = document.createElement("button");
+    randomBtn.type = "button";
+    randomBtn.className = "btn primary";
+    randomBtn.textContent = "Poster Aleatorio";
+    randomBtn.onclick = () => {
+      const r = Math.random;
+
+      const pick = (arr) => arr[Math.floor(r() * arr.length)];
+      const pickBool = () => r() > 0.5;
+      const pickRange = (min, max) => min + r() * (max - min);
+
+      state.map.styleId = pick(MAP_STYLES).id;
+      state.map.colorTheme = pick(COLOR_THEMES).id;
+
+      const allowG = isGridAllowedForCurrentStyle();
+      state.map.showGrid = allowG ? pickBool() : false;
+
+      state.map.showConstellations = pickBool();
+      state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
+
+      state.map.mapZoom = Math.round(pickRange(0.8, 1.5) * 20) / 20;
+
+      state.map.posterMarginThickness = Math.round(pickRange(1, 10));
+      state.map.mapCircleMarginThickness = Math.round(pickRange(1, 10));
+
+      state.map.invertMapColors = pickBool();
+      if (state.map.colorTheme === "white") state.map.invertMapColors = true;
+
+      // Romántico: contorno ON, retícula OFF
+      if (state.map.styleId === "romantico") {
+        state.map.mapCircleMarginEnabled = true;
+        state.map.showGrid = false;
+      } else {
+        state.map.mapCircleMarginEnabled = pickBool();
+      }
+
+      const st = getStyleDef();
+      state.map.posterMarginEnabled = (st.id !== "poster") ? pickBool() : false;
+
+      state.map.seed = (Math.random() * 1e9) | 0;
+
+      renderPosterAndMap();
+      renderAll();
+    };
+    randomRow.appendChild(randomBtn);
+
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(styleRow);
     $section.appendChild(colorRow);
+
+    // ✅ Zoom después de color
+    $section.appendChild(mapZoomRow);
+
     $section.appendChild(invertRow);
 
     if (allowGrid) $section.appendChild(gridRow);
@@ -952,6 +1037,7 @@
     if (posterThickRow) $section.appendChild(posterThickRow);
 
     $section.appendChild(seedRow);
+    $section.appendChild(randomRow);
 
     $section.appendChild(navButtons({
       showPrev: false,
@@ -1058,7 +1144,6 @@
     s.className = "sub";
     s.textContent = "Selecciona tamaño y formato (selector de puntos).";
 
-    // ✅ Tamaño (radio)
     const sizeRow = document.createElement("div");
     sizeRow.className = "formRow";
     sizeRow.innerHTML = `<div class="label">Medidas de exportación</div>`;
@@ -1075,16 +1160,15 @@
       (val) => { state.export.sizeKey = val; }
     ));
 
-    // ✅ Formato (radio)
     const formatRow = document.createElement("div");
     formatRow.className = "formRow";
     formatRow.classList.add("stackGap");
     formatRow.innerHTML = `<div class="label">Formato</div>`;
 
     const formatItems = [
-      { value: "png", title: "PNG", sub: "Mejor calidad / transparencia" },
-      { value: "jpg", title: "JPG", sub: "Archivo más ligero (sin transparencia)" },
-      { value: "pdf", title: "PDF", sub: "Abre una ventana para imprimir/guardar" },
+      { value: "png", title: "PNG", sub: "Mejor calidad" },
+      { value: "jpg", title: "JPG", sub: "Archivo más ligero" },
+      { value: "pdf", title: "PDF", sub: "Perfecto para imprimir" },
     ];
 
     formatRow.appendChild(radioGroup(
@@ -1127,9 +1211,6 @@
     const inches = cm / 2.54;
     return Math.round(inches * dpi);
   }
-  function inToPx(inches, dpi){
-    return Math.round(inches * dpi);
-  }
 
   function exportPoster(format, sizeKey){
     const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
@@ -1141,39 +1222,31 @@
     } else if (sz.type === "cm"){
       W = cmToPx(sz.w, dpi);
       H = cmToPx(sz.h, dpi);
-    } else if (sz.type === "in"){
-      W = inToPx(sz.w, dpi);
-      H = inToPx(sz.h, dpi);
     } else {
       W = 900; H = 1200;
     }
 
-    // Protección: siempre mantener 3:4 (por si metes presets después)
     const targetRatio = 3/4;
     const ratio = W / H;
     if (Math.abs(ratio - targetRatio) > 0.001){
       H = Math.round(W / targetRatio);
     }
 
-    // Exporta render a alta resolución
-    const scale = 1; // ya estamos exportando a W,H grandes
     const out = document.createElement("canvas");
-    out.width = Math.round(W * scale);
-    out.height = Math.round(H * scale);
+    out.width = W;
+    out.height = H;
 
     const ctx = out.getContext("2d");
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     const colors = colorsFor(state.map.colorTheme);
 
-    // Fondo del poster (siempre)
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
     const pad = state.map.posterMarginEnabled ? clamp(state.map.posterMarginInsetPx, 0, 140) : 0;
     const st = getStyleDef();
 
-    // Proporciones basadas en el diseño original (900×1200)
     const sx = W / POSTER_W;
     const sy = H / POSTER_H;
 
@@ -1182,7 +1255,6 @@
       mapW = Math.round(820 * sx);
       mapH = Math.round(860 * sy);
     } else {
-      // mapa circular/heart se escala similar a tu layout
       const base = 780 * sx;
       const padEffect = Math.round((pad * 0.6) * sx);
       mapW = clamp(Math.round(base - padEffect), Math.round(640 * sx), Math.round(780 * sx));
@@ -1192,7 +1264,6 @@
     const mapX = Math.round((W - mapW) / 2);
     const mapY = Math.round((pad + 70) * sy);
 
-    // Importante: el canvas puede tener transparencia fuera de la forma
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
     if (state.map.posterMarginEnabled){
@@ -1229,7 +1300,6 @@
 
     const show = state.visible;
 
-    // Texto (manteniendo tu lógica, escalada)
     if (st.layout === "minimal"){
       const left = (pad + 80) * sx;
 

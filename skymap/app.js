@@ -1,3 +1,4 @@
+// app.js
 (() => {
   const POSTER_W = 900;
   const POSTER_H = 1200;
@@ -367,6 +368,13 @@
     $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(posterColors.star, 1) : "transparent";
+
+    // ✅ Subir textos si el margen del póster está activo (para que no se encimen)
+    const isClassic = $poster.classList.contains("classic");
+    const baseBottom = isClassic ? 28 : 12;
+    const safeBottomWhenMarginOn = marginEdge + thickness + 10; // 50 + grosor + aire
+    const bottomTextBottom = (marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom);
+    $poster.style.setProperty("--bottomTextBottom", `${bottomTextBottom}px`);
   }
 
   function applyPosterLayoutByStyle(){
@@ -700,8 +708,8 @@
       const cx = mapW/2;
       const cy = mapH/2 - Math.round(mapH * 0.06);
 
-      // ✅ 20% más grande
-      const baseSize = Math.min(mapW, mapH) * 0.5227;
+      // ✅ 20% más grande, pero -5% para que no se corte
+      const baseSize = Math.min(mapW, mapH) * (0.5227 * 0.95);
 
       const size = clamp(baseSize - insetPad * 0.95, baseSize * 0.70, baseSize);
 
@@ -771,8 +779,9 @@
   function renderPosterAndMap(){
     const posterColors = colorsFor(state.map.colorTheme);
 
-    applyPosterFrameAndMargin(posterColors);
+    // ✅ Primero clases (classic/rectStyle) para que el cálculo de bottom funcione
     applyPosterLayoutByStyle();
+    applyPosterFrameAndMargin(posterColors);
     applyPosterPaddingLayout();
     setMapSizeFromPosterPad();
 
@@ -872,9 +881,20 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
 
+        // ✅ En estilo Poster no se permite decor (botón desaparece) y se apaga todo
         if (!isPosterDecorAllowed()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
+        } else {
+          // ✅ Clásico: margen ON por default
+          if (st.id === "classic"){
+            state.map.posterFrameEnabled = false;
+            state.map.posterMarginEnabled = true;
+            state.map.posterMarginThickness = 2;
+          } else {
+            // ✅ Moderno / Romántico: margen OFF por default
+            state.map.posterMarginEnabled = false;
+          }
         }
 
         if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;

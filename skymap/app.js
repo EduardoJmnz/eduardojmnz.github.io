@@ -2,8 +2,11 @@
   const POSTER_W = 900;
   const POSTER_H = 1200;
 
-  // ✅ Separación fija desde el borde del poster (ANTES 25px → AHORA 50px)
-  const POSTER_EDGE_GAP_PX = 50;
+  // ✅ IMPORTANTE:
+  // - Marco (área) NO se mueve: se queda como estaba (25px)
+  // - Margen (línea) SÍ va a 50px (lo que pediste)
+  const POSTER_FRAME_EDGE_GAP_PX = 25;  // Marco (área) y "papel" interior
+  const POSTER_MARGIN_EDGE_GAP_PX = 50; // Margen (línea)
 
   // ✅ Marco (área) máximo = la MITAD de antes (0.12 -> 0.06)
   // ✅ Valor inicial del marco = máximo permitido
@@ -53,7 +56,6 @@
       posterMarginThickness: 2,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
-      // ✅ “Control de mapa” (contorno) y su inset %
       mapCircleMarginEnabled: false,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: 2,
@@ -207,7 +209,6 @@
     return state.map.styleId === "poster";
   }
 
-  // ✅ Marco/Margen NO aplican al estilo Poster
   function isPosterDecorAllowed(){
     return !isPosterStyle();
   }
@@ -244,7 +245,7 @@
   });
 
   // --------------------------
-  // CAPAS: edge gap + marco(área) + margen(línea)
+  // CAPAS: marco(área) + papel + margen(línea)
   // --------------------------
   let $posterFrameArea = null;
   let $posterPaper = null;
@@ -316,12 +317,15 @@
     }
   }
 
+  // ✅ Marco NO se mueve: usa POSTER_FRAME_EDGE_GAP_PX
+  // ✅ Margen sí va a 50: usa POSTER_MARGIN_EDGE_GAP_PX
   function applyPosterFrameAndMargin(posterColors){
     ensurePosterLayers();
     updatePosterFrameInsetPx();
     enforceDecorRules();
 
-    const edge = POSTER_EDGE_GAP_PX;
+    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
+    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX;
 
     const decorAllowed = isPosterDecorAllowed();
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
@@ -329,33 +333,37 @@
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
+    // Fondo general
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
+    // ---------- MARCO (ÁREA) ----------
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = posterColors.star;
-      $posterFrameArea.style.inset = `${edge}px`;
+      $posterFrameArea.style.inset = `${frameEdge}px`;
       $posterFrameArea.style.borderRadius = "0px";
     } else {
       $posterFrameArea.style.opacity = "0";
       $posterFrameArea.style.background = "transparent";
-      $posterFrameArea.style.inset = `${edge}px`;
+      $posterFrameArea.style.inset = `${frameEdge}px`;
       $posterFrameArea.style.borderRadius = "0px";
     }
 
-    const innerInset = edge + framePx;
+    // ---------- PAPEL (ÁREA INTERIOR) ----------
+    const innerInset = frameEdge + framePx;
     $posterPaper.style.background = posterColors.bg;
     $posterPaper.style.inset = `${innerInset}px`;
     $posterPaper.style.borderRadius = "0px";
 
+    // ---------- MARGEN (LÍNEA) ----------
     const thickness = clamp(
       state.map.posterMarginThickness || 2,
       1,
       state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX
     );
 
-    $posterMarginLine.style.inset = `${edge}px`;
+    $posterMarginLine.style.inset = `${marginEdge}px`; // ✅ 50px SOLO para el margen
     $posterMarginLine.style.borderRadius = "0px";
     $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
     $posterMarginLine.style.borderStyle = "solid";
@@ -380,7 +388,8 @@
   }
 
   function applyPosterPaddingLayout(){
-    const edge = POSTER_EDGE_GAP_PX;
+    // ✅ posterPad debe basarse en el edge del MARCO (para NO mover textos/inner)
+    const edge = POSTER_FRAME_EDGE_GAP_PX;
     const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
       ? clamp(state.map.posterFrameInsetPx, 0, 160)
       : 0;
@@ -641,10 +650,7 @@
 
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
 
-    // ✅ inset como “control de mapa” si:
-    // - contorno del mapa ON
-    // - o marco ON
-    // - o margen ON (NUEVO)
+    // ✅ Cuando se activa el Margen, el mapa también hace inset como "control de mapa"
     const shouldInsetLikeMapControl =
       !!state.map.mapCircleMarginEnabled ||
       (isPosterDecorAllowed() && !!state.map.posterFrameEnabled) ||
@@ -1403,27 +1409,34 @@
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
     const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
 
-    const edgeX = Math.round(POSTER_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeY = Math.round(POSTER_EDGE_GAP_PX * (H / POSTER_H));
+    // ✅ Frame edge (25) vs Margin edge (50)
+    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
+    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
+    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W));
+    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H));
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
     const frameX = Math.round(framePx * (W / POSTER_W));
     const frameY = Math.round(framePx * (H / POSTER_H));
 
+    // Fondo
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
+    // Marco (área)
     if (frameOn){
       ctx.fillStyle = colors.star;
-      ctx.fillRect(edgeX, edgeY, W - edgeX*2, H - edgeY*2);
+      ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
     }
 
-    const innerX = edgeX + frameX;
-    const innerY = edgeY + frameY;
+    // Papel interior
+    const innerX = edgeFrameX + frameX;
+    const innerY = edgeFrameY + frameY;
 
     ctx.fillStyle = colors.bg;
     ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
 
+    // Margen (línea) a 50
     if (marginOn){
       const thick = clamp(state.map.posterMarginThickness || 2, 1, state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX);
       const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
@@ -1431,7 +1444,12 @@
       ctx.strokeStyle = rgbaFromHex(colors.star, 1);
       ctx.lineWidth = thickScaled;
       const half = thickScaled / 2;
-      ctx.strokeRect(edgeX + half, edgeY + half, W - (edgeX * 2) - thickScaled, H - (edgeY * 2) - thickScaled);
+      ctx.strokeRect(
+        edgeMarginX + half,
+        edgeMarginY + half,
+        W - (edgeMarginX * 2) - thickScaled,
+        H - (edgeMarginY * 2) - thickScaled
+      );
       ctx.restore();
     }
 
@@ -1442,11 +1460,7 @@
     const mapH = mapW;
 
     const mapX = Math.round((W - mapW) / 2);
-
-    // ✅ Antes: innerY + (70*sy) → Ahora: innerY + (50*sy)
-    // Esto sube el mapa y deja MÁS aire para el texto sin mover el texto fuera del canvas.
-    const mapY = Math.round(innerY + (50 * sy));
-
+    const mapY = Math.round(innerY + (70 * sy)); // ✅ como estaba (NO muevo el mapa)
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
     const fontFamily = state.text.fontFamily;
@@ -1462,15 +1476,22 @@
       ctx.restore();
     }
 
+    // ✅ BAJO EL TEXTO EN EXPORT sin cortar (subo poquito cada línea, no uniforme)
     const show = state.visible;
     const centerX = W / 2;
 
-    if (show.title) drawText(state.text.title, centerX, Math.round(1040 * sy), 54 * sy, 900, "center", 1);
-    if (show.subtitle) drawText(state.text.subtitle, centerX, Math.round(1085 * sy), 18 * sy, 650, "center", 0.85);
+    const yTitle    = Math.round(1065 * sy);
+    const ySubtitle = Math.round(1105 * sy);
+    const yPlace    = Math.round(1150 * sy);
+    const yCoords   = Math.round(1172 * sy);
+    const yDT       = Math.round(1192 * sy); // casi al fondo pero seguro
 
-    if (show.place) drawText(state.text.place, centerX, Math.round(1135 * sy), 14 * sy, 650, "center", 0.82);
-    if (show.coords) drawText(state.text.coords, centerX, Math.round(1160 * sy), 14 * sy, 650, "center", 0.82);
-    if (show.datetime) drawText(getDateTimeString(), centerX, Math.round(1185 * sy), 14 * sy, 650, "center", 0.82);
+    if (show.title)    drawText(state.text.title, centerX, yTitle,    54 * sy, 900, "center", 1);
+    if (show.subtitle) drawText(state.text.subtitle, centerX, ySubtitle, 18 * sy, 650, "center", 0.85);
+
+    if (show.place)    drawText(state.text.place, centerX, yPlace, 14 * sy, 650, "center", 0.82);
+    if (show.coords)   drawText(state.text.coords, centerX, yCoords, 14 * sy, 650, "center", 0.82);
+    if (show.datetime) drawText(getDateTimeString(), centerX, yDT, 14 * sy, 650, "center", 0.82);
 
     if (format === "png" || format === "jpg"){
       const mime = format === "png" ? "image/png" : "image/jpeg";

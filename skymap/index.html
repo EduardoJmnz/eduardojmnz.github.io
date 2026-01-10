@@ -21,6 +21,10 @@
 
       /* ✅ Preview fijo (desktop) */
       --previewZoom: 0.75;
+
+      /* ✅ Tamaño real del poster para calcular stage */
+      --posterW: 900px;
+      --posterH: 1200px;
     }
 
     *{ box-sizing:border-box; }
@@ -115,25 +119,37 @@
       position:relative;
       overflow:auto;
       padding: 16px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
+
+      /* ✅ QUITAMOS CENTRADO: alineado a la izquierda */
+      display:block;
     }
 
+    /* ✅ Contenedor normal (sin centrar) */
     .previewWrap{
       width:100%;
       max-width: 980px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
       position:relative;
       padding-bottom: 12px;
-      overflow:hidden; /* ✅ evita brinco horizontal */
+      overflow:hidden;
     }
 
-    /* ✅ Escala fija por CSS var */
+    /* ✅ Stage = tamaño REAL escalado (arregla el “layout gigante”) */
+    .previewStage{
+      position: relative;
+      width: calc(var(--posterW) * var(--previewZoom));
+      height: calc(var(--posterH) * var(--previewZoom));
+      overflow: hidden;
+      transform-origin: top left;
+    }
+
+    /* ✅ Elemento real 900×1200, ABSOLUTO y escalado */
     .previewScale{
-      transform-origin: top center;
+      position:absolute;
+      top:0;
+      left:0;
+      width: var(--posterW);
+      height: var(--posterH);
+      transform-origin: top left;
       will-change: transform;
       transform: scale(var(--previewZoom));
     }
@@ -280,7 +296,6 @@
       align-items: end;
     }
 
-    /* ✅ Tabs: "1) Diseño" inline + regular */
     .sheetTab{
       background: transparent;
       border: 0;
@@ -478,7 +493,7 @@
       opacity: .92;
     }
 
-    /* ✅ MOBILE: body scroll + columna + preview fijo 45% */
+    /* ✅ MOBILE: body scroll + preview 45% + sin inflar layout */
     @media (max-width: 980px){
       body{ overflow:auto; }
 
@@ -518,13 +533,9 @@
 
       .sheetBody{
         padding: 12px;
-        overflow: visible; /* ✅ sin scroll interno */
+        overflow: visible;
       }
 
-      .fieldHeader .fieldLabel{ font-size: 15px; }
-      .fieldInput{ font-size: 15px; padding: 13px 12px; }
-
-      /* ✅ Preview fijo 45% en móvil */
       :root{ --previewZoom: 0.45; }
     }
   </style>
@@ -536,7 +547,7 @@
         <div class="dot"></div>
         <div class="brandText">
           <div class="brandTitle">Sky Art Creator</div>
-          <div class="brandSub">v2.100126.fixedScale</div>
+          <div class="brandSub">v2.100126.stageFix</div>
         </div>
       </div>
       <div class="topbarRight">© 2026</div>
@@ -544,28 +555,31 @@
 
     <main class="previewArea noScrollBar">
       <div class="previewWrap">
-        <div class="previewScale" id="previewScale">
-          <div class="poster" id="poster">
-            <div class="posterInner">
-              <div class="mapFrame">
-                <canvas id="mapCanvas"></canvas>
-              </div>
+        <!-- ✅ Stage controla el tamaño real del layout -->
+        <div class="previewStage">
+          <div class="previewScale" id="previewScale">
+            <div class="poster" id="poster">
+              <div class="posterInner">
+                <div class="mapFrame">
+                  <canvas id="mapCanvas"></canvas>
+                </div>
 
-              <div class="bottomText" id="bottomText">
-                <div class="tTitle" id="pTitle"></div>
-                <div class="tSub" id="pSubtitle"></div>
+                <div class="bottomText" id="bottomText">
+                  <div class="tTitle" id="pTitle"></div>
+                  <div class="tSub" id="pSubtitle"></div>
 
-                <div class="meta">
-                  <div class="metaCol">
-                    <div class="metaRow" id="pPlace"></div>
-                    <div class="metaRow" id="pCoords"></div>
-                    <div class="metaRow" id="pDatetime"></div>
+                  <div class="meta">
+                    <div class="metaCol">
+                      <div class="metaRow" id="pPlace"></div>
+                      <div class="metaRow" id="pCoords"></div>
+                      <div class="metaRow" id="pDatetime"></div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div><!-- /poster -->
-        </div><!-- /previewScale -->
+            </div><!-- /poster -->
+          </div><!-- /previewScale -->
+        </div><!-- /previewStage -->
       </div>
     </main>
 

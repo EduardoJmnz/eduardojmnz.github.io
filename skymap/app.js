@@ -11,6 +11,9 @@
 
   const POSTER_LINE_THICK_MAX = 12;
 
+  // ✅ NUEVO: contorno del mapa fijo (10px) y SIN opacidad
+  const MAP_OUTLINE_PX = 10;
+
   const state = {
     step: 0,
 
@@ -215,14 +218,12 @@
   }
 
   function mapOutlineAllowed(){
-    // ✅ fondo blanco: no; estilo poster: no
     return !isWhiteBackgroundMode() && !isPosterStyle();
   }
 
   function computeRenderTokens(){
     const th = colorsFor(state.map.colorTheme);
 
-    // ✅ NEON: todo del color seleccionado, fondo negro
     if (isNeonTheme()){
       const neon = th.star;
       const bg = "#000000";
@@ -236,7 +237,9 @@
         gridLine: rgbaFromHex(neon, 0.35),
         constLine: rgbaFromHex(neon, 0.55),
         constNode: rgbaFromHex(neon, 1.0),
-        outline: rgbaFromHex(neon, 0.85),
+
+        // (ya no usamos outline para el stroke)
+        outline: rgbaFromHex(neon, 1.0),
 
         theme: th,
       };
@@ -253,8 +256,7 @@
         gridLine: "rgba(255,255,255,0.22)",
         constLine: "rgba(255,255,255,0.22)",
         constNode: "#FFFFFF",
-        outline: "rgba(255,255,255,0.22)",
-
+        outline: "rgba(255,255,255,1)",
         theme: th,
       };
     }
@@ -269,14 +271,12 @@
       gridLine: "rgba(255,255,255,0.22)",
       constLine: "rgba(255,255,255,0.22)",
       constNode: "#FFFFFF",
-      outline: "rgba(255,255,255,0.22)",
-
+      outline: "rgba(255,255,255,1)",
       theme: th,
     };
   }
 
   function syncOutlineThickness(){
-    // ✅ contorno del mapa = grosor del margen del póster (mismo valor)
     state.map.mapCircleMarginThickness = state.map.posterMarginThickness;
   }
 
@@ -359,7 +359,6 @@
     enforceDecorRules();
     syncOutlineThickness();
 
-    // ✅ si fondo blanco => contorno apagado
     if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
 
     const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
@@ -374,7 +373,6 @@
     $poster.style.background = tokens.posterBg;
     $poster.style.color = tokens.posterInk;
 
-    // MARCO (ÁREA)
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = tokens.posterInk;
@@ -385,12 +383,10 @@
       $posterFrameArea.style.inset = `${frameEdge}px`;
     }
 
-    // PAPEL INTERIOR
     const innerInset = frameEdge + framePx;
     $posterPaper.style.background = tokens.posterBg;
     $posterPaper.style.inset = `${innerInset}px`;
 
-    // MARGEN (LÍNEA)
     const thickness = clamp(
       state.map.posterMarginThickness || 2,
       1,
@@ -424,7 +420,6 @@
       $poster.style.setProperty("--mapH", "780px");
     }
 
-    // ✅ estilo poster no puede llevar contorno
     if (st.id === "poster") state.map.mapCircleMarginEnabled = false;
   }
 
@@ -595,11 +590,12 @@
 
     ctx.restore();
 
+    // ✅ SIN OPACIDAD y color sólido
     if (showOutline){
       ctx.save();
-      ctx.strokeStyle = tokens.outline;
+      ctx.strokeStyle = tokens.posterInk;
       ctx.lineWidth = outlineW;
-      ctx.globalAlpha = 0.75;
+      ctx.globalAlpha = 1;
       const half = outlineW / 2;
       ctx.strokeRect(half, half, mapW - outlineW, mapH - outlineW);
       ctx.restore();
@@ -632,8 +628,8 @@
     const outlineEnabled = !!state.map.mapCircleMarginEnabled && mapOutlineAllowed();
     const showOutline = outlineEnabled;
 
-    // ✅ contorno EXACTAMENTE del mismo grosor del margen del póster (mismo valor)
-    const outlineW = clamp(state.map.posterMarginThickness || 2, 1, POSTER_LINE_THICK_MAX);
+    // ✅ CONTORNO FIJO 10px
+    const outlineW = MAP_OUTLINE_PX;
 
     ctx.clearRect(0, 0, mapW, mapH);
 
@@ -653,11 +649,12 @@
       const rOuter = Math.min(mapW,mapH)/2;
       const rInner = rOuter - insetPad;
 
+      // ✅ SIN OPACIDAD y color sólido
       if (showOutline){
         ctx.save();
-        ctx.strokeStyle = tokens.outline;
+        ctx.strokeStyle = tokens.posterInk;
         ctx.lineWidth = outlineW;
-        ctx.globalAlpha = 0.75;
+        ctx.globalAlpha = 1;
         ctx.beginPath();
         ctx.arc(cx, cy, rInner, 0, Math.PI*2);
         ctx.stroke();
@@ -718,11 +715,12 @@
 
       ctx.restore();
 
+      // ✅ SIN OPACIDAD y 10px
       if (showOutline){
         ctx.save();
-        ctx.strokeStyle = tokens.outline;
+        ctx.strokeStyle = tokens.posterInk;
         ctx.lineWidth = outlineW;
-        ctx.globalAlpha = 0.85;
+        ctx.globalAlpha = 1;
         heartPath(ctx, cx, cy, size);
         ctx.stroke();
         ctx.restore();
@@ -765,7 +763,7 @@
 
   function renderPosterAndMap(){
     if (isNeonTheme()) state.map.backgroundMode = "match";
-    if (isPosterStyle()) state.map.mapCircleMarginEnabled = false; // ✅ regla poster
+    if (isPosterStyle()) state.map.mapCircleMarginEnabled = false;
 
     const tokens = computeRenderTokens();
 
@@ -813,6 +811,7 @@
     });
   }
 
+  // --- UI SECTIONS (Diseño/Contenido/Exportar) ---
   function drawStyleTextSkeleton(ctx, w, h, styleId, color){
     ctx.save();
     ctx.fillStyle = color;
@@ -902,6 +901,7 @@
     s.className = "sub";
     s.textContent = "Selecciona un estilo de poster, los colores y las opcines de personalizacion para tu mapa o genera un aleatorio. ¡Cada mapa es unico y diferente!";
 
+    // --- Random ---
     const randomRow = document.createElement("div");
     randomRow.className = "formRow";
     randomRow.classList.add("stackGap");
@@ -938,17 +938,11 @@
           state.map.posterFramePct = POSTER_FRAME_PCT_MAX;
           updatePosterFrameInsetPx();
         }
-
         state.map.posterMarginEnabled = !marco ? pickBool() : false;
         state.map.posterMarginThickness = 2;
       }
 
-      // ✅ por default contorno ON excepto poster
-      if (state.map.styleId === "poster") {
-        state.map.mapCircleMarginEnabled = false;
-      } else {
-        state.map.mapCircleMarginEnabled = true;
-      }
+      state.map.mapCircleMarginEnabled = (state.map.styleId !== "poster");
 
       if (state.map.styleId === "romantico") state.map.showGrid = false;
       if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
@@ -962,6 +956,7 @@
     };
     randomRow.appendChild(randomBtn);
 
+    // --- Styles ---
     const styleRow = document.createElement("div");
     styleRow.className = "formRow";
     styleRow.innerHTML = `<div class="label">Estilos</div>`;
@@ -1011,8 +1006,8 @@
       c.width = 180; c.height = 240;
 
       const ctx = c.getContext("2d");
-
       const tokens = computeRenderTokens();
+
       ctx.clearRect(0,0,180,240);
       ctx.fillStyle = tokens.posterBg;
       ctx.fillRect(0,0,180,240);
@@ -1083,12 +1078,8 @@
           }
         }
 
-        // ✅ contorno: por default ON, excepto poster
         state.map.mapCircleMarginEnabled = (st.id !== "poster");
-
-        if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
-
         if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
 
         renderPosterAndMap();
@@ -1100,6 +1091,7 @@
 
     styleRow.appendChild(grid);
 
+    // --- Color theme ---
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
     colorRow.innerHTML = `<div class="label">Color del Mapa estelar</div>`;
@@ -1114,6 +1106,7 @@
     });
     colorSel.value = state.map.colorTheme;
 
+    // --- Background mode ---
     const bgRow = document.createElement("div");
     bgRow.className = "formRow";
     bgRow.classList.add("stackGap");
@@ -1141,6 +1134,7 @@
     };
     colorRow.appendChild(colorSel);
 
+    // --- Zoom ---
     const mapZoomRow = document.createElement("div");
     mapZoomRow.className = "formRow";
     mapZoomRow.classList.add("stackGap");
@@ -1157,6 +1151,7 @@
     };
     mapZoomRow.appendChild(mapZoomRange);
 
+    // --- Decor ---
     const showDecor = isPosterDecorAllowed();
     let frameRow = null, marginRow = null, marginThickRow = null;
 
@@ -1197,10 +1192,8 @@
       marginThick.step = "1";
       marginThick.value = String(state.map.posterMarginThickness || 2);
       marginThick.oninput = () => {
-        const v = Number(marginThick.value);
-        state.map.posterMarginThickness = v;
-        syncOutlineThickness();
-        drawMap();             // ✅ basta con redibujar mapa para ver contorno igual
+        state.map.posterMarginThickness = Number(marginThick.value);
+        drawMap();
         renderPosterAndMap();
         renderAll();
       };
@@ -1210,6 +1203,7 @@
       state.map.posterMarginEnabled = false;
     }
 
+    // --- Grid ---
     const allowGrid = isGridAllowedForCurrentStyle();
     if (!allowGrid) state.map.showGrid = false;
 
@@ -1223,6 +1217,7 @@
       renderAll();
     }));
 
+    // --- Constellations ---
     const conRow = document.createElement("div");
     conRow.className = "rowToggle";
     conRow.classList.add("stackGap");
@@ -1246,6 +1241,7 @@
     csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
     csRow.appendChild(csRange);
 
+    // --- Outline ---
     const outlineRow = document.createElement("div");
     outlineRow.className = "rowToggle";
     outlineRow.classList.add("stackGap");
@@ -1257,6 +1253,7 @@
       renderAll();
     }));
 
+    // --- Seed ---
     const seedRow = document.createElement("div");
     seedRow.className = "formRow";
     seedRow.classList.add("stackGap");
@@ -1310,8 +1307,12 @@
     $section.appendChild(btns);
   }
 
-  // --- CONTENT / EXPORT (sin cambios funcionales) ---
+  // --- Content / Export (idéntico a lo que ya tenías, omití por longitud) ---
+  // Si quieres que te lo pegue también completo con Content/Export igual,
+  // dímelo y lo pego entero (pero aquí ya está lo funcional del contorno 10px sólido).
+
   function renderSectionContent(){
+    // (tu versión anterior sin cambios)
     $section.innerHTML = "";
 
     const t = document.createElement("div");
@@ -1492,6 +1493,7 @@
   }
 
   function exportPoster(format, sizeKey){
+    // (tu versión anterior sin cambios relevantes al contorno — exporta desde el canvas ya dibujado)
     const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
     const dpi = state.export.dpi || 300;
 
@@ -1628,6 +1630,7 @@
   }
 
   function renderSectionExport(){
+    // (tu versión anterior sin cambios)
     $section.innerHTML = "";
 
     const t = document.createElement("div");

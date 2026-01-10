@@ -45,7 +45,6 @@
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
       posterMarginEnabled: true,
-      // ✅ fijo, usuario NO puede editar
       posterMarginThickness: DEFAULT_POSTER_MARGIN_THICKNESS,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
@@ -271,10 +270,12 @@
   }
 
   function syncOutlineThickness(){
-    // ✅ mantenemos consistencia interna (aunque el stroke real es fijo)
     state.map.mapCircleMarginThickness = state.map.posterMarginThickness;
   }
 
+  // --------------------------
+  // CAPAS: marco(área) + papel + margen(línea)
+  // --------------------------
   let $posterFrameArea = null;
   let $posterPaper = null;
   let $posterMarginLine = null;
@@ -379,7 +380,6 @@
     $posterPaper.style.background = tokens.posterBg;
     $posterPaper.style.inset = `${innerInset}px`;
 
-    // ✅ margen fijo: el usuario no puede cambiarlo
     const thickness = clamp(
       DEFAULT_POSTER_MARGIN_THICKNESS,
       1,
@@ -751,7 +751,6 @@
   }
 
   function renderPosterAndMap(){
-    // ✅ siempre mantener margen fijo
     state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
 
     if (isNeonTheme()) state.map.backgroundMode = "match";
@@ -881,6 +880,31 @@
     ctx.restore();
   }
 
+  function makeSwatchTile({ name, circleBg, dotBg, active, onClick }){
+    const tile = document.createElement("div");
+    tile.className = "swatchTile" + (active ? " active" : "");
+
+    const c = document.createElement("div");
+    c.className = "swatchCircle";
+    c.style.background = circleBg;
+
+    const dot = document.createElement("div");
+    dot.className = "swatchDot";
+    dot.style.background = dotBg;
+
+    c.appendChild(dot);
+
+    const label = document.createElement("div");
+    label.className = "swatchName";
+    label.textContent = name;
+
+    tile.appendChild(c);
+    tile.appendChild(label);
+    tile.onclick = onClick;
+
+    return tile;
+  }
+
   function renderSectionDesign(){
     $section.innerHTML = "";
 
@@ -892,42 +916,15 @@
     s.className = "sub";
     s.textContent = "Selecciona un estilo de poster, los colores y las opcines de personalizacion para tu mapa o genera un aleatorio. ¡Cada mapa es unico y diferente!";
 
-    let bgSel = null;
-    const rebuildBgOptions = () => {
-      if (!bgSel) return;
+    $section.appendChild(t);
+    $section.appendChild(s);
 
-      bgSel.innerHTML = "";
+    // -------- Grupo: Aleatorio + Estilos --------
+    const group1 = document.createElement("div");
+    group1.className = "groupBlock";
 
-      if (isNeonTheme()){
-        state.map.backgroundMode = "match";
-        const opt = document.createElement("option");
-        opt.value = "match";
-        opt.textContent = getThemeName();
-        bgSel.appendChild(opt);
-        bgSel.value = "match";
-        bgSel.disabled = true;
-        return;
-      }
-
-      const optMatch = document.createElement("option");
-      optMatch.value = "match";
-      optMatch.textContent = getThemeName();
-      bgSel.appendChild(optMatch);
-
-      const optWhite = document.createElement("option");
-      optWhite.value = "white";
-      optWhite.textContent = "Blanco";
-      bgSel.appendChild(optWhite);
-
-      bgSel.disabled = false;
-      bgSel.value = state.map.backgroundMode;
-    };
-
-    // 1) Aleatorio
     const randomRow = document.createElement("div");
     randomRow.className = "formRow";
-    randomRow.classList.add("stackGap");
-
     const randomBtn = document.createElement("button");
     randomBtn.type = "button";
     randomBtn.className = "btn primary";
@@ -961,8 +958,6 @@
           updatePosterFrameInsetPx();
         }
         state.map.posterMarginEnabled = !marco ? pickBool() : false;
-
-        // ✅ fijo
         state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
       }
 
@@ -978,9 +973,9 @@
     };
     randomRow.appendChild(randomBtn);
 
-    // 2) Estilos
     const styleRow = document.createElement("div");
     styleRow.className = "formRow";
+    styleRow.classList.add("stackGap");
     styleRow.innerHTML = `<div class="label">Estilos</div>`;
 
     const grid = document.createElement("div");
@@ -1063,7 +1058,7 @@
           if (st.id === "classic"){
             state.map.posterFrameEnabled = false;
             state.map.posterMarginEnabled = true;
-            state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS; // fijo
+            state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
           } else {
             state.map.posterMarginEnabled = false;
           }
@@ -1082,81 +1077,120 @@
 
     styleRow.appendChild(grid);
 
-    // 3) ✅ Color del mapa (swatches)
+    group1.appendChild(randomRow);
+    group1.appendChild(styleRow);
+    $section.appendChild(group1);
+
+    // -------- Grupo: Color del mapa (swatches redondos) --------
+    const group2 = document.createElement("div");
+    group2.className = "groupBlock";
+
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
     colorRow.innerHTML = `<div class="label">Color del Mapa estelar</div>`;
 
-    const colorGrid = document.createElement("div");
-    colorGrid.className = "colorGrid";
+    const swatchRow = document.createElement("div");
+    swatchRow.className = "swatchRow";
 
     COLOR_THEMES.forEach(th => {
-      const tile = document.createElement("div");
-      tile.className = "colorTile" + (state.map.colorTheme === th.id ? " active" : "");
-
-      const sw = document.createElement("div");
-      sw.className = "colorSwatch";
-
-      const inner = document.createElement("div");
-      inner.className = "colorSwatchInner";
-
-      const dot = document.createElement("div");
-      dot.className = "colorSwatchDot";
-
       const c = colorsFor(th.id);
+      const circleBg = th.id.startsWith("neon") ? "#000000" : c.bg;
+      const dotBg = c.star;
 
-      // fondo del swatch
-      sw.style.background = th.id.startsWith("neon") ? "#000000" : c.bg;
-      // dot (representa “tinta/estrellas”)
-      dot.style.background = c.star;
-
-      inner.appendChild(dot);
-      sw.appendChild(inner);
-
-      const name = document.createElement("div");
-      name.className = "colorNameLabel";
-      name.textContent = th.name;
-
-      tile.appendChild(sw);
-      tile.appendChild(name);
-
-      tile.onclick = () => {
-        state.map.colorTheme = th.id;
-        if (isNeonTheme()) state.map.backgroundMode = "match";
-        renderPosterAndMap();
-        renderAll();
-      };
-
-      colorGrid.appendChild(tile);
+      swatchRow.appendChild(
+        makeSwatchTile({
+          name: th.name,
+          circleBg,
+          dotBg,
+          active: state.map.colorTheme === th.id,
+          onClick: () => {
+            state.map.colorTheme = th.id;
+            if (isNeonTheme()) state.map.backgroundMode = "match";
+            renderPosterAndMap();
+            renderAll();
+          }
+        })
+      );
     });
 
-    colorRow.appendChild(colorGrid);
+    colorRow.appendChild(swatchRow);
+    group2.appendChild(colorRow);
+    $section.appendChild(group2);
 
-    // 4) Color fondo
+    // -------- Grupo: Color de fondo (swatches) --------
+    const group3 = document.createElement("div");
+    group3.className = "groupBlock";
+
     const bgRow = document.createElement("div");
     bgRow.className = "formRow";
-    bgRow.classList.add("stackGap");
     bgRow.innerHTML = `<div class="label">Color de fondo</div>`;
 
-    bgSel = document.createElement("select");
-    bgSel.className = "select";
-    rebuildBgOptions();
-    bgSel.onchange = () => {
-      state.map.backgroundMode = bgSel.value;
-      if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
-      renderPosterAndMap();
-      renderAll();
-    };
-    bgRow.appendChild(bgSel);
+    const bgSwatches = document.createElement("div");
+    bgSwatches.className = "swatchRow";
 
-    // 5) Marco / 6) Margen (sin slider)
+    // opción: "match" (nombre del tema)
+    {
+      const th = colorsFor(state.map.colorTheme);
+      const circleBg = isNeonTheme() ? "#000000" : th.bg;
+      const dotBg = isNeonTheme() ? th.star : "#FFFFFF";
+
+      bgSwatches.appendChild(
+        makeSwatchTile({
+          name: getThemeName(),
+          circleBg,
+          dotBg,
+          active: state.map.backgroundMode === "match" || isNeonTheme(),
+          onClick: () => {
+            state.map.backgroundMode = "match";
+            renderPosterAndMap();
+            renderAll();
+          }
+        })
+      );
+    }
+
+    // opción: "white" sólo si NO es neon
+    if (!isNeonTheme()){
+      bgSwatches.appendChild(
+        makeSwatchTile({
+          name: "Blanco",
+          circleBg: "#FFFFFF",
+          dotBg: "rgba(0,0,0,.25)",
+          active: state.map.backgroundMode === "white",
+          onClick: () => {
+            state.map.backgroundMode = "white";
+            if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
+            renderPosterAndMap();
+            renderAll();
+          }
+        })
+      );
+    } else {
+      // asegura regla neon
+      state.map.backgroundMode = "match";
+    }
+
+    bgRow.appendChild(bgSwatches);
+    group3.appendChild(bgRow);
+    $section.appendChild(group3);
+
+    // -------- Grupo: Toggles + acciones --------
+    const group4 = document.createElement("div");
+    group4.className = "groupBlock";
+
     const showDecor = isPosterDecorAllowed();
-    let frameRow = null, frameSizeRow = null, marginRow = null;
+    if (!showDecor){
+      state.map.posterFrameEnabled = false;
+      state.map.posterMarginEnabled = false;
+    }
 
+    const stack = document.createElement("div");
+    stack.className = "toggleStack";
+
+    // Marco
     if (showDecor){
-      frameRow = document.createElement("div");
+      const frameRow = document.createElement("div");
       frameRow.className = "rowToggle";
-      frameRow.classList.add("stackGap");
       frameRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Marco del póster" }));
       frameRow.appendChild(toggleSwitch(!!state.map.posterFrameEnabled, (val) => {
         state.map.posterFrameEnabled = val;
@@ -1164,93 +1198,98 @@
         renderPosterAndMap();
         renderAll();
       }));
+      stack.appendChild(frameRow);
 
-      frameSizeRow = document.createElement("div");
-      frameSizeRow.className = "formRow";
-      frameSizeRow.classList.add("stackGap");
-      frameSizeRow.innerHTML = `<div class="label">Tamaño del marco</div>`;
-      const frameRange = document.createElement("input");
-      frameRange.type = "range";
-      frameRange.min = "0.00";
-      frameRange.max = String(POSTER_FRAME_PCT_MAX);
-      frameRange.step = "0.005";
-      frameRange.value = String(state.map.posterFramePct ?? POSTER_FRAME_PCT_DEFAULT);
-      frameRange.oninput = () => {
-        state.map.posterFramePct = Number(frameRange.value);
-        updatePosterFrameInsetPx();
-        renderPosterAndMap();
-        renderAll();
-      };
-      frameSizeRow.appendChild(frameRange);
+      if (state.map.posterFrameEnabled){
+        const frameSizeRow = document.createElement("div");
+        frameSizeRow.className = "formRow";
+        frameSizeRow.innerHTML = `<div class="label">Tamaño del marco</div>`;
+        const frameRange = document.createElement("input");
+        frameRange.type = "range";
+        frameRange.min = "0.00";
+        frameRange.max = String(POSTER_FRAME_PCT_MAX);
+        frameRange.step = "0.005";
+        frameRange.value = String(state.map.posterFramePct ?? POSTER_FRAME_PCT_DEFAULT);
+        frameRange.oninput = () => {
+          state.map.posterFramePct = Number(frameRange.value);
+          updatePosterFrameInsetPx();
+          renderPosterAndMap();
+          renderAll();
+        };
+        frameSizeRow.appendChild(frameRange);
+        stack.appendChild(frameSizeRow);
+      }
 
-      marginRow = document.createElement("div");
+      // Margen (sin slider)
+      const marginRow = document.createElement("div");
       marginRow.className = "rowToggle";
-      marginRow.classList.add("stackGap");
       marginRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Margen del póster" }));
       marginRow.appendChild(toggleSwitch(!!state.map.posterMarginEnabled, (val) => {
         state.map.posterMarginEnabled = val;
         renderPosterAndMap();
         renderAll();
       }));
-    } else {
-      state.map.posterFrameEnabled = false;
-      state.map.posterMarginEnabled = false;
+      stack.appendChild(marginRow);
     }
 
-    // 7) Contorno
-    const outlineRow = document.createElement("div");
-    outlineRow.className = "rowToggle";
-    outlineRow.classList.add("stackGap");
-    outlineRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
-    outlineRow.appendChild(toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
-      state.map.mapCircleMarginEnabled = val;
-      if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
-      drawMap();
-      renderAll();
-    }));
+    // Contorno (si aplica)
+    if (mapOutlineAllowed()){
+      const outlineRow = document.createElement("div");
+      outlineRow.className = "rowToggle";
+      outlineRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
+      outlineRow.appendChild(toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
+        state.map.mapCircleMarginEnabled = val;
+        if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
+        drawMap();
+        renderAll();
+      }));
+      stack.appendChild(outlineRow);
+    }
 
-    // 8) Constelaciones
+    // Constelaciones
     const conRow = document.createElement("div");
     conRow.className = "rowToggle";
-    conRow.classList.add("stackGap");
     conRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Constelaciones" }));
     conRow.appendChild(toggleSwitch(!!state.map.showConstellations, (val) => {
       state.map.showConstellations = val;
       drawMap();
       renderAll();
     }));
+    stack.appendChild(conRow);
 
-    const csRow = document.createElement("div");
-    csRow.className = "formRow";
-    csRow.classList.add("stackGap");
-    csRow.innerHTML = `<div class="label">Tamaño de constelaciones</div>`;
-    const csRange = document.createElement("input");
-    csRange.type = "range";
-    csRange.min = "1";
-    csRange.max = "4";
-    csRange.step = "0.5";
-    csRange.value = String(state.map.constellationSize);
-    csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
-    csRow.appendChild(csRange);
+    if (state.map.showConstellations){
+      const csRow = document.createElement("div");
+      csRow.className = "formRow";
+      csRow.innerHTML = `<div class="label">Tamaño de constelaciones</div>`;
+      const csRange = document.createElement("input");
+      csRange.type = "range";
+      csRange.min = "1";
+      csRange.max = "4";
+      csRange.step = "0.5";
+      csRange.value = String(state.map.constellationSize);
+      csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
+      csRow.appendChild(csRange);
+      stack.appendChild(csRow);
+    }
 
-    // 9) Retícula
+    // Retícula
     const allowGrid = isGridAllowedForCurrentStyle();
     if (!allowGrid) state.map.showGrid = false;
+    if (allowGrid){
+      const gridRow = document.createElement("div");
+      gridRow.className = "rowToggle";
+      gridRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Retícula" }));
+      gridRow.appendChild(toggleSwitch(!!state.map.showGrid, (val) => {
+        state.map.showGrid = val;
+        drawMap();
+        renderAll();
+      }));
+      stack.appendChild(gridRow);
+    }
 
-    const gridRow = document.createElement("div");
-    gridRow.className = "rowToggle";
-    gridRow.classList.add("stackGap");
-    gridRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Retícula" }));
-    gridRow.appendChild(toggleSwitch(!!state.map.showGrid, (val) => {
-      state.map.showGrid = val;
-      drawMap();
-      renderAll();
-    }));
-
-    // 10) Nuevo cielo
+    // Nuevo cielo
     const seedRow = document.createElement("div");
     seedRow.className = "formRow";
-    seedRow.classList.add("stackGap");
     seedRow.innerHTML = `<div class="label">Variación del cielo</div>`;
     const seedBtn = document.createElement("button");
     seedBtn.type = "button";
@@ -1258,11 +1297,11 @@
     seedBtn.textContent = "Generar nuevo cielo";
     seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
+    stack.appendChild(seedRow);
 
-    // 11) Zoom
+    // Zoom
     const mapZoomRow = document.createElement("div");
     mapZoomRow.className = "formRow";
-    mapZoomRow.classList.add("stackGap");
     mapZoomRow.innerHTML = `<div class="label">Zoom de Estrellas</div>`;
     const mapZoomRange = document.createElement("input");
     mapZoomRange.type = "range";
@@ -1275,30 +1314,10 @@
       drawMap();
     };
     mapZoomRow.appendChild(mapZoomRange);
+    stack.appendChild(mapZoomRow);
 
-    // Append orden solicitado
-    $section.appendChild(t);
-    $section.appendChild(s);
-    $section.appendChild(randomRow);
-    $section.appendChild(styleRow);
-    $section.appendChild(colorRow);
-    $section.appendChild(bgRow);
-
-    if (showDecor){
-      $section.appendChild(frameRow);
-      if (state.map.posterFrameEnabled) $section.appendChild(frameSizeRow);
-      $section.appendChild(marginRow);
-    }
-
-    if (mapOutlineAllowed()) $section.appendChild(outlineRow);
-
-    $section.appendChild(conRow);
-    if (state.map.showConstellations) $section.appendChild(csRow);
-
-    if (allowGrid) $section.appendChild(gridRow);
-
-    $section.appendChild(seedRow);
-    $section.appendChild(mapZoomRow);
+    group4.appendChild(stack);
+    $section.appendChild(group4);
 
     const btns = document.createElement("div");
     btns.className = "btnRow";
@@ -1315,9 +1334,6 @@
     btns.appendChild(left);
     btns.appendChild(right);
     $section.appendChild(btns);
-
-    // ✅ asegura que el select de fondo refleje nombre correcto
-    rebuildBgOptions();
   }
 
   function renderSectionContent(){
@@ -1520,8 +1536,6 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     if (isNeonTheme()) state.map.backgroundMode = "match";
-
-    // ✅ margen fijo también en export
     state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
 
     const tokens = computeRenderTokens();

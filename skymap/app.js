@@ -565,7 +565,7 @@
       strokePath(frontPts, isPolarRing ? alphaFront : alphaFront,       isPolarRing ? lwFront + 1.0 : lwFront);
     }
 
-    // meridianos
+        // meridianos (VERTICALES) — dibujar completos para que se vean ambos lados
     const lonsDeg = [];
     for (let d = -75; d <= 75; d += 15) lonsDeg.push(d);
     lonsDeg.push(-90, 90);
@@ -574,19 +574,18 @@
 
     for (const lonDeg of lonsDeg){
       const lon = lonDeg * Math.PI / 180;
-      const frontPts = [];
-      const backPts  = [];
+      const pts = [];
 
       for (let i = 0; i <= latSteps; i++){
         const lat = (-90 + (i / latSteps) * 180) * Math.PI / 180;
         const p = projectSphere(lat, lon);
-        if (p.z >= 0) frontPts.push(p);
-        else backPts.push(p);
+        pts.push(p);
       }
 
-      strokePath(backPts,  alphaBack,  lwBack);
-      strokePath(frontPts, alphaFront, lwFront);
+      // ✅ dibuja TODO el meridiano con la misma opacidad (como en referencia)
+      strokePath(pts, alphaFront, lwFront);
     }
+
 
     // círculo exterior tenue
     ctx.save();

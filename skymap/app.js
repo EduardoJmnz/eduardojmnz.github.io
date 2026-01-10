@@ -41,13 +41,13 @@
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
-      posterMarginEnabled: true,          // ✅ clásico default ON
+      posterMarginEnabled: true,
       posterMarginThickness: 2,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
       mapCircleMarginEnabled: false,
       mapCircleInsetPct: 0.10,
-      mapCircleMarginThickness: 2,        // ✅ igual al margen
+      mapCircleMarginThickness: 2,
 
       constellationSize: 2.0,
       seed: 12345,
@@ -103,7 +103,6 @@
     { key: "90x120cm_300dpi",  title: "90×120 cm (300 dpi)",   sub: "Impresión premium", type: "cm", w: 90, h: 120 },
   ];
 
-  // DOM (preview)
   const $poster = document.getElementById("poster");
   const $canvas = document.getElementById("mapCanvas");
 
@@ -118,16 +117,8 @@
   const $zoomOut = document.getElementById("zoomOut");
   const $zoomLabel = document.getElementById("zoomLabel");
 
-  // DOM (editors)
-  const $tabsDesktop = document.getElementById("tabs");
-  const $sectionDesktop = document.getElementById("sectionContainer");
-
-  const $tabsMobile = document.getElementById("tabsMobile");
-  const $sectionMobile = document.getElementById("sectionContainerMobile");
-
-  function isMobile(){
-    return window.matchMedia("(max-width: 980px)").matches;
-  }
+  const $tabs = document.getElementById("tabs");
+  const $section = document.getElementById("sectionContainer");
 
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
@@ -222,10 +213,10 @@
   }
 
   function applyResponsiveDefaultZoom(){
-    if (isMobile()){
+    const mobile = window.matchMedia("(max-width: 980px)").matches;
+    if (mobile){
       state.ui.minZoom = 0.18;
       state.ui.maxZoom = 0.75;
-      // ✅ Mobile default = 42%
       if (!state.ui.zoom || state.ui.zoom > 0.60) state.ui.zoom = 0.42;
     } else {
       state.ui.minZoom = 0.35;
@@ -321,8 +312,8 @@
     enforceDecorRules();
     syncOutlineThickness();
 
-    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;   // 0
-    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX; // 50
+    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
+    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX;
 
     const decorAllowed = isPosterDecorAllowed();
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
@@ -358,10 +349,7 @@
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(posterColors.star, 1) : "transparent";
 
-    // ✅ Global bottom spacing
-    const baseBottom = isPosterStyle() ? 130 : 100;
-
-    // ✅ si margen ON, sube texto para no sobreponer
+    const baseBottom = isPosterStyle() ? 60 : 100;
     const safeBottomWhenMarginOn = marginEdge + thickness + 18;
     const finalBottom = marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom;
 
@@ -592,7 +580,6 @@
     const conLineW = 0.9 + cs * 0.55;
     const nodeR = 1.6 + cs * 0.35;
 
-    // Contorno OFF en Poster
     const outlineEnabled = !!state.map.mapCircleMarginEnabled && !isPosterStyle();
     const showOutline = outlineEnabled && !state.map.invertMapColors;
     const outlineW = clamp(state.map.posterMarginThickness || 2, 1, 10);
@@ -652,7 +639,6 @@
       const cx = mapW/2;
       const cy = mapH/2 - Math.round(mapH * 0.06);
 
-      // ✅ Reduce 5% para evitar corte
       const baseSize = Math.min(mapW, mapH) * (0.5227 * 0.95);
       const size = clamp(baseSize - insetPad * 0.95, baseSize * 0.70, baseSize);
 
@@ -754,9 +740,7 @@
     return t;
   }
 
-  // ---- Tabs (render both desktop + mobile so never missing) ----
-  function renderTabsInto($tabs){
-    if (!$tabs) return;
+  function renderTabs(){
     $tabs.innerHTML = "";
     STEPS.forEach((s, idx) => {
       const b = document.createElement("button");
@@ -768,7 +752,7 @@
     });
   }
 
-  // Skeleton for style previews (text layout)
+  // Skeleton previews
   function drawStyleTextSkeleton(ctx, w, h, styleId, color){
     ctx.save();
     ctx.fillStyle = color;
@@ -778,7 +762,6 @@
     const bottomPad = 20;
 
     if (styleId === "classic"){
-      // centered title/sub + 3 meta lines
       const titleW = Math.round(w * 0.58);
       const subW   = Math.round(w * 0.38);
       const x1 = Math.round((w - titleW)/2);
@@ -802,7 +785,6 @@
       ctx.fillRect(xm, yMeta3, metaW * 0.76, 4);
     }
     else if (styleId === "poster"){
-      // centered slightly higher (poster layout)
       const titleW = Math.round(w * 0.52);
       const subW   = Math.round(w * 0.34);
       const x1 = Math.round((w - titleW)/2);
@@ -826,7 +808,6 @@
       ctx.fillRect(xm, yMeta3, metaW * 0.76, 4);
     }
     else {
-      // moderno / romantico = left-ish title/sub + meta
       const x = padX;
       const titleW = Math.round(w * 0.55);
       const subW   = Math.round(w * 0.36);
@@ -850,8 +831,7 @@
     ctx.restore();
   }
 
-  // -------- Sections (render into given container) --------
-  function renderSectionDesign($section){
+  function renderSectionDesign(){
     $section.innerHTML = "";
 
     const t = document.createElement("div");
@@ -929,7 +909,6 @@
       ctx.globalAlpha = 1;
       ctx.restore();
 
-      // ✅ skeleton texto para diferenciar estilo
       drawStyleTextSkeleton(ctx, 180, 240, st.id, mc.star);
 
       poster.appendChild(c);
@@ -944,7 +923,6 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
 
-        // Defaults por estilo
         if (!isPosterDecorAllowed()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
@@ -959,7 +937,7 @@
         }
 
         if (st.id === "poster"){
-          state.map.mapCircleMarginEnabled = false; // contorno OFF
+          state.map.mapCircleMarginEnabled = false;
         }
 
         if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;
@@ -975,7 +953,6 @@
 
     styleRow.appendChild(grid);
 
-    // ✅ Regresado: botón aleatorio
     const randomRow = document.createElement("div");
     randomRow.className = "formRow";
     randomRow.classList.add("stackGap");
@@ -1012,7 +989,6 @@
         state.map.posterFramePct = marco ? POSTER_FRAME_PCT_MAX : state.map.posterFramePct;
         updatePosterFrameInsetPx();
 
-        // ✅ si marco ON, margen OFF
         state.map.posterMarginEnabled = !marco ? pickBool() : false;
         state.map.posterMarginThickness = 2;
       }
@@ -1082,7 +1058,6 @@
     }));
 
     const showDecor = isPosterDecorAllowed();
-
     let frameRow = null, frameSizeRow = null, marginRow = null, marginThickRow = null;
 
     if (showDecor){
@@ -1209,7 +1184,7 @@
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(styleRow);
-    $section.appendChild(randomRow); // ✅ aquí volvió
+    $section.appendChild(randomRow);
     $section.appendChild(colorRow);
     $section.appendChild(mapZoomRow);
     $section.appendChild(invertRow);
@@ -1249,7 +1224,7 @@
     $section.appendChild(btns);
   }
 
-  function renderSectionContent($section){
+  function renderSectionContent(){
     $section.innerHTML = "";
 
     const t = document.createElement("div");
@@ -1382,7 +1357,7 @@
     $section.appendChild(fontRow);
 
     $section.appendChild(fieldCard("title", "Título", () => state.text.title, (v) => { state.text.title = v; }));
-    $section.appendChild(fieldCard("subtitle", "Subtítulo", () => state.text.subtitle, (v) => { state.text.subtitle = v; }));
+    $section.appendChild(fieldCard("subtitle", "Mensaje", () => state.text.subtitle, (v) => { state.text.subtitle = v; }));
     $section.appendChild(fieldCard("place", "Lugar", () => state.text.place, (v) => { state.text.place = v; }));
     $section.appendChild(fieldCard("coords", "Coordenadas", () => state.text.coords, (v) => {
       state.text.coords = v;
@@ -1563,7 +1538,7 @@
     w.document.close();
   }
 
-  function renderSectionExport($section){
+  function renderSectionExport(){
     $section.innerHTML = "";
 
     const t = document.createElement("div");
@@ -1640,21 +1615,15 @@
     $section.appendChild(btns);
   }
 
-  function renderSectionInto($section){
-    if (!$section) return;
-    if (state.step === 0) return renderSectionDesign($section);
-    if (state.step === 1) return renderSectionContent($section);
-    return renderSectionExport($section);
+  function renderSection(){
+    if (state.step === 0) return renderSectionDesign();
+    if (state.step === 1) return renderSectionContent();
+    return renderSectionExport();
   }
 
   function renderAll(){
-    // ✅ Render siempre en ambos (desktop+mobile) para que nunca quede “vacío”
-    renderTabsInto($tabsDesktop);
-    renderTabsInto($tabsMobile);
-
-    renderSectionInto($sectionDesktop);
-    renderSectionInto($sectionMobile);
-
+    renderTabs();
+    renderSection();
     renderPosterFont();
     renderPosterText();
     renderPosterAndMap();
@@ -1672,6 +1641,6 @@
 
   window.addEventListener("resize", () => {
     applyResponsiveDefaultZoom();
-    renderAll();
+    drawMap();
   });
 })();

@@ -48,6 +48,7 @@
       posterMarginThickness: DEFAULT_POSTER_MARGIN_THICKNESS,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
+      // ✅ por default CLÁSICO sí trae contorno
       mapCircleMarginEnabled: true,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: DEFAULT_POSTER_MARGIN_THICKNESS,
@@ -230,6 +231,7 @@
     return !isWhiteBackgroundMode() && !isPosterStyle();
   }
 
+  // ✅ Token colors (retícula SIN opacidad)
   function computeRenderTokens(){
     const th = colorsFor(state.map.colorTheme);
 
@@ -239,17 +241,14 @@
       return {
         posterBg: bg,
         posterInk: neon,
-
         mapBg: bg,
         stars: neon,
 
-        // ✅ Retícula sin opacidad
         gridLine: rgbaFromHex(neon, 1.0),
-
         constLine: rgbaFromHex(neon, 1.0),
         constNode: rgbaFromHex(neon, 1.0),
-
         outline: rgbaFromHex(neon, 1.0),
+
         theme: th,
       };
     }
@@ -262,12 +261,12 @@
         mapBg: th.bg,
         stars: th.star,
 
-        // ✅ Retícula sin opacidad (aunque sea "blanca")
+        // ✅ sin opacidad
         gridLine: "rgba(255,255,255,1)",
-
         constLine: "rgba(255,255,255,1)",
         constNode: "#FFFFFF",
         outline: "rgba(255,255,255,1)",
+
         theme: th,
       };
     }
@@ -279,9 +278,8 @@
       mapBg: th.bg,
       stars: "#FFFFFF",
 
-      // ✅ Retícula sin opacidad
+      // ✅ sin opacidad
       gridLine: "rgba(255,255,255,1)",
-
       constLine: "rgba(255,255,255,1)",
       constNode: "#FFFFFF",
       outline: "rgba(255,255,255,1)",
@@ -401,6 +399,7 @@
     $posterPaper.style.background = tokens.posterBg;
     $posterPaper.style.inset = `${innerInset}px`;
 
+    // ✅ margen fijo (usuario no lo edita)
     const thickness = clamp(
       DEFAULT_POSTER_MARGIN_THICKNESS,
       1,
@@ -478,67 +477,40 @@
     ctx.closePath();
   }
 
-  // ✅ Retícula como tu imagen:
-  // - proyección "polar" (centro arriba), círculos concéntricos + meridianos
-  // - trazo punteado fino
-  // - SIN opacidad (alpha 1)
+  // ✅ Retícula anterior (curvas) pero SIN opacidad
   function drawCurvedGrid(ctx, w, h, gridLine){
     ctx.save();
     ctx.strokeStyle = gridLine;
-    ctx.globalAlpha = 1;
+    ctx.lineWidth = 1.15;
+    ctx.globalAlpha = 1; // ✅ sin opacidad
 
-    // “puntillado” como en la imagen
-    ctx.lineWidth = 1.1;
-    ctx.setLineDash([1, 5]);
-    ctx.lineCap = "round";
+    const meridians = 7;
+    const parallels = 6;
 
-    const cx = w / 2;
-    const cy = h / 2;
+    for (let i = 0; i < meridians; i++){
+      const t = i / (meridians - 1);
+      const x = w * (0.12 + t * 0.76);
+      const bend = (Math.abs(t - 0.5) / 0.5);
+      const curve = (1 - bend) * (w * 0.18);
 
-    const R = Math.min(w, h) / 2;
-
-    // Desplazamos el “polo” hacia arriba (como tu imagen)
-    const poleX = cx;
-    const poleY = cy - R * 0.58;
-
-    // Clip al círculo del mapa (ya hay clip externo en circle mode, pero esto ayuda si se llama en rect)
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, R - 2, 0, Math.PI * 2);
-    ctx.clip();
-
-    // Círculos concéntricos (paralelos) alrededor del polo
-    const rings = 10;
-    for (let i = 1; i <= rings; i++){
-      const rr = (R * 1.18) * (i / rings); // un poco mayor para que los arcos llenen el disco
       ctx.beginPath();
-      ctx.arc(poleX, poleY, rr, 0, Math.PI * 2);
+      ctx.moveTo(x, h * 0.06);
+      ctx.quadraticCurveTo(x + curve * (t < 0.5 ? -1 : 1), h * 0.50, x, h * 0.94);
       ctx.stroke();
     }
 
-    // Meridianos (rayos desde el polo)
-    const spokes = 18;
-    for (let i = 0; i < spokes; i++){
-      const a = (i / spokes) * Math.PI * 2;
-
-      // línea larga, pero recortada por el clip
-      const x2 = poleX + Math.cos(a) * (R * 2.4);
-      const y2 = poleY + Math.sin(a) * (R * 2.4);
+    for (let j = 0; j < parallels; j++){
+      const t = j / (parallels - 1);
+      const y = h * (0.16 + t * 0.68);
+      const bend = (Math.abs(t - 0.5) / 0.5);
+      const curve = (1 - bend) * (h * 0.16);
 
       ctx.beginPath();
-      ctx.moveTo(poleX, poleY);
-      ctx.lineTo(x2, y2);
+      ctx.moveTo(w * 0.06, y);
+      ctx.quadraticCurveTo(w * 0.50, y + curve * (t < 0.5 ? 1 : -1), w * 0.94, y);
       ctx.stroke();
     }
 
-    // círculo pequeño del polo (en tu imagen se nota un aro)
-    ctx.setLineDash([]);
-    ctx.lineWidth = 1.1;
-    ctx.beginPath();
-    ctx.arc(poleX, poleY, R * 0.12, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.restore(); // clip
     ctx.restore();
   }
 
@@ -745,9 +717,6 @@
         ctx.scale(z, z);
         ctx.translate(-cx, -cy);
       }
-
-      // (En romántico no metemos retícula por estilo actual; si quieres, la habilitamos)
-      if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawCurvedGrid(ctx, mapW, mapH, tokens.gridLine);
 
       drawStars(ctx, mapW, mapH, rand, tokens.stars);
 
@@ -971,6 +940,7 @@
     $section.appendChild(t);
     $section.appendChild(s);
 
+    // --- Grupo 1: Aleatorio + estilos ---
     const group1 = document.createElement("div");
     group1.className = "groupBlock";
 
@@ -1009,10 +979,14 @@
           updatePosterFrameInsetPx();
         }
         state.map.posterMarginEnabled = !marco ? pickBool() : false;
-        state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
       }
 
-      state.map.mapCircleMarginEnabled = (state.map.styleId !== "poster");
+      // ✅ Defaults de contorno por estilo:
+      if (state.map.styleId === "classic") state.map.mapCircleMarginEnabled = true;
+      else if (state.map.styleId === "romantico") state.map.mapCircleMarginEnabled = true;
+      else if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
+      else state.map.mapCircleMarginEnabled = false; // poster
+
       if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
       if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
 
@@ -1051,6 +1025,7 @@
       ctx.save();
       const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
 
+      // Clip forma
       if (st.shape === "circle"){
         ctx.beginPath();
         ctx.arc(mx+mw/2, my+mw/2, mw/2, 0, Math.PI*2);
@@ -1070,6 +1045,7 @@
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(mx,my,mw,mh);
 
+      // estrellas preview
       const r = mulberry32(
         st.id === "romantico" ? 202603 :
         st.id === "poster" ? 202604 :
@@ -1086,6 +1062,28 @@
       }
       ctx.globalAlpha = 1;
       ctx.restore();
+
+      // ✅ Mostrar contorno SOLO en Clásico y Romántico (preview)
+      const showOutlinePreview = (st.id === "classic" || st.id === "romantico");
+      if (showOutlinePreview){
+        ctx.save();
+        ctx.strokeStyle = tokens.posterInk;
+        ctx.lineWidth = 5; // un “hint” visible en miniatura
+        ctx.globalAlpha = 1;
+
+        if (st.shape === "circle"){
+          ctx.beginPath();
+          ctx.arc(mx+mw/2, my+mw/2, mw/2 - 2.5, 0, Math.PI*2);
+          ctx.stroke();
+        } else if (st.shape === "heart"){
+          const cx = mx + mw/2;
+          const cy = my + mw/2 - 6;
+          const size = mw * 0.50;
+          heartPath(ctx, cx, cy, size);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
 
       drawStyleTextSkeleton(ctx, 180, 240, st.id, tokens.posterInk);
 
@@ -1108,13 +1106,17 @@
           if (st.id === "classic"){
             state.map.posterFrameEnabled = false;
             state.map.posterMarginEnabled = true;
-            state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
           } else {
             state.map.posterMarginEnabled = false;
           }
         }
 
-        state.map.mapCircleMarginEnabled = (st.id !== "poster");
+        // ✅ Defaults contorno por estilo (lo que pediste)
+        if (st.id === "classic") state.map.mapCircleMarginEnabled = true;
+        else if (st.id === "romantico") state.map.mapCircleMarginEnabled = true; // y puede togglear
+        else if (st.id === "moderno") state.map.mapCircleMarginEnabled = false;  // default OFF
+        else state.map.mapCircleMarginEnabled = false; // poster
+
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
         if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
 
@@ -1131,6 +1133,7 @@
     group1.appendChild(styleRow);
     $section.appendChild(group1);
 
+    // --- Grupo 2: Color mapa ---
     const group2 = document.createElement("div");
     group2.className = "groupBlock";
 
@@ -1166,6 +1169,7 @@
     group2.appendChild(colorRow);
     $section.appendChild(group2);
 
+    // --- Grupo 3: Fondo ---
     const group3 = document.createElement("div");
     group3.className = "groupBlock";
 
@@ -1219,6 +1223,7 @@
     group3.appendChild(bgRow);
     $section.appendChild(group3);
 
+    // --- Grupo 4: toggles ---
     const group4 = document.createElement("div");
     group4.className = "groupBlock";
 
@@ -1274,6 +1279,10 @@
       stack.appendChild(marginRow);
     }
 
+    // ✅ Contorno:
+    // - NO aparece para poster (por mapOutlineAllowed)
+    // - Moderno: existe, pero default OFF (ya lo manejamos al seleccionar estilo)
+    // - Romántico: puede on/off
     if (mapOutlineAllowed()){
       const outlineRow = document.createElement("div");
       outlineRow.className = "rowToggle";
@@ -1565,7 +1574,6 @@
   }
 
   function exportPoster(format, sizeKey){
-    // (export igual que tu versión; no lo cambié para no romper flujo)
     const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
     const dpi = state.export.dpi || 300;
 
@@ -1795,6 +1803,10 @@
 
   // Init
   updateSeedFromDateTime();
+
+  // ✅ asegura defaults por estilo inicial (classic)
+  if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
+  if (state.map.styleId === "poster") state.map.mapCircleMarginEnabled = false;
 
   state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
   if (isNeonTheme()) state.map.backgroundMode = "match";

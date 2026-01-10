@@ -212,17 +212,43 @@
     if ($zoomLabel) $zoomLabel.textContent = `${Math.round(state.ui.zoom * 100)}%`;
   }
 
+  /* ✅ Zoom adaptativo: calcula un zoom default para que el poster quepa */
+  function computeFitZoom(){
+    const isMobile = window.matchMedia("(max-width: 980px)").matches;
+    if (!isMobile) return 0.75;
+
+    const vw = Math.max(320, window.innerWidth || 360);
+    const pad = 24; // padding visual total
+    const available = Math.max(240, vw - pad);
+
+    // zoom para que el ancho del poster (900) quepa en el viewport
+    const fit = available / POSTER_W;
+
+    // límites suaves (evita enorme o minúsculo)
+    return clamp(fit, 0.22, 0.55);
+  }
+
   function applyResponsiveDefaultZoom(){
-    const mobile = window.matchMedia("(max-width: 980px)").matches;
-    if (mobile){
-      state.ui.minZoom = 0.18;
+    const isMobile = window.matchMedia("(max-width: 980px)").matches;
+
+    if (isMobile){
+      state.ui.minZoom = 0.20;
       state.ui.maxZoom = 0.75;
-      if (!state.ui.zoom || state.ui.zoom > 0.60) state.ui.zoom = 0.42;
+
+      // si el zoom actual es “no razonable” o es primer render, lo ajusta al fit
+      const fit = computeFitZoom();
+      if (!state.ui.zoom || state.ui.zoom > 0.60 || state.ui.zoom < 0.20) {
+        state.ui.zoom = fit;
+      } else {
+        // aún así, si no cabe (por rotación), lo baja al fit
+        state.ui.zoom = Math.min(state.ui.zoom, fit);
+      }
     } else {
       state.ui.minZoom = 0.35;
       state.ui.maxZoom = 1.25;
       if (!state.ui.zoom || state.ui.zoom < 0.35) state.ui.zoom = 0.75;
     }
+
     applyZoom();
   }
 
@@ -740,13 +766,14 @@
     return t;
   }
 
+  /* ✅ Tabs: texto inline "1) Diseño" sin salto y sin bold */
   function renderTabs(){
     $tabs.innerHTML = "";
     STEPS.forEach((s, idx) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "sheetTab" + (idx === state.step ? " active" : "");
-      b.innerHTML = `<span class="stepNum">${idx+1})</span>${s.label}`;
+      b.textContent = `${idx + 1}) ${s.label}`;
       b.onclick = () => { state.step = idx; renderAll(); };
       $tabs.appendChild(b);
     });

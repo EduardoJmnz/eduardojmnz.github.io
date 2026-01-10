@@ -19,11 +19,16 @@
 
     *{ box-sizing:border-box; }
     html,body{ height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
+
+    /* ✅ grid areas para poder reordenar en mobile sin mover HTML */
     #app{
       height:100%;
       display:grid;
       grid-template-columns: 420px 1fr;
+      grid-template-areas: "left right";
     }
+    .left{ grid-area:left; }
+    .right{ grid-area:right; }
 
     .left{
       border-right:1px solid var(--stroke);
@@ -308,7 +313,6 @@
       --mapW: 780px;
       --mapH: 780px;
 
-      /* bottom dinámico */
       --bottomTextBottom: 100px;
     }
 
@@ -399,9 +403,37 @@
     }
     .poster.rectStyle .metaCol{ align-items:center; text-align:center; }
 
+    /* ✅ MOBILE: preview arriba, editor abajo */
     @media (max-width: 980px){
-      #app{ grid-template-columns: 1fr; }
-      .right{ display:none; }
+      #app{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        grid-template-areas:
+          "right"
+          "left";
+      }
+
+      .right{
+        padding: 12px;
+        overflow: auto;
+        align-items: flex-start;
+        justify-content: center;
+        border-bottom: 1px solid var(--stroke);
+      }
+
+      .left{
+        border-right: 0;
+        border-bottom: 0;
+        min-width: 0;
+      }
+
+      .previewWrap{
+        height: auto;
+        align-items: flex-start;
+        justify-content: center;
+      }
+
+      .previewFooter{ display:none; }
     }
   </style>
 </head>

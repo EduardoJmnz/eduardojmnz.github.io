@@ -36,7 +36,6 @@
       invertMapColors: false,
 
       colorTheme: "mono",
-
       mapZoom: 1.0,
 
       posterFrameEnabled: false,
@@ -235,6 +234,9 @@
     applyZoom();
   });
 
+  // --------------------------
+  // CAPAS: marco(área) + papel + margen(línea)
+  // --------------------------
   let $posterFrameArea = null;
   let $posterPaper = null;
   let $posterMarginLine = null;
@@ -322,6 +324,7 @@
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
+    // ---------- MARCO (ÁREA) ----------
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = posterColors.star;
@@ -334,11 +337,13 @@
       $posterFrameArea.style.borderRadius = "0px";
     }
 
+    // ---------- PAPEL (ÁREA INTERIOR) ----------
     const innerInset = frameEdge + framePx;
     $posterPaper.style.background = posterColors.bg;
     $posterPaper.style.inset = `${innerInset}px`;
     $posterPaper.style.borderRadius = "0px";
 
+    // ---------- MARGEN (LÍNEA) ----------
     const thickness = clamp(
       state.map.posterMarginThickness || 2,
       1,
@@ -351,7 +356,8 @@
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(posterColors.star, 1) : "transparent";
 
-    const baseBottom = 100;
+    // ✅ ÚNICO CAMBIO: bajar letras SOLO en estilo Poster
+    const baseBottom = isPosterStyle() ? 140 : 100; // antes 100 fijo
     const safeBottomWhenMarginOn = marginEdge + thickness + 10;
     const bottomTextBottom = (marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom);
     $poster.style.setProperty("--bottomTextBottom", `${bottomTextBottom}px`);
@@ -688,6 +694,7 @@
       const cx = mapW/2;
       const cy = mapH/2 - Math.round(mapH * 0.06);
 
+      // ✅ Corazón -5% para que no se corte
       const baseSize = Math.min(mapW, mapH) * (0.5227 * 0.95);
       const size = clamp(baseSize - insetPad * 0.95, baseSize * 0.70, baseSize);
 
@@ -767,6 +774,70 @@
   }
 
   // --------------------------
+  // Preview tiles (con skeleton de texto)
+  // --------------------------
+  function drawTextSkeletonOnPreview(ctx, st, pc){
+    const skeleton = rgbaFromHex(pc.star, 0.55);
+    const skeleton2 = rgbaFromHex(pc.star, 0.38);
+
+    // área "textos" en mini poster 180x240
+    const bottomPad = 18;
+    const areaH = 66;
+    const y0 = 240 - bottomPad - areaH;
+
+    const isRect = st.shape === "rect";
+    const isClassic = st.id === "classic";
+    const isPoster = st.id === "poster";
+    const isRom = st.id === "romantico";
+    const isModern = st.id === "moderno";
+
+    // anchos (simula left/right padding)
+    let left = 22, right = 22;
+    let alignCenter = false;
+
+    if (isClassic || isRect || isPoster || isRom) alignCenter = true;
+    if (isModern) alignCenter = false;
+
+    if (alignCenter){
+      left = 34; right = 34;
+      if (isRect || isPoster) { left = 34; right = 34; }
+    }
+
+    const w = 180 - left - right;
+
+    ctx.save();
+    ctx.globalAlpha = 1;
+
+    // título
+    ctx.fillStyle = skeleton;
+    const titleW = alignCenter ? Math.round(w * 0.72) : Math.round(w * 0.78);
+    const titleX = alignCenter ? Math.round(90 - titleW / 2) : left;
+    ctx.fillRect(titleX, y0 + 6, titleW, 10);
+
+    // subtítulo
+    ctx.fillStyle = skeleton2;
+    const subW = alignCenter ? Math.round(w * 0.52) : Math.round(w * 0.60);
+    const subX = alignCenter ? Math.round(90 - subW / 2) : left;
+    ctx.fillRect(subX, y0 + 22, subW, 6);
+
+    // meta lines
+    ctx.fillStyle = skeleton2;
+    const m1W = alignCenter ? Math.round(w * 0.46) : Math.round(w * 0.64);
+    const m2W = alignCenter ? Math.round(w * 0.40) : Math.round(w * 0.58);
+    const m3W = alignCenter ? Math.round(w * 0.42) : Math.round(w * 0.62);
+
+    const mx1 = alignCenter ? Math.round(90 - m1W / 2) : left;
+    const mx2 = alignCenter ? Math.round(90 - m2W / 2) : left;
+    const mx3 = alignCenter ? Math.round(90 - m3W / 2) : left;
+
+    ctx.fillRect(mx1, y0 + 38, m1W, 5);
+    ctx.fillRect(mx2, y0 + 48, m2W, 5);
+    ctx.fillRect(mx3, y0 + 58, m3W, 5);
+
+    ctx.restore();
+  }
+
+  // --------------------------
   // UI: Secciones
   // --------------------------
   function renderSectionDesign(){
@@ -835,6 +906,7 @@
         st.id === "poster" ? 202604 :
         st.id === "moderno" ? 202605 : 202602
       );
+
       for (let i=0;i<160;i++){
         const x = mx + r()*mw;
         const y = my + r()*mh;
@@ -846,6 +918,9 @@
       }
       ctx.globalAlpha = 1;
       ctx.restore();
+
+      // ✅ restore del preview: skeleton de texto según estilo
+      drawTextSkeletonOnPreview(ctx, st, pc);
 
       poster.appendChild(c);
 
@@ -864,6 +939,7 @@
           state.map.mapCircleMarginEnabled = false;
         }
 
+        // ✅ margen por default solo en clásico
         if (!isPosterDecorAllowed()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
@@ -928,7 +1004,6 @@
         state.map.posterMarginThickness = 2;
       }
 
-      // ✅ contorno desactivado si cae en Poster
       if (state.map.styleId === "poster") {
         state.map.mapCircleMarginEnabled = false;
         state.map.showGrid = false;
@@ -995,6 +1070,7 @@
     }));
 
     const showDecor = isPosterDecorAllowed();
+
     let frameRow = null, frameSizeRow = null, marginRow = null, marginThickRow = null;
 
     if (showDecor){
@@ -1100,8 +1176,7 @@
     mapRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
     mapRow.appendChild(toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
       state.map.mapCircleMarginEnabled = val;
-      // ✅ si estás en Poster, forzamos OFF aunque intentes prenderlo
-      if (isPosterStyle()) state.map.mapCircleMarginEnabled = false;
+      if (isPosterStyle()) state.map.mapCircleMarginEnabled = false; // fuerza OFF
       drawMap();
       renderAll();
     }));
@@ -1140,7 +1215,7 @@
     $section.appendChild(conRow);
     if (state.map.showConstellations) $section.appendChild(csRow);
 
-    // ✅ si estás en Poster, NO mostramos el toggle de contorno
+    // ✅ en Poster no mostramos el toggle de contorno
     if (!isPosterStyle()) $section.appendChild(mapRow);
 
     $section.appendChild(seedRow);
@@ -1386,10 +1461,148 @@
     return Math.round(inches * dpi);
   }
 
-  // (exportPoster y downloadDataURL igual que tu versión actual)
-  // ✅ No los repetí aquí para no hacer el mensaje interminable,
-  // pero si quieres que también el EXPORT respete contorno OFF en Poster, te lo ajusto igual.
-  // ----
+  function exportPoster(format, sizeKey){
+    const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
+    const dpi = state.export.dpi || 300;
+
+    let W, H;
+    if (sz.type === "px"){
+      W = sz.w; H = sz.h;
+    } else {
+      W = cmToPx(sz.w, dpi);
+      H = cmToPx(sz.h, dpi);
+    }
+
+    const out = document.createElement("canvas");
+    out.width = W;
+    out.height = H;
+
+    const ctx = out.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    const colors = colorsFor(state.map.colorTheme);
+
+    updatePosterFrameInsetPx();
+
+    const st = getStyleDef();
+    const decorAllowed = (st.id !== "poster");
+
+    const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
+    const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
+
+    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
+    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
+    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W));
+    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H));
+
+    const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
+    const frameX = Math.round(framePx * (W / POSTER_W));
+    const frameY = Math.round(framePx * (H / POSTER_H));
+
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    if (frameOn){
+      ctx.fillStyle = colors.star;
+      ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
+    }
+
+    const innerX = edgeFrameX + frameX;
+    const innerY = edgeFrameY + frameY;
+
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
+
+    if (marginOn){
+      const thick = clamp(state.map.posterMarginThickness || 2, 1, state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX);
+      const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
+      ctx.save();
+      ctx.strokeStyle = rgbaFromHex(colors.star, 1);
+      ctx.lineWidth = thickScaled;
+      const half = thickScaled / 2;
+      ctx.strokeRect(
+        edgeMarginX + half,
+        edgeMarginY + half,
+        W - (edgeMarginX * 2) - thickScaled,
+        H - (edgeMarginY * 2) - thickScaled
+      );
+      ctx.restore();
+    }
+
+    const sx = W / POSTER_W;
+    const sy = H / POSTER_H;
+
+    const mapW = Math.round(780 * sx);
+    const mapH = mapW;
+
+    const mapX = Math.round((W - mapW) / 2);
+    const mapY = Math.round(innerY + (70 * sy));
+    ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
+
+    const fontFamily = state.text.fontFamily;
+    ctx.fillStyle = colors.star;
+
+    function drawText(text, x, y, sizePx, weight=800, align="left", alpha=1){
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.textAlign = align;
+      ctx.textBaseline = "alphabetic";
+      ctx.font = `${weight} ${Math.round(sizePx)}px ${fontFamily}`;
+      ctx.fillText(text, Math.round(x), Math.round(y));
+      ctx.restore();
+    }
+
+    const show = state.visible;
+    const centerX = W / 2;
+
+    const yTitle    = Math.round(1085 * sy);
+    const ySubtitle = Math.round(1122 * sy);
+    const yPlace    = Math.round(1162 * sy);
+    const yCoords   = Math.round(1180 * sy);
+    const yDT       = Math.round(1196 * sy);
+
+    if (show.title)    drawText(state.text.title, centerX, yTitle, 54 * sy, 900, "center", 1);
+    if (show.subtitle) drawText(state.text.subtitle, centerX, ySubtitle, 18 * sy, 650, "center", 0.85);
+
+    if (show.place)    drawText(state.text.place, centerX, yPlace, 14 * sy, 650, "center", 0.82);
+    if (show.coords)   drawText(state.text.coords, centerX, yCoords, 14 * sy, 650, "center", 0.82);
+    if (show.datetime) drawText(getDateTimeString(), centerX, yDT, 14 * sy, 650, "center", 0.82);
+
+    if (format === "png" || format === "jpg"){
+      const mime = format === "png" ? "image/png" : "image/jpeg";
+      const quality = format === "jpg" ? 0.95 : undefined;
+      const url = out.toDataURL(mime, quality);
+      downloadDataURL(url, `poster_${sizeKey}.${format}`);
+      return;
+    }
+
+    const url = out.toDataURL("image/png");
+    const w = window.open("", "_blank");
+    if (!w) {
+      alert("Bloqueaste popups. Permite ventanas emergentes para exportar PDF.");
+      return;
+    }
+    w.document.write(`
+      <html><head><title>Poster PDF</title>
+      <style>html,body{margin:0;padding:0;} img{width:100%;height:auto;display:block;}</style>
+      </head><body>
+        <img src="${url}" />
+        <script>
+          window.onload = () => { window.focus(); window.print(); };
+        </script>
+      </body></html>
+    `);
+    w.document.close();
+  }
+
+  function downloadDataURL(dataURL, filename){
+    const a = document.createElement("a");
+    a.href = dataURL;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
 
   function renderSection(){
     if (state.step === 0) return renderSectionDesign();
@@ -1405,6 +1618,7 @@
     renderPosterAndMap();
   }
 
+  // Init
   updateSeedFromDateTime();
   ensurePosterLayers();
   applyPosterLayoutByStyle();

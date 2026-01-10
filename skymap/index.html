@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sky Art Creator</title>
   <style>
     :root{
@@ -13,319 +13,78 @@
       --muted: rgba(233,238,252,.70);
       --stroke: rgba(233,238,252,.10);
       --accent: rgba(124,255,250,.45);
-      --accentSolid: #7CFFFA;
       --accentFill: rgba(124,255,250,.12);
-
-      --headerH: 66px;
-      --editorW: 420px;
-
-      /* ✅ Preview fijo (desktop) */
-      --previewZoom: 0.75;
-
-      /* ✅ Tamaño real del poster para calcular stage */
-      --posterW: 900px;
-      --posterH: 1200px;
+      --accentSolid: #7CFFFA;
     }
 
     *{ box-sizing:border-box; }
-    html,body{
-      height:100%;
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background:var(--bg);
-      color:var(--text);
-    }
-
-    /* Desktop: sin scroll del body */
-    body{ overflow:hidden; }
-
-    /* ✅ Scroll invisible (pero funcional) */
-    .noScrollBar{
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    .noScrollBar::-webkit-scrollbar{
-      width: 0;
-      height: 0;
-    }
+    html,body{ height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
 
     #app{
       height:100%;
       display:grid;
-      grid-template-rows: var(--headerH) 1fr;
-      grid-template-columns: 1fr var(--editorW);
-      grid-template-areas:
-        "header header"
-        "preview editor";
+      grid-template-columns: 420px 1fr;
     }
 
-    /* Header */
-    .topbar{
-      grid-area: header;
+    .left{
+      border-right:1px solid var(--stroke);
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
       display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(15,18,26,.85), rgba(12,15,21,.65));
-      backdrop-filter: blur(10px);
-      position: sticky;
-      top: 0;
-      z-index: 80;
+      flex-direction:column;
+      min-width:320px;
     }
 
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width: 0;
-    }
-
+    .header{ padding:16px 16px 8px 16px; }
+    .brand{ display:flex; align-items:center; gap:10px; }
     .dot{
-      width:12px;height:12px;border-radius:999px;background: var(--accentSolid);
+      width:12px;height:12px;border-radius:999px;background:#7CFFFA;
       box-shadow:0 0 24px rgba(124,255,250,.35);
-      flex: 0 0 auto;
+    }
+    .brandTitle{ font-weight:800; letter-spacing:.3px; }
+    .brandSub{ font-size:12px; color:var(--muted); margin-top:2px; }
+
+    /* Tabs */
+    .tabs{
+      display:flex; flex-wrap:wrap; gap:0;
+      padding: 8px 16px 0 16px;
     }
 
-    .brandText{ min-width: 0; }
-    .brandTitle{
-      font-weight: 900;
-      letter-spacing: .2px;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-    .brandSub{
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-
-    .topbarRight{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      color: var(--muted);
-      font-size: 12px;
-      white-space:nowrap;
-    }
-
-    /* Preview area */
-    .previewArea{
-      grid-area: preview;
-      position:relative;
-      overflow:auto;
-      padding: 16px;
-
-      /* ✅ Desktop centrado */
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
-    }
-
-    .previewWrap{
-      width:100%;
-      max-width: 980px;
-      position:relative;
-      padding-bottom: 12px;
-      overflow:hidden;
-    }
-
-    /* ✅ Stage = tamaño REAL escalado (evita “layout gigante”) */
-    .previewStage{
-      position: relative;
-      width: calc(var(--posterW) * var(--previewZoom));
-      height: calc(var(--posterH) * var(--previewZoom));
-      overflow: hidden;
-      transform-origin: top left;
-    }
-
-    /* ✅ Elemento real 900×1200, ABSOLUTO y escalado */
-    .previewScale{
-      position:absolute;
-      top:0;
-      left:0;
-      width: var(--posterW);
-      height: var(--posterH);
-      transform-origin: top left;
-      will-change: transform;
-      transform: scale(var(--previewZoom));
-    }
-
-    .poster{
-      width: 900px;
-      height: 1200px;
-      border-radius: 26px;
-      box-shadow: 0 24px 90px rgba(0,0,0,.55);
-      position:relative;
-      overflow:hidden;
-
-      --posterPad: 0px;
-      --mapW: 780px;
-      --mapH: 780px;
-
-      --bottomTextBottom: 100px;
-    }
-
-    .posterInner{
-      position:absolute;
-      inset:0;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:flex-start;
-      padding-top: calc(var(--posterPad) + 70px);
-    }
-
-    .mapFrame{
-      width: var(--mapW);
-      height: var(--mapH);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    canvas#mapCanvas{
-      width: var(--mapW);
-      height: var(--mapH);
-      display:block;
-    }
-
-    .bottomText{
-      position:absolute;
-      left: calc(var(--posterPad) + 80px);
-      right: calc(var(--posterPad) + 80px);
-      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
-      padding:0;
-    }
-
-    .tTitle{
-      font-size:54px;
-      letter-spacing:2px;
-      font-weight:900;
-      margin-bottom:10px;
-    }
-    .tSub{
-      font-size:18px;
-      opacity:.85;
-      margin-bottom:22px;
-    }
-    .meta{
-      display:flex;
-      justify-content:flex-start;
-      gap:20px;
-      font-size:14px;
-      opacity:.82;
-    }
-    .metaCol{ display:flex; flex-direction:column; gap:6px; }
-    .metaRow{
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    /* Classic */
-    .poster.classic .bottomText{
-      left: calc(var(--posterPad) + 110px);
-      right: calc(var(--posterPad) + 110px);
-      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
-      text-align:center;
-    }
-    .poster.classic .meta{ justify-content:center; }
-    .poster.classic .metaCol{ align-items:center; text-align:center; }
-    .poster.classic .tTitle{ letter-spacing:1.6px; }
-
-    /* Rect style (Poster) */
-    .poster.rectStyle .bottomText{
-      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
-      left: calc(var(--posterPad) + 110px);
-      right: calc(var(--posterPad) + 110px);
-      text-align:center;
-    }
-    .poster.rectStyle .tTitle{
-      font-size: 46px;
-      margin-bottom: 8px;
-      letter-spacing: 1.4px;
-    }
-    .poster.rectStyle .tSub{
-      font-size: 16px;
-      margin-bottom: 16px;
-    }
-    .poster.rectStyle .meta{
-      justify-content:center;
-      font-size: 12px;
-      gap: 16px;
-    }
-    .poster.rectStyle .metaCol{ align-items:center; text-align:center; }
-
-    /* Editor (Desktop) */
-    .editorDock{
-      grid-area: editor;
-      padding: 16px 16px 16px 0;
-      overflow:hidden;
-    }
-
-    .sheet{
-      height: 100%;
-      border: 1px solid var(--stroke);
-      border-radius: 22px;
-      background: linear-gradient(180deg, rgba(15,18,26,.92), rgba(12,15,21,.86));
-      box-shadow: 0 24px 90px rgba(0,0,0,.40);
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-    }
-
-    /* ✅ Tabs (sin título arriba) */
-    .sheetTabs{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      padding: 12px 12px 10px 12px;
-      align-items: end;
-    }
-
-    /* ✅ Inactivo = regular / Activo = bold */
+    /* NOTA: si tu layout final usa .sheetTab, este bloque es el que le da espacio a la barra */
     .sheetTab{
+      flex: 1 1 0;
+      border:0;
       background: transparent;
-      border: 0;
-      color: rgba(233,238,252,.50);
-      font-weight: 400;
-      font-size: 13px;
-      padding: 10px 0 14px 0;
+      color: rgba(233,238,252,.55);
+      padding: 12px 10px 16px 10px;  /* ✅ más espacio abajo */
       cursor:pointer;
-      position: relative;
-      letter-spacing: .2px;
-      -webkit-tap-highlight-color: transparent;
+      font-size:13px;
+      user-select:none;
+      position:relative;
+      font-weight: 500;
       text-align:center;
-      width: 100%;
-      line-height: 1.1;
     }
-
-    .sheetTab.active{
-      color: var(--text);
-      font-weight: 800; /* ✅ bold activo */
-    }
-
-    .sheetTab.active::after{
+    .sheetTab::after{
       content:"";
       position:absolute;
-      left: 0;
-      right: 0;
-      bottom: 2px;
-      height: 7px;
-      background: var(--accentSolid);
+      left:0; right:0;
+      bottom: 2px;               /* ✅ separa más del texto */
+      height:4px;                /* ✅ barra más gordita */
+      background: transparent;
       border-radius: 999px;
-      box-shadow: 0 0 22px rgba(124,255,250,.28);
+    }
+    .sheetTab.active{
+      color: var(--text);
+      font-weight: 800;
+    }
+    .sheetTab.active::after{
+      background: var(--accentSolid);
+      box-shadow: 0 0 18px rgba(124,255,250,.25);
     }
 
-    .sheetBody{
-      padding: 14px;
+    .panel{
+      padding: 12px 16px 16px 16px;
       overflow:auto;
     }
-
-    .card{ border:0; border-radius:0; padding:0; background: transparent; }
 
     .title{ font-weight:800; margin-bottom:4px; }
     .sub{ font-size:12px; color:var(--muted); margin-bottom:12px; }
@@ -341,7 +100,7 @@
 
     .formRow{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
     .label{ font-size:12px; color:var(--muted); }
-    .input, .select{
+    .select{
       border:1px solid var(--stroke);
       background: rgba(255,255,255,.02);
       color:var(--text);
@@ -358,12 +117,11 @@
       margin-top:12px;
       align-items:center;
     }
-
     .btn{
       border-radius:14px;
       padding:10px 12px;
       cursor:pointer;
-      font-weight:850;
+      font-weight:750;
       user-select:none;
       white-space:nowrap;
       min-height:44px;
@@ -371,7 +129,6 @@
       align-items:center;
       justify-content:center;
       line-height:1;
-      -webkit-tap-highlight-color: transparent;
     }
     .btn.ghost{
       border:1px solid var(--stroke);
@@ -395,7 +152,6 @@
       flex: 0 0 auto;
       transition: 160ms ease;
       box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
-      -webkit-tap-highlight-color: transparent;
     }
     .toggle::after{
       content:"";
@@ -436,19 +192,21 @@
       padding: 14px 14px;
     }
     .fieldHeader .fieldLabel{
-      font-weight: 900;
-      font-size: 16px;
+      font-weight: 800;
+      font-size: 18px;
     }
-    .fieldBody{ padding: 0 14px 14px 14px; }
+    .fieldBody{
+      padding: 0 14px 14px 14px;
+    }
     .fieldInput{
       width:100%;
       border:1px solid var(--stroke);
       background: rgba(0,0,0,.18);
       color: var(--text);
-      padding: 14px 12px;
+      padding: 16px 14px;
       border-radius: 14px;
       outline:none;
-      font-size: 16px;
+      font-size: 18px;
     }
 
     .styleGrid{
@@ -457,135 +215,213 @@
       gap: 14px;
       margin-top: 8px;
     }
-    @media (max-width: 520px){
-      .styleGrid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    }
+
     .styleTile{ cursor:pointer; user-select:none; }
     .stylePoster{
       width:100%;
       aspect-ratio: 3 / 4;
-      border-radius: 10px;
+      border-radius: 8px;
       background: rgba(0,0,0,.18);
       border: 2px solid rgba(0,0,0,0);
       overflow:hidden;
       position:relative;
       box-shadow: 0 10px 24px rgba(0,0,0,.28);
     }
+
+    /* ✅ activo verde */
     .styleTile.active .stylePoster{
-      border-color: rgba(255,210,90,.95);
-      box-shadow: 0 0 0 2px rgba(255,210,90,.25), 0 10px 24px rgba(0,0,0,.28);
+      border-color: var(--accentSolid);
+      box-shadow: 0 0 0 2px rgba(124,255,250,.25), 0 10px 24px rgba(0,0,0,.28);
     }
+
     .stylePoster canvas{ width:100%; height:100%; display:block; }
     .styleNameLabel{
       margin-top: 8px;
-      font-size: 12px;
-      font-weight: 800;
+      font-size: 13px;
+      font-weight: 700;
       color: var(--text);
       opacity: .92;
     }
 
-    /* ✅ MOBILE: body scroll + preview 45% + modal 100% ancho */
+    .right{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      overflow:hidden;
+      position:relative;
+    }
+
+    /* ✅ centra mejor en escritorio */
+    .previewWrap{
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+    }
+
+    .previewScale{
+      transform-origin: center center;
+      will-change: transform;
+      display:flex;
+      justify-content:center;
+    }
+
+    .poster{
+      width: 900px;
+      height: 1200px;
+      border-radius: 26px;
+      box-shadow: 0 24px 90px rgba(0,0,0,.55);
+      position:relative;
+      overflow:hidden;
+
+      --posterPad: 0px;
+      --mapW: 780px;
+      --mapH: 780px;
+      --bottomTextBottom: 100px; /* ✅ controlado por JS */
+    }
+
+    .posterInner{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      padding-top: calc(var(--posterPad) + 70px);
+    }
+
+    .mapFrame{
+      width: var(--mapW);
+      height: var(--mapH);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    canvas#mapCanvas{
+      width: var(--mapW);
+      height: var(--mapH);
+      display:block;
+    }
+
+    /* ✅ usa variable dinámica para no chocar con margen */
+    .bottomText{
+      position:absolute;
+      left: calc(var(--posterPad) + 80px);
+      right: calc(var(--posterPad) + 80px);
+      bottom: var(--bottomTextBottom);
+      padding:0;
+    }
+    .tTitle{
+      font-size:54px;
+      letter-spacing:2px;
+      font-weight:900;
+      margin-bottom:10px;
+    }
+    .tSub{
+      font-size:18px;
+      opacity:.85;
+      margin-bottom:22px;
+    }
+    .meta{
+      display:flex;
+      justify-content:flex-start;
+      gap:20px;
+      font-size:14px;
+      opacity:.82;
+    }
+    .metaCol{ display:flex; flex-direction:column; gap:6px; }
+    .metaRow{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .poster.classic .bottomText{
+      left: calc(var(--posterPad) + 110px);
+      right: calc(var(--posterPad) + 110px);
+      text-align:center;
+    }
+    .poster.classic .meta{ justify-content:center; }
+    .poster.classic .metaCol{ align-items:center; text-align:center; }
+    .poster.classic .tTitle{ letter-spacing:1.6px; }
+
+    .poster.rectStyle .bottomText{
+      left: calc(var(--posterPad) + 110px);
+      right: calc(var(--posterPad) + 110px);
+      text-align:center;
+    }
+    .poster.rectStyle .tTitle{
+      font-size: 46px;
+      margin-bottom: 8px;
+      letter-spacing: 1.4px;
+    }
+    .poster.rectStyle .tSub{
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+    .poster.rectStyle .meta{
+      justify-content:center;
+      font-size: 12px;
+      gap: 16px;
+    }
+    .poster.rectStyle .metaCol{ align-items:center; text-align:center; }
+
     @media (max-width: 980px){
-      body{ overflow:auto; }
-
-      #app{
-        height: auto;
-        min-height: 100vh;
-        grid-template-columns: 1fr;
-        grid-template-rows: var(--headerH) auto auto;
-        grid-template-areas:
-          "header"
-          "preview"
-          "editor";
-      }
-
-      /* en móvil NO centramos el preview */
-      .previewArea{
-        overflow: visible;
-        padding: 12px;
-        display:block;
-      }
-
-      .editorDock{
-        display:block;
-        padding: 0;              /* ✅ full width real */
-        overflow: visible;
-      }
-
-      .sheet{
-        width: 100%;
-        border-radius: 0;        /* ✅ ocupa todo el ancho, look “modal” */
-        border-left: 0;
-        border-right: 0;
-        border-bottom: 0;
-        box-shadow: none;
-        height: auto;
-      }
-
-      .sheetTabs{ padding: 12px 12px 10px 12px; }
-      .sheetTab{ font-size: 13px; padding: 10px 0 12px 0; }
-      .sheetTab.active::after{ height: 6px; }
-
-      .sheetBody{
-        padding: 12px;
-        overflow: visible;
-      }
-
-      :root{ --previewZoom: 0.45; }
+      #app{ grid-template-columns: 1fr; }
+      .right{ display:none; }
+      .styleGrid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <header class="topbar">
-      <div class="brand">
-        <div class="dot"></div>
-        <div class="brandText">
-          <div class="brandTitle">Sky Art Creator</div>
-          <div class="brandSub">v2.100126.finalUI</div>
+    <aside class="left">
+      <div class="header">
+        <div class="brand">
+          <div class="dot"></div>
+          <div>
+            <div class="brandTitle">Sky Art Creator</div>
+            <div class="brandSub">v2.090126.5</div>
+          </div>
         </div>
       </div>
-      <div class="topbarRight">© 2026</div>
-    </header>
 
-    <main class="previewArea noScrollBar">
+      <div class="tabs" id="tabs"></div>
+
+      <div class="panel">
+        <div id="sectionContainer"></div>
+      </div>
+    </aside>
+
+    <main class="right">
       <div class="previewWrap">
-        <div class="previewStage">
-          <div class="previewScale" id="previewScale">
-            <div class="poster" id="poster">
-              <div class="posterInner">
-                <div class="mapFrame">
-                  <canvas id="mapCanvas"></canvas>
-                </div>
+        <div class="previewScale" id="previewScale">
+          <div class="poster" id="poster">
+            <div class="posterInner">
+              <div class="mapFrame">
+                <canvas id="mapCanvas"></canvas>
+              </div>
 
-                <div class="bottomText" id="bottomText">
-                  <div class="tTitle" id="pTitle"></div>
-                  <div class="tSub" id="pSubtitle"></div>
+              <div class="bottomText" id="bottomText">
+                <div class="tTitle" id="pTitle"></div>
+                <div class="tSub" id="pSubtitle"></div>
 
-                  <div class="meta">
-                    <div class="metaCol">
-                      <div class="metaRow" id="pPlace"></div>
-                      <div class="metaRow" id="pCoords"></div>
-                      <div class="metaRow" id="pDatetime"></div>
-                    </div>
+                <div class="meta">
+                  <div class="metaCol">
+                    <div class="metaRow" id="pPlace"></div>
+                    <div class="metaRow" id="pCoords"></div>
+                    <div class="metaRow" id="pDatetime"></div>
                   </div>
                 </div>
               </div>
-            </div><!-- /poster -->
-          </div><!-- /previewScale -->
-        </div><!-- /previewStage -->
+            </div>
+          </div><!-- /poster -->
+        </div><!-- /previewScale -->
       </div>
     </main>
-
-    <aside class="editorDock">
-      <div class="sheet">
-        <!-- ✅ quitamos el título "Personalización" -->
-        <div class="sheetTabs" id="tabs"></div>
-        <div class="sheetBody noScrollBar">
-          <div class="card" id="sectionContainer"></div>
-        </div>
-      </div>
-    </aside>
   </div>
 
   <script src="./app.js"></script>

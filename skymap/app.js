@@ -23,7 +23,8 @@
       subtitle: "A moment to remember",
       place: "Mexico City, MX",
       coords: "19.4326, -99.1332",
-      date: "2026-01-07",
+      // ✅ default dd.mm.yyyy
+      date: "25.12.1995",
       time: "19:30",
       fontKey: "system",
       fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
@@ -136,6 +137,24 @@
       h = Math.imul(h, 0x01000193);
     }
     return h >>> 0;
+  }
+
+  function isValidDDMMYYYY(v){
+    const s = String(v || "").trim();
+    // dd.mm.yyyy (validación simple)
+    if (!/^\d{2}\.\d{2}\.\d{4}$/.test(s)) return false;
+    const [dd, mm, yyyy] = s.split(".").map(n => parseInt(n, 10));
+    if (!Number.isFinite(dd) || !Number.isFinite(mm) || !Number.isFinite(yyyy)) return false;
+    if (yyyy < 1000 || yyyy > 9999) return false;
+    if (mm < 1 || mm > 12) return false;
+    if (dd < 1 || dd > 31) return false;
+    // checks rápidos por mes (sin bisiesto súper estricto, suficiente para UI)
+    const maxByMonth = [31,28,31,30,31,30,31,31,30,31,30,31];
+    let max = maxByMonth[mm-1] || 31;
+    // bisiesto básico
+    const leap = (yyyy % 4 === 0 && (yyyy % 100 !== 0 || yyyy % 400 === 0));
+    if (mm === 2 && leap) max = 29;
+    return dd <= max;
   }
 
   function getDateTimeString(){
@@ -265,6 +284,7 @@
       constLine: "rgba(255,255,255,0.22)",
       constNode: "#FFFFFF",
       outline: "rgba(255,255,255,1)",
+
       theme: th,
     };
   }
@@ -919,7 +939,6 @@
     $section.appendChild(t);
     $section.appendChild(s);
 
-    // -------- Grupo: Aleatorio + Estilos --------
     const group1 = document.createElement("div");
     group1.className = "groupBlock";
 
@@ -1081,7 +1100,6 @@
     group1.appendChild(styleRow);
     $section.appendChild(group1);
 
-    // -------- Grupo: Color del mapa (swatches redondos) --------
     const group2 = document.createElement("div");
     group2.className = "groupBlock";
 
@@ -1117,7 +1135,6 @@
     group2.appendChild(colorRow);
     $section.appendChild(group2);
 
-    // -------- Grupo: Color de fondo (swatches) --------
     const group3 = document.createElement("div");
     group3.className = "groupBlock";
 
@@ -1128,7 +1145,6 @@
     const bgSwatches = document.createElement("div");
     bgSwatches.className = "swatchRow";
 
-    // opción: "match" (nombre del tema)
     {
       const th = colorsFor(state.map.colorTheme);
       const circleBg = isNeonTheme() ? "#000000" : th.bg;
@@ -1149,7 +1165,6 @@
       );
     }
 
-    // opción: "white" sólo si NO es neon
     if (!isNeonTheme()){
       bgSwatches.appendChild(
         makeSwatchTile({
@@ -1166,7 +1181,6 @@
         })
       );
     } else {
-      // asegura regla neon
       state.map.backgroundMode = "match";
     }
 
@@ -1174,7 +1188,6 @@
     group3.appendChild(bgRow);
     $section.appendChild(group3);
 
-    // -------- Grupo: Toggles + acciones --------
     const group4 = document.createElement("div");
     group4.className = "groupBlock";
 
@@ -1187,7 +1200,6 @@
     const stack = document.createElement("div");
     stack.className = "toggleStack";
 
-    // Marco
     if (showDecor){
       const frameRow = document.createElement("div");
       frameRow.className = "rowToggle";
@@ -1220,7 +1232,6 @@
         stack.appendChild(frameSizeRow);
       }
 
-      // Margen (sin slider)
       const marginRow = document.createElement("div");
       marginRow.className = "rowToggle";
       marginRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Margen del póster" }));
@@ -1232,7 +1243,6 @@
       stack.appendChild(marginRow);
     }
 
-    // Contorno (si aplica)
     if (mapOutlineAllowed()){
       const outlineRow = document.createElement("div");
       outlineRow.className = "rowToggle";
@@ -1246,7 +1256,6 @@
       stack.appendChild(outlineRow);
     }
 
-    // Constelaciones
     const conRow = document.createElement("div");
     conRow.className = "rowToggle";
     conRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Constelaciones" }));
@@ -1272,7 +1281,6 @@
       stack.appendChild(csRow);
     }
 
-    // Retícula
     const allowGrid = isGridAllowedForCurrentStyle();
     if (!allowGrid) state.map.showGrid = false;
     if (allowGrid){
@@ -1287,7 +1295,6 @@
       stack.appendChild(gridRow);
     }
 
-    // Nuevo cielo
     const seedRow = document.createElement("div");
     seedRow.className = "formRow";
     seedRow.innerHTML = `<div class="label">Variación del cielo</div>`;
@@ -1299,7 +1306,6 @@
     seedRow.appendChild(seedBtn);
     stack.appendChild(seedRow);
 
-    // Zoom
     const mapZoomRow = document.createElement("div");
     mapZoomRow.className = "formRow";
     mapZoomRow.innerHTML = `<div class="label">Zoom de Estrellas</div>`;
@@ -1430,16 +1436,31 @@
         const body = document.createElement("div");
         body.className = "fieldBody";
 
+        // ✅ dd.mm.yyyy
         const dateInp = document.createElement("input");
         dateInp.className = "fieldInput";
-        dateInp.type = "date";
+        dateInp.type = "text";
+        dateInp.inputMode = "numeric";
+        dateInp.placeholder = "dd.mm.yyyy";
         dateInp.value = state.text.date || "";
         dateInp.oninput = () => {
           state.text.date = dateInp.value;
+          // recalcula seed siempre
           updateSeedFromDateTime();
           renderPosterText();
           drawMap();
+
+          // feedback visual simple: si inválido, borde rojito
+          if (dateInp.value.trim() && !isValidDDMMYYYY(dateInp.value)) {
+            dateInp.style.borderColor = "rgba(255,90,90,.55)";
+          } else {
+            dateInp.style.borderColor = "";
+          }
         };
+        // init valid state
+        if (dateInp.value.trim() && !isValidDDMMYYYY(dateInp.value)) {
+          dateInp.style.borderColor = "rgba(255,90,90,.55)";
+        }
         body.appendChild(dateInp);
 
         const spacer = document.createElement("div");

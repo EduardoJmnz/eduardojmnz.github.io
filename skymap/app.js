@@ -10,10 +10,7 @@
 
   const POSTER_LINE_THICK_MAX = 12;
 
-  // ✅ Contorno fijo solicitado
   const MAP_OUTLINE_PX = 8;
-
-  // ✅ Default solicitado para margen del póster
   const DEFAULT_POSTER_MARGIN_THICKNESS = 8;
 
   const state = {
@@ -41,7 +38,6 @@
       colorTheme: "mono",
       mapZoom: 1.0,
 
-      // ✅ Por default: mismo color que mapa estelar
       backgroundMode: "match",
 
       posterFrameEnabled: false,
@@ -49,10 +45,10 @@
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
       posterMarginEnabled: true,
+      // ✅ fijo, usuario NO puede editar
       posterMarginThickness: DEFAULT_POSTER_MARGIN_THICKNESS,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
-      // ✅ por default contorno activo (excepto estilo poster)
       mapCircleMarginEnabled: true,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: DEFAULT_POSTER_MARGIN_THICKNESS,
@@ -90,10 +86,10 @@
     { key: "rounded", name: "Rounded (Friendly)", css: "'Trebuchet MS', 'Verdana', system-ui, Arial" },
   ];
 
+  // ✅ eliminado Carbon
   const COLOR_THEMES = [
     { id: "mono",      name: "Mono" },
     { id: "marino",    name: "Marino" },
-    { id: "carbon",    name: "Carbón" },
     { id: "ice",       name: "Hielo" },
     { id: "warm",      name: "Cálido" },
     { id: "forest",    name: "Bosque" },
@@ -175,7 +171,6 @@
     const THEMES = {
       mono:      { bg: "#0A0B0D", star: "#FFFFFF", line: "rgba(255,255,255,0.16)" },
       marino:    { bg: "#0B0D12", star: "#FFFFFF", line: "rgba(255,255,255,0.22)" },
-      carbon:    { bg: "#0A0B0D", star: "#E8DCC8", line: "rgba(232,220,200,0.20)" },
       ice:       { bg: "#071016", star: "#E9F6FF", line: "rgba(233,246,255,0.18)" },
       warm:      { bg: "#140E0A", star: "#F6E7C9", line: "rgba(246,231,201,0.20)" },
       forest:    { bg: "#06130E", star: "#EAF7F1", line: "rgba(234,247,241,0.18)" },
@@ -225,7 +220,6 @@
   function computeRenderTokens(){
     const th = colorsFor(state.map.colorTheme);
 
-    // ✅ NEON: todo en color, fondo negro, sin opción fondo blanco
     if (isNeonTheme()){
       const neon = th.star;
       const bg = "#000000";
@@ -277,13 +271,10 @@
   }
 
   function syncOutlineThickness(){
-    // ✅ ya no lo usamos para el stroke (outline fijo), pero lo dejamos consistente
+    // ✅ mantenemos consistencia interna (aunque el stroke real es fijo)
     state.map.mapCircleMarginThickness = state.map.posterMarginThickness;
   }
 
-  // --------------------------
-  // CAPAS: marco(área) + papel + margen(línea)
-  // --------------------------
   let $posterFrameArea = null;
   let $posterPaper = null;
   let $posterMarginLine = null;
@@ -374,7 +365,6 @@
     $poster.style.background = tokens.posterBg;
     $poster.style.color = tokens.posterInk;
 
-    // Marco (área)
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = tokens.posterInk;
@@ -385,24 +375,23 @@
       $posterFrameArea.style.inset = `${frameEdge}px`;
     }
 
-    // Papel interior
     const innerInset = frameEdge + framePx;
     $posterPaper.style.background = tokens.posterBg;
     $posterPaper.style.inset = `${innerInset}px`;
 
-    // Margen (línea)
+    // ✅ margen fijo: el usuario no puede cambiarlo
     const thickness = clamp(
-      state.map.posterMarginThickness || DEFAULT_POSTER_MARGIN_THICKNESS,
+      DEFAULT_POSTER_MARGIN_THICKNESS,
       1,
       state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX
     );
+    state.map.posterMarginThickness = thickness;
 
     $posterMarginLine.style.inset = `${marginEdge}px`;
     $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(tokens.posterInk, 1) : "transparent";
 
-    // Bottom spacing
     const baseBottom = isPosterStyle() ? 60 : 100;
     const safeBottomWhenMarginOn = marginEdge + thickness + 18;
     const finalBottom = marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom;
@@ -597,9 +586,9 @@
 
     if (showOutline){
       ctx.save();
-      ctx.strokeStyle = tokens.posterInk; // sólido
+      ctx.strokeStyle = tokens.posterInk;
       ctx.lineWidth = outlineW;
-      ctx.globalAlpha = 1; // sin opacidad
+      ctx.globalAlpha = 1;
       const half = outlineW / 2;
       ctx.strokeRect(half, half, mapW - outlineW, mapH - outlineW);
       ctx.restore();
@@ -631,8 +620,6 @@
 
     const outlineEnabled = !!state.map.mapCircleMarginEnabled && mapOutlineAllowed();
     const showOutline = outlineEnabled;
-
-    // ✅ fijo 8px
     const outlineW = MAP_OUTLINE_PX;
 
     ctx.clearRect(0, 0, mapW, mapH);
@@ -764,6 +751,9 @@
   }
 
   function renderPosterAndMap(){
+    // ✅ siempre mantener margen fijo
+    state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
+
     if (isNeonTheme()) state.map.backgroundMode = "match";
     if (isPosterStyle()) state.map.mapCircleMarginEnabled = false;
 
@@ -902,7 +892,6 @@
     s.className = "sub";
     s.textContent = "Selecciona un estilo de poster, los colores y las opcines de personalizacion para tu mapa o genera un aleatorio. ¡Cada mapa es unico y diferente!";
 
-    // helpers
     let bgSel = null;
     const rebuildBgOptions = () => {
       if (!bgSel) return;
@@ -934,7 +923,7 @@
       bgSel.value = state.map.backgroundMode;
     };
 
-    // 1) ✅ Botón Aleatorio
+    // 1) Aleatorio
     const randomRow = document.createElement("div");
     randomRow.className = "formRow";
     randomRow.classList.add("stackGap");
@@ -973,13 +962,11 @@
         }
         state.map.posterMarginEnabled = !marco ? pickBool() : false;
 
-        // ✅ default 8
+        // ✅ fijo
         state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
       }
 
       state.map.mapCircleMarginEnabled = (state.map.styleId !== "poster");
-
-      if (state.map.styleId === "romantico") state.map.showGrid = false;
       if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
       state.map.seed = (Math.random() * 1e9) | 0;
@@ -1076,9 +1063,7 @@
           if (st.id === "classic"){
             state.map.posterFrameEnabled = false;
             state.map.posterMarginEnabled = true;
-
-            // ✅ default 8
-            state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
+            state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS; // fijo
           } else {
             state.map.posterMarginEnabled = false;
           }
@@ -1097,20 +1082,55 @@
 
     styleRow.appendChild(grid);
 
-    // 3) Color mapa
+    // 3) ✅ Color del mapa (swatches)
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
     colorRow.innerHTML = `<div class="label">Color del Mapa estelar</div>`;
 
-    const colorSel = document.createElement("select");
-    colorSel.className = "select";
+    const colorGrid = document.createElement("div");
+    colorGrid.className = "colorGrid";
+
     COLOR_THEMES.forEach(th => {
-      const opt = document.createElement("option");
-      opt.value = th.id;
-      opt.textContent = th.name;
-      colorSel.appendChild(opt);
+      const tile = document.createElement("div");
+      tile.className = "colorTile" + (state.map.colorTheme === th.id ? " active" : "");
+
+      const sw = document.createElement("div");
+      sw.className = "colorSwatch";
+
+      const inner = document.createElement("div");
+      inner.className = "colorSwatchInner";
+
+      const dot = document.createElement("div");
+      dot.className = "colorSwatchDot";
+
+      const c = colorsFor(th.id);
+
+      // fondo del swatch
+      sw.style.background = th.id.startsWith("neon") ? "#000000" : c.bg;
+      // dot (representa “tinta/estrellas”)
+      dot.style.background = c.star;
+
+      inner.appendChild(dot);
+      sw.appendChild(inner);
+
+      const name = document.createElement("div");
+      name.className = "colorNameLabel";
+      name.textContent = th.name;
+
+      tile.appendChild(sw);
+      tile.appendChild(name);
+
+      tile.onclick = () => {
+        state.map.colorTheme = th.id;
+        if (isNeonTheme()) state.map.backgroundMode = "match";
+        renderPosterAndMap();
+        renderAll();
+      };
+
+      colorGrid.appendChild(tile);
     });
-    colorSel.value = state.map.colorTheme;
+
+    colorRow.appendChild(colorGrid);
 
     // 4) Color fondo
     const bgRow = document.createElement("div");
@@ -1121,7 +1141,6 @@
     bgSel = document.createElement("select");
     bgSel.className = "select";
     rebuildBgOptions();
-
     bgSel.onchange = () => {
       state.map.backgroundMode = bgSel.value;
       if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
@@ -1130,19 +1149,10 @@
     };
     bgRow.appendChild(bgSel);
 
-    colorSel.onchange = () => {
-      state.map.colorTheme = colorSel.value;
-      if (isNeonTheme()) state.map.backgroundMode = "match";
-      rebuildBgOptions();
-      renderPosterAndMap();
-      renderAll();
-    };
-    colorRow.appendChild(colorSel);
-
-    // 5) Marco
+    // 5) Marco / 6) Margen (sin slider)
     const showDecor = isPosterDecorAllowed();
+    let frameRow = null, frameSizeRow = null, marginRow = null;
 
-    let frameRow = null, frameSizeRow = null;
     if (showDecor){
       frameRow = document.createElement("div");
       frameRow.className = "rowToggle";
@@ -1172,13 +1182,7 @@
         renderAll();
       };
       frameSizeRow.appendChild(frameRange);
-    } else {
-      state.map.posterFrameEnabled = false;
-    }
 
-    // 6) Margen
-    let marginRow = null, marginThickRow = null;
-    if (showDecor){
       marginRow = document.createElement("div");
       marginRow.className = "rowToggle";
       marginRow.classList.add("stackGap");
@@ -1188,29 +1192,12 @@
         renderPosterAndMap();
         renderAll();
       }));
-
-      marginThickRow = document.createElement("div");
-      marginThickRow.className = "formRow";
-      marginThickRow.classList.add("stackGap");
-      marginThickRow.innerHTML = `<div class="label">Grosor del margen</div>`;
-      const marginThick = document.createElement("input");
-      marginThick.type = "range";
-      marginThick.min = "1";
-      marginThick.max = String(state.map.posterMarginThicknessMax);
-      marginThick.step = "1";
-      marginThick.value = String(state.map.posterMarginThickness || DEFAULT_POSTER_MARGIN_THICKNESS);
-      marginThick.oninput = () => {
-        state.map.posterMarginThickness = Number(marginThick.value);
-        drawMap();
-        renderPosterAndMap();
-        renderAll();
-      };
-      marginThickRow.appendChild(marginThick);
     } else {
+      state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
     }
 
-    // 7) Contorno mapa (toggle)
+    // 7) Contorno
     const outlineRow = document.createElement("div");
     outlineRow.className = "rowToggle";
     outlineRow.classList.add("stackGap");
@@ -1272,7 +1259,7 @@
     seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
 
-    // 11) ✅ Zoom al final, renombrado
+    // 11) Zoom
     const mapZoomRow = document.createElement("div");
     mapZoomRow.className = "formRow";
     mapZoomRow.classList.add("stackGap");
@@ -1289,10 +1276,9 @@
     };
     mapZoomRow.appendChild(mapZoomRange);
 
-    // ---- Append en el orden solicitado ----
+    // Append orden solicitado
     $section.appendChild(t);
     $section.appendChild(s);
-
     $section.appendChild(randomRow);
     $section.appendChild(styleRow);
     $section.appendChild(colorRow);
@@ -1301,9 +1287,7 @@
     if (showDecor){
       $section.appendChild(frameRow);
       if (state.map.posterFrameEnabled) $section.appendChild(frameSizeRow);
-
       $section.appendChild(marginRow);
-      if (state.map.posterMarginEnabled) $section.appendChild(marginThickRow);
     }
 
     if (mapOutlineAllowed()) $section.appendChild(outlineRow);
@@ -1331,6 +1315,9 @@
     btns.appendChild(left);
     btns.appendChild(right);
     $section.appendChild(btns);
+
+    // ✅ asegura que el select de fondo refleje nombre correcto
+    rebuildBgOptions();
   }
 
   function renderSectionContent(){
@@ -1534,6 +1521,9 @@
 
     if (isNeonTheme()) state.map.backgroundMode = "match";
 
+    // ✅ margen fijo también en export
+    state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
+
     const tokens = computeRenderTokens();
 
     updatePosterFrameInsetPx();
@@ -1569,7 +1559,7 @@
     ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
 
     if (marginOn){
-      const thick = clamp(state.map.posterMarginThickness || DEFAULT_POSTER_MARGIN_THICKNESS, 1, state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX);
+      const thick = DEFAULT_POSTER_MARGIN_THICKNESS;
       const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
       ctx.save();
       ctx.strokeStyle = rgbaFromHex(tokens.posterInk, 1);
@@ -1743,10 +1733,8 @@
   // Init
   updateSeedFromDateTime();
 
-  // ✅ neon fuerza match
+  state.map.posterMarginThickness = DEFAULT_POSTER_MARGIN_THICKNESS;
   if (isNeonTheme()) state.map.backgroundMode = "match";
-
-  // ✅ poster no permite contorno
   if (isPosterStyle()) state.map.mapCircleMarginEnabled = false;
 
   ensurePosterLayers();

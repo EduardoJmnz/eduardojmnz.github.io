@@ -10,8 +10,11 @@
 
   const POSTER_LINE_THICK_MAX = 12;
 
+  // ✅ Contorno real del mapa
   const MAP_OUTLINE_PX = 8;
-  const DEFAULT_POSTER_MARGIN_THICKNESS = 8;
+
+  // ✅ Margen del poster fijo (usuario no lo edita)
+  const DEFAULT_POSTER_MARGIN_THICKNESS = 6;
 
   const state = {
     step: 0,
@@ -231,7 +234,7 @@
     return !isWhiteBackgroundMode() && !isPosterStyle();
   }
 
-  // ✅ Token colors (retícula SIN opacidad)
+  // ✅ Token colors (todo sin opacidad para líneas)
   function computeRenderTokens(){
     const th = colorsFor(state.map.colorTheme);
 
@@ -261,7 +264,6 @@
         mapBg: th.bg,
         stars: th.star,
 
-        // ✅ sin opacidad
         gridLine: "rgba(255,255,255,1)",
         constLine: "rgba(255,255,255,1)",
         constNode: "#FFFFFF",
@@ -278,7 +280,6 @@
       mapBg: th.bg,
       stars: "#FFFFFF",
 
-      // ✅ sin opacidad
       gridLine: "rgba(255,255,255,1)",
       constLine: "rgba(255,255,255,1)",
       constNode: "#FFFFFF",
@@ -399,7 +400,7 @@
     $posterPaper.style.background = tokens.posterBg;
     $posterPaper.style.inset = `${innerInset}px`;
 
-    // ✅ margen fijo (usuario no lo edita)
+    // ✅ margen fijo a 6
     const thickness = clamp(
       DEFAULT_POSTER_MARGIN_THICKNESS,
       1,
@@ -477,39 +478,54 @@
     ctx.closePath();
   }
 
-  // ✅ Retícula anterior (curvas) pero SIN opacidad
-  function drawCurvedGrid(ctx, w, h, gridLine){
+  // ✅ NUEVA: retícula tipo globo terráqueo (sin opacidad)
+  // - Paralelos = elipses “aplastadas” con offsets (simula esfera)
+  // - Meridianos = elipses rotadas (simula longitudes)
+  function drawGlobeGrid(ctx, w, h, gridLine){
+    const cx = w / 2;
+    const cy = h / 2;
+
     ctx.save();
     ctx.strokeStyle = gridLine;
+    ctx.globalAlpha = 1;
+
+    // un poco más fino que constelaciones
+    ctx.lineWidth = 1.05;
+
+    const R = Math.min(w, h) * 0.47;
+
+    // ---- Paralelos (latitudes) ----
+    // desde -4 a 4, evitando el ecuador duplicado
+    const latSteps = 9;
+    for (let i = 0; i < latSteps; i++){
+      const t = (i / (latSteps - 1)) * 2 - 1; // [-1..1]
+      const bend = Math.sqrt(1 - Math.min(1, t*t)); // 1 en ecuador, 0 en polos
+
+      const yOff = t * R * 0.72;
+      const rx = R * (0.98);                 // radio horizontal casi completo
+      const ry = R * 0.46 * bend + 0.5;      // se aplasta hacia polos
+
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + yOff, rx, ry, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // ---- Meridianos (longitudes) ----
+    // elipses rotadas con “aplastamiento” fijo
+    const lonSteps = 12;
+    for (let i = 0; i < lonSteps; i++){
+      const a = (i / lonSteps) * Math.PI; // 0..π (con π ya se repite)
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, R * 0.98, R * 0.46, a, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // ---- Un círculo interior tenue (da look “esfera”) ----
+    // (mismo color, solo otra capa geométrica)
     ctx.lineWidth = 1.15;
-    ctx.globalAlpha = 1; // ✅ sin opacidad
-
-    const meridians = 7;
-    const parallels = 6;
-
-    for (let i = 0; i < meridians; i++){
-      const t = i / (meridians - 1);
-      const x = w * (0.12 + t * 0.76);
-      const bend = (Math.abs(t - 0.5) / 0.5);
-      const curve = (1 - bend) * (w * 0.18);
-
-      ctx.beginPath();
-      ctx.moveTo(x, h * 0.06);
-      ctx.quadraticCurveTo(x + curve * (t < 0.5 ? -1 : 1), h * 0.50, x, h * 0.94);
-      ctx.stroke();
-    }
-
-    for (let j = 0; j < parallels; j++){
-      const t = j / (parallels - 1);
-      const y = h * (0.16 + t * 0.68);
-      const bend = (Math.abs(t - 0.5) / 0.5);
-      const curve = (1 - bend) * (h * 0.16);
-
-      ctx.beginPath();
-      ctx.moveTo(w * 0.06, y);
-      ctx.quadraticCurveTo(w * 0.50, y + curve * (t < 0.5 ? 1 : -1), w * 0.94, y);
-      ctx.stroke();
-    }
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * 0.84, 0, Math.PI * 2);
+    ctx.stroke();
 
     ctx.restore();
   }
@@ -595,7 +611,9 @@
       ctx.translate(-mapW/2, -mapH/2);
     }
 
-    if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawCurvedGrid(ctx, mapW, mapH, tokens.gridLine);
+    if (state.map.showGrid && isGridAllowedForCurrentStyle()){
+      drawGlobeGrid(ctx, mapW, mapH, tokens.gridLine);
+    }
 
     drawStars(ctx, mapW, mapH, rand, tokens.stars);
 
@@ -686,7 +704,9 @@
         ctx.translate(-cx, -cy);
       }
 
-      if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawCurvedGrid(ctx, mapW, mapH, tokens.gridLine);
+      if (state.map.showGrid && isGridAllowedForCurrentStyle()){
+        drawGlobeGrid(ctx, mapW, mapH, tokens.gridLine);
+      }
 
       drawStars(ctx, mapW, mapH, rand, tokens.stars);
 
@@ -981,11 +1001,11 @@
         state.map.posterMarginEnabled = !marco ? pickBool() : false;
       }
 
-      // ✅ Defaults de contorno por estilo:
+      // ✅ Defaults de contorno por estilo
       if (state.map.styleId === "classic") state.map.mapCircleMarginEnabled = true;
       else if (state.map.styleId === "romantico") state.map.mapCircleMarginEnabled = true;
       else if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
-      else state.map.mapCircleMarginEnabled = false; // poster
+      else state.map.mapCircleMarginEnabled = false;
 
       if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
       if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
@@ -1025,7 +1045,6 @@
       ctx.save();
       const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
 
-      // Clip forma
       if (st.shape === "circle"){
         ctx.beginPath();
         ctx.arc(mx+mw/2, my+mw/2, mw/2, 0, Math.PI*2);
@@ -1045,7 +1064,6 @@
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(mx,my,mw,mh);
 
-      // estrellas preview
       const r = mulberry32(
         st.id === "romantico" ? 202603 :
         st.id === "poster" ? 202604 :
@@ -1063,17 +1081,17 @@
       ctx.globalAlpha = 1;
       ctx.restore();
 
-      // ✅ Mostrar contorno SOLO en Clásico y Romántico (preview)
+      // ✅ Preview contorno más delgado
       const showOutlinePreview = (st.id === "classic" || st.id === "romantico");
       if (showOutlinePreview){
         ctx.save();
         ctx.strokeStyle = tokens.posterInk;
-        ctx.lineWidth = 5; // un “hint” visible en miniatura
+        ctx.lineWidth = 2;     // ✅ más fino
         ctx.globalAlpha = 1;
 
         if (st.shape === "circle"){
           ctx.beginPath();
-          ctx.arc(mx+mw/2, my+mw/2, mw/2 - 2.5, 0, Math.PI*2);
+          ctx.arc(mx+mw/2, my+mw/2, mw/2 - 1, 0, Math.PI*2);
           ctx.stroke();
         } else if (st.shape === "heart"){
           const cx = mx + mw/2;
@@ -1111,11 +1129,10 @@
           }
         }
 
-        // ✅ Defaults contorno por estilo (lo que pediste)
         if (st.id === "classic") state.map.mapCircleMarginEnabled = true;
-        else if (st.id === "romantico") state.map.mapCircleMarginEnabled = true; // y puede togglear
-        else if (st.id === "moderno") state.map.mapCircleMarginEnabled = false;  // default OFF
-        else state.map.mapCircleMarginEnabled = false; // poster
+        else if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;
+        else if (st.id === "moderno") state.map.mapCircleMarginEnabled = false;
+        else state.map.mapCircleMarginEnabled = false;
 
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
         if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
@@ -1279,10 +1296,6 @@
       stack.appendChild(marginRow);
     }
 
-    // ✅ Contorno:
-    // - NO aparece para poster (por mapOutlineAllowed)
-    // - Moderno: existe, pero default OFF (ya lo manejamos al seleccionar estilo)
-    // - Romántico: puede on/off
     if (mapOutlineAllowed()){
       const outlineRow = document.createElement("div");
       outlineRow.className = "rowToggle";
@@ -1804,7 +1817,6 @@
   // Init
   updateSeedFromDateTime();
 
-  // ✅ asegura defaults por estilo inicial (classic)
   if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
   if (state.map.styleId === "poster") state.map.mapCircleMarginEnabled = false;
 

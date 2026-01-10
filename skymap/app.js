@@ -3,12 +3,17 @@
   const POSTER_W = 900;
   const POSTER_H = 1200;
 
+  // Marco (ÁREA) desde el borde
   const POSTER_FRAME_EDGE_GAP_PX = 0;
+
+  // Margen (LÍNEA)
   const POSTER_MARGIN_EDGE_GAP_PX = 50;
 
+  // Marco máximo
   const POSTER_FRAME_PCT_MAX = 0.06;
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
+  // Grosor máximo del margen (línea)
   const POSTER_LINE_THICK_MAX = 12;
 
   const state = {
@@ -36,18 +41,25 @@
       invertMapColors: false,
 
       colorTheme: "mono",
+
+      // Zoom interno
       mapZoom: 1.0,
 
+      // Marco del póster (ÁREA)
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
+      // Margen del póster (LÍNEA)
       posterMarginEnabled: false,
       posterMarginThickness: 2,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
+      // Contorno del mapa
       mapCircleMarginEnabled: false,
       mapCircleInsetPct: 0.10,
+
+      // ✅ Se mantiene, pero se sincroniza siempre con posterMarginThickness
       mapCircleMarginThickness: 2,
 
       constellationSize: 2.0,
@@ -199,8 +211,14 @@
     return state.map.styleId === "poster";
   }
 
+  // Marco/Margen NO aplican al estilo Poster
   function isPosterDecorAllowed(){
     return !isPosterStyle();
+  }
+
+  // ✅ helper: contorno siempre usa el mismo grosor que el margen del póster
+  function syncOutlineThickness(){
+    state.map.mapCircleMarginThickness = state.map.posterMarginThickness;
   }
 
   function heartPath(ctx, cx, cy, size){
@@ -311,9 +329,10 @@
     ensurePosterLayers();
     updatePosterFrameInsetPx();
     enforceDecorRules();
+    syncOutlineThickness();
 
-    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
-    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX;
+    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;   // 0
+    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX; // 50
 
     const decorAllowed = isPosterDecorAllowed();
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
@@ -321,6 +340,7 @@
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
+    // Fondo general
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
@@ -356,8 +376,10 @@
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(posterColors.star, 1) : "transparent";
 
-    // ✅ ÚNICO CAMBIO: bajar letras SOLO en estilo Poster
-    const baseBottom = isPosterStyle() ? 140 : 100; // antes 100 fijo
+    // ✅ Texto: bajar MÁS SOLO en Poster (evita sobreposición)
+    // OJO: bottom más chico => texto más abajo (más cerca del borde)
+    const baseBottom = isPosterStyle() ? 50 : 100;
+
     const safeBottomWhenMarginOn = marginEdge + thickness + 10;
     const bottomTextBottom = (marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom);
     $poster.style.setProperty("--bottomTextBottom", `${bottomTextBottom}px`);
@@ -381,7 +403,7 @@
   }
 
   function applyPosterPaddingLayout(){
-    const edge = POSTER_FRAME_EDGE_GAP_PX;
+    const edge = POSTER_FRAME_EDGE_GAP_PX; // 0
     const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
       ? clamp(state.map.posterFrameInsetPx, 0, 160)
       : 0;
@@ -606,6 +628,8 @@
   }
 
   function drawMap(){
+    syncOutlineThickness();
+
     const mapW = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) || 780);
     const mapH = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) || 780);
 
@@ -638,7 +662,9 @@
     // ✅ Contorno desactivado SIEMPRE en estilo Poster
     const outlineEnabled = !!state.map.mapCircleMarginEnabled && !isPosterStyle();
     const showOutline = outlineEnabled && !state.map.invertMapColors;
-    const outlineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
+
+    // ✅ Grosor del contorno = grosor del margen del póster (clamp a 10 por canvas)
+    const outlineW = clamp(state.map.posterMarginThickness || 2, 1, 10);
 
     ctx.clearRect(0, 0, mapW, mapH);
 
@@ -774,13 +800,12 @@
   }
 
   // --------------------------
-  // Preview tiles (con skeleton de texto)
+  // Preview tiles con skeleton de texto
   // --------------------------
   function drawTextSkeletonOnPreview(ctx, st, pc){
     const skeleton = rgbaFromHex(pc.star, 0.55);
     const skeleton2 = rgbaFromHex(pc.star, 0.38);
 
-    // área "textos" en mini poster 180x240
     const bottomPad = 18;
     const areaH = 66;
     const y0 = 240 - bottomPad - areaH;
@@ -791,7 +816,6 @@
     const isRom = st.id === "romantico";
     const isModern = st.id === "moderno";
 
-    // anchos (simula left/right padding)
     let left = 22, right = 22;
     let alignCenter = false;
 
@@ -806,21 +830,17 @@
     const w = 180 - left - right;
 
     ctx.save();
-    ctx.globalAlpha = 1;
 
-    // título
     ctx.fillStyle = skeleton;
     const titleW = alignCenter ? Math.round(w * 0.72) : Math.round(w * 0.78);
     const titleX = alignCenter ? Math.round(90 - titleW / 2) : left;
     ctx.fillRect(titleX, y0 + 6, titleW, 10);
 
-    // subtítulo
     ctx.fillStyle = skeleton2;
     const subW = alignCenter ? Math.round(w * 0.52) : Math.round(w * 0.60);
     const subX = alignCenter ? Math.round(90 - subW / 2) : left;
     ctx.fillRect(subX, y0 + 22, subW, 6);
 
-    // meta lines
     ctx.fillStyle = skeleton2;
     const m1W = alignCenter ? Math.round(w * 0.46) : Math.round(w * 0.64);
     const m2W = alignCenter ? Math.round(w * 0.40) : Math.round(w * 0.58);
@@ -919,7 +939,7 @@
       ctx.globalAlpha = 1;
       ctx.restore();
 
-      // ✅ restore del preview: skeleton de texto según estilo
+      // ✅ skeleton texto por estilo
       drawTextSkeletonOnPreview(ctx, st, pc);
 
       poster.appendChild(c);
@@ -934,12 +954,12 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
 
-        // ✅ contorno OFF por default en Poster
+        // contorno OFF por default en Poster
         if (st.id === "poster") {
           state.map.mapCircleMarginEnabled = false;
         }
 
-        // ✅ margen por default solo en clásico
+        // margen por default solo en clásico
         if (!isPosterDecorAllowed()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
@@ -948,6 +968,7 @@
             state.map.posterFrameEnabled = false;
             state.map.posterMarginEnabled = true;
             state.map.posterMarginThickness = 2;
+            syncOutlineThickness();
           } else {
             state.map.posterMarginEnabled = false;
           }
@@ -1002,6 +1023,7 @@
         updatePosterFrameInsetPx();
         state.map.posterMarginEnabled = !marco ? pickBool() : false;
         state.map.posterMarginThickness = 2;
+        syncOutlineThickness();
       }
 
       if (state.map.styleId === "poster") {
@@ -1124,7 +1146,12 @@
       marginThick.step = "1";
       marginThick.value = String(state.map.posterMarginThickness || 2);
       marginThick.oninput = () => {
-        state.map.posterMarginThickness = Number(marginThick.value);
+        const v = Number(marginThick.value);
+        state.map.posterMarginThickness = v;
+
+        // ✅ contorno = margen
+        syncOutlineThickness();
+
         renderPosterAndMap();
         renderAll();
       };
@@ -1176,7 +1203,7 @@
     mapRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
     mapRow.appendChild(toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
       state.map.mapCircleMarginEnabled = val;
-      if (isPosterStyle()) state.map.mapCircleMarginEnabled = false; // fuerza OFF
+      if (isPosterStyle()) state.map.mapCircleMarginEnabled = false; // fuerza OFF en Poster
       drawMap();
       renderAll();
     }));
@@ -1215,7 +1242,7 @@
     $section.appendChild(conRow);
     if (state.map.showConstellations) $section.appendChild(csRow);
 
-    // ✅ en Poster no mostramos el toggle de contorno
+    // en Poster no mostramos el toggle de contorno
     if (!isPosterStyle()) $section.appendChild(mapRow);
 
     $section.appendChild(seedRow);
@@ -1483,6 +1510,7 @@
     const colors = colorsFor(state.map.colorTheme);
 
     updatePosterFrameInsetPx();
+    syncOutlineThickness();
 
     const st = getStyleDef();
     const decorAllowed = (st.id !== "poster");
@@ -1490,29 +1518,33 @@
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
     const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
 
-    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
-    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H));
+    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W)); // 0
+    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H)); // 0
+    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W)); // 50
+    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H)); // 50
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
     const frameX = Math.round(framePx * (W / POSTER_W));
     const frameY = Math.round(framePx * (H / POSTER_H));
 
+    // Fondo
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
+    // Marco (área) desde el borde
     if (frameOn){
       ctx.fillStyle = colors.star;
       ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
     }
 
+    // Papel interior
     const innerX = edgeFrameX + frameX;
     const innerY = edgeFrameY + frameY;
 
     ctx.fillStyle = colors.bg;
     ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
 
+    // Margen (línea)
     if (marginOn){
       const thick = clamp(state.map.posterMarginThickness || 2, 1, state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX);
       const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
@@ -1625,6 +1657,13 @@
   applyPosterPaddingLayout();
   setMapSizeFromPosterPad();
   applyZoom();
+
+  // defaults iniciales (si inicia en clásico)
+  if (state.map.styleId === "classic") {
+    state.map.posterMarginEnabled = true;
+    state.map.posterMarginThickness = 2;
+    syncOutlineThickness();
+  }
 
   renderAll();
   window.addEventListener("resize", () => drawMap());

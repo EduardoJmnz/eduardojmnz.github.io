@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!doctype html>
 <html lang="es">
 <head>
@@ -293,7 +294,10 @@
       color: rgba(233,238,252,.50);
       font-weight: 400;
       font-size: 13px;
-      padding: 10px 0 14px 0;
+
+      /* ✅ MÁS espacio entre el texto y la barra verde */
+      padding: 10px 0 22px 0;
+
       cursor:pointer;
       position: relative;
       letter-spacing: .2px;
@@ -313,7 +317,10 @@
       position:absolute;
       left: 0;
       right: 0;
-      bottom: 2px;
+
+      /* ✅ baja la barra para que no se vea amontonado */
+      bottom: 0px;
+
       height: 7px;
       background: var(--accentSolid);
       border-radius: 999px;
@@ -471,9 +478,10 @@
       position:relative;
       box-shadow: 0 10px 24px rgba(0,0,0,.28);
     }
+    /* ✅ Tile activo en VERDE (accent) */
     .styleTile.active .stylePoster{
-      border-color: rgba(255,210,90,.95);
-      box-shadow: 0 0 0 2px rgba(255,210,90,.25), 0 10px 24px rgba(0,0,0,.28);
+      border-color: var(--accentSolid);
+      box-shadow: 0 0 0 2px rgba(124,255,250,.25), 0 10px 24px rgba(0,0,0,.28);
     }
     .stylePoster canvas{ width:100%; height:100%; display:block; }
     .styleNameLabel{
@@ -484,7 +492,7 @@
       opacity: .92;
     }
 
-    /* ✅ MOBILE: body scroll + preview 45% + modal 100% ancho */
+    /* ✅ MOBILE: body scroll + preview 45% + modal 100% ancho (pantalla completa) */
     @media (max-width: 980px){
       body{ overflow:auto; }
 
@@ -506,15 +514,17 @@
         display:block;
       }
 
+      /* ✅ modal full width real */
       .editorDock{
         display:block;
-        padding: 0;              /* ✅ full width real */
+        padding: 0;
         overflow: visible;
+        width: 100%;
       }
 
       .sheet{
         width: 100%;
-        border-radius: 0;        /* ✅ ocupa todo el ancho, look “modal” */
+        border-radius: 0;
         border-left: 0;
         border-right: 0;
         border-bottom: 0;
@@ -523,8 +533,8 @@
       }
 
       .sheetTabs{ padding: 12px 12px 10px 12px; }
-      .sheetTab{ font-size: 13px; padding: 10px 0 12px 0; }
-      .sheetTab.active::after{ height: 6px; }
+      .sheetTab{ font-size: 13px; padding: 10px 0 22px 0; }
+      .sheetTab.active::after{ height: 6px; bottom: 0px; }
 
       .sheetBody{
         padding: 12px;
@@ -579,7 +589,6 @@
 
     <aside class="editorDock">
       <div class="sheet">
-        <!-- ✅ quitamos el título "Personalización" -->
         <div class="sheetTabs" id="tabs"></div>
         <div class="sheetBody noScrollBar">
           <div class="card" id="sectionContainer"></div>

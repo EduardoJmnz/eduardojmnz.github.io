@@ -51,7 +51,7 @@
       posterMarginThickness: DEFAULT_POSTER_MARGIN_THICKNESS,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
-      // ✅ por default CLÁSICO sí trae contorno
+      // ✅ default: clásico con contorno
       mapCircleMarginEnabled: true,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: DEFAULT_POSTER_MARGIN_THICKNESS,
@@ -234,7 +234,6 @@
     return !isWhiteBackgroundMode() && !isPosterStyle();
   }
 
-  // ✅ Token colors (todo sin opacidad para líneas)
   function computeRenderTokens(){
     const th = colorsFor(state.map.colorTheme);
 
@@ -478,54 +477,40 @@
     ctx.closePath();
   }
 
-  // ✅ NUEVA: retícula tipo globo terráqueo (sin opacidad)
-  // - Paralelos = elipses “aplastadas” con offsets (simula esfera)
-  // - Meridianos = elipses rotadas (simula longitudes)
+  // ✅ RETÍCULA TAL CUAL TU REFERENCIA (70% opacidad)
+  // Meridianos curvos + paralelos curvos.
   function drawGlobeGrid(ctx, w, h, gridLine){
     const cx = w / 2;
     const cy = h / 2;
+    const R  = Math.min(w, h) * 0.48;
 
     ctx.save();
     ctx.strokeStyle = gridLine;
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = 0.7;      // ✅ 70%
+    ctx.lineWidth = 1.25;
 
-    // un poco más fino que constelaciones
-    ctx.lineWidth = 1.05;
+    // PARALLELOS (horizontales como arcos)
+    const latCount = 9;
+    for (let i = 1; i < latCount; i++){
+      const t = (i / latCount) * 2 - 1; // -1..1
+      const y = cy + t * R * 0.78;
 
-    const R = Math.min(w, h) * 0.47;
-
-    // ---- Paralelos (latitudes) ----
-    // desde -4 a 4, evitando el ecuador duplicado
-    const latSteps = 9;
-    for (let i = 0; i < latSteps; i++){
-      const t = (i / (latSteps - 1)) * 2 - 1; // [-1..1]
-      const bend = Math.sqrt(1 - Math.min(1, t*t)); // 1 en ecuador, 0 en polos
-
-      const yOff = t * R * 0.72;
-      const rx = R * (0.98);                 // radio horizontal casi completo
-      const ry = R * 0.46 * bend + 0.5;      // se aplasta hacia polos
+      const scale = Math.cos(t * Math.PI / 2);
+      const rx = R * scale;
 
       ctx.beginPath();
-      ctx.ellipse(cx, cy + yOff, rx, ry, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx, y, rx, 0.0001, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
 
-    // ---- Meridianos (longitudes) ----
-    // elipses rotadas con “aplastamiento” fijo
-    const lonSteps = 12;
-    for (let i = 0; i < lonSteps; i++){
-      const a = (i / lonSteps) * Math.PI; // 0..π (con π ya se repite)
+    // MERIDIANOS (verticales curvos)
+    const lonCount = 12;
+    for (let i = 0; i < lonCount; i++){
+      const a = (i / lonCount) * Math.PI;
       ctx.beginPath();
-      ctx.ellipse(cx, cy, R * 0.98, R * 0.46, a, 0, Math.PI * 2);
+      ctx.ellipse(cx, cy, R, R * 0.78, a, 0, Math.PI * 2);
       ctx.stroke();
     }
-
-    // ---- Un círculo interior tenue (da look “esfera”) ----
-    // (mismo color, solo otra capa geométrica)
-    ctx.lineWidth = 1.15;
-    ctx.beginPath();
-    ctx.arc(cx, cy, R * 0.84, 0, Math.PI * 2);
-    ctx.stroke();
 
     ctx.restore();
   }
@@ -596,42 +581,6 @@
       ctx.fill();
     }
     ctx.globalAlpha = 1;
-  }
-
-  function drawRectMap(ctx, mapW, mapH, tokens, rand, showOutline, outlineW, conLineW, nodeR){
-    ctx.save();
-
-    ctx.fillStyle = tokens.mapBg;
-    ctx.fillRect(0,0,mapW,mapH);
-
-    const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
-    if (z !== 1){
-      ctx.translate(mapW/2, mapH/2);
-      ctx.scale(z, z);
-      ctx.translate(-mapW/2, -mapH/2);
-    }
-
-    if (state.map.showGrid && isGridAllowedForCurrentStyle()){
-      drawGlobeGrid(ctx, mapW, mapH, tokens.gridLine);
-    }
-
-    drawStars(ctx, mapW, mapH, rand, tokens.stars);
-
-    if (state.map.showConstellations) {
-      drawConstellations(ctx, mapW, mapH, rand, tokens.constLine, tokens.constNode, conLineW, nodeR);
-    }
-
-    ctx.restore();
-
-    if (showOutline){
-      ctx.save();
-      ctx.strokeStyle = tokens.posterInk;
-      ctx.lineWidth = outlineW;
-      ctx.globalAlpha = 1;
-      const half = outlineW / 2;
-      ctx.strokeRect(half, half, mapW - outlineW, mapH - outlineW);
-      ctx.restore();
-    }
   }
 
   function drawMap(){
@@ -758,19 +707,11 @@
       return;
     }
 
-    if (st.shape === "rect"){
-      if (insetPad > 0){
-        ctx.save();
-        ctx.translate(insetPad, insetPad);
-        const w = Math.max(1, mapW - insetPad * 2);
-        const h = Math.max(1, mapH - insetPad * 2);
-        drawRectMap(ctx, w, h, tokens, rand, showOutline, outlineW, conLineW, nodeR);
-        ctx.restore();
-      } else {
-        drawRectMap(ctx, mapW, mapH, tokens, rand, showOutline, outlineW, conLineW, nodeR);
-      }
-      return;
-    }
+    // Rect (poster)
+    ctx.save();
+    ctx.fillStyle = tokens.mapBg;
+    ctx.fillRect(0,0,mapW,mapH);
+    ctx.restore();
   }
 
   function renderPosterFont(){
@@ -960,7 +901,7 @@
     $section.appendChild(t);
     $section.appendChild(s);
 
-    // --- Grupo 1: Aleatorio + estilos ---
+    // Grupo 1: Aleatorio + estilos
     const group1 = document.createElement("div");
     group1.className = "groupBlock";
 
@@ -1001,13 +942,10 @@
         state.map.posterMarginEnabled = !marco ? pickBool() : false;
       }
 
-      // ✅ Defaults de contorno por estilo
       if (state.map.styleId === "classic") state.map.mapCircleMarginEnabled = true;
       else if (state.map.styleId === "romantico") state.map.mapCircleMarginEnabled = true;
-      else if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
       else state.map.mapCircleMarginEnabled = false;
 
-      if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
       if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
 
       state.map.seed = (Math.random() * 1e9) | 0;
@@ -1086,7 +1024,7 @@
       if (showOutlinePreview){
         ctx.save();
         ctx.strokeStyle = tokens.posterInk;
-        ctx.lineWidth = 2;     // ✅ más fino
+        ctx.lineWidth = 2;
         ctx.globalAlpha = 1;
 
         if (st.shape === "circle"){
@@ -1131,7 +1069,6 @@
 
         if (st.id === "classic") state.map.mapCircleMarginEnabled = true;
         else if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;
-        else if (st.id === "moderno") state.map.mapCircleMarginEnabled = false;
         else state.map.mapCircleMarginEnabled = false;
 
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
@@ -1150,7 +1087,7 @@
     group1.appendChild(styleRow);
     $section.appendChild(group1);
 
-    // --- Grupo 2: Color mapa ---
+    // Grupo 2: Color mapa
     const group2 = document.createElement("div");
     group2.className = "groupBlock";
 
@@ -1186,7 +1123,7 @@
     group2.appendChild(colorRow);
     $section.appendChild(group2);
 
-    // --- Grupo 3: Fondo ---
+    // Grupo 3: Fondo
     const group3 = document.createElement("div");
     group3.className = "groupBlock";
 
@@ -1240,7 +1177,7 @@
     group3.appendChild(bgRow);
     $section.appendChild(group3);
 
-    // --- Grupo 4: toggles ---
+    // Grupo 4: toggles (orden)
     const group4 = document.createElement("div");
     group4.className = "groupBlock";
 
@@ -1249,9 +1186,6 @@
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
     }
-
-    const stack = document.createElement("div");
-    stack.className = "toggleStack";
 
     if (showDecor){
       const frameRow = document.createElement("div");
@@ -1263,7 +1197,7 @@
         renderPosterAndMap();
         renderAll();
       }));
-      stack.appendChild(frameRow);
+      group4.appendChild(frameRow);
 
       if (state.map.posterFrameEnabled){
         const frameSizeRow = document.createElement("div");
@@ -1282,7 +1216,7 @@
           renderAll();
         };
         frameSizeRow.appendChild(frameRange);
-        stack.appendChild(frameSizeRow);
+        group4.appendChild(frameSizeRow);
       }
 
       const marginRow = document.createElement("div");
@@ -1293,7 +1227,7 @@
         renderPosterAndMap();
         renderAll();
       }));
-      stack.appendChild(marginRow);
+      group4.appendChild(marginRow);
     }
 
     if (mapOutlineAllowed()){
@@ -1306,7 +1240,7 @@
         drawMap();
         renderAll();
       }));
-      stack.appendChild(outlineRow);
+      group4.appendChild(outlineRow);
     }
 
     const conRow = document.createElement("div");
@@ -1317,7 +1251,7 @@
       drawMap();
       renderAll();
     }));
-    stack.appendChild(conRow);
+    group4.appendChild(conRow);
 
     if (state.map.showConstellations){
       const csRow = document.createElement("div");
@@ -1331,7 +1265,7 @@
       csRange.value = String(state.map.constellationSize);
       csRange.oninput = () => { state.map.constellationSize = Number(csRange.value); drawMap(); };
       csRow.appendChild(csRange);
-      stack.appendChild(csRow);
+      group4.appendChild(csRow);
     }
 
     const allowGrid = isGridAllowedForCurrentStyle();
@@ -1345,7 +1279,7 @@
         drawMap();
         renderAll();
       }));
-      stack.appendChild(gridRow);
+      group4.appendChild(gridRow);
     }
 
     const seedRow = document.createElement("div");
@@ -1357,7 +1291,7 @@
     seedBtn.textContent = "Generar nuevo cielo";
     seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
-    stack.appendChild(seedRow);
+    group4.appendChild(seedRow);
 
     const mapZoomRow = document.createElement("div");
     mapZoomRow.className = "formRow";
@@ -1373,9 +1307,8 @@
       drawMap();
     };
     mapZoomRow.appendChild(mapZoomRange);
-    stack.appendChild(mapZoomRow);
+    group4.appendChild(mapZoomRow);
 
-    group4.appendChild(stack);
     $section.appendChild(group4);
 
     const btns = document.createElement("div");
@@ -1613,61 +1546,22 @@
     updatePosterFrameInsetPx();
     syncOutlineThickness();
 
-    const st = getStyleDef();
-    const decorAllowed = (st.id !== "poster");
-
-    const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
-    const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
-
-    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
-    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H));
-
-    const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
-    const frameX = Math.round(framePx * (W / POSTER_W));
-    const frameY = Math.round(framePx * (H / POSTER_H));
-
+    // Fondo
     ctx.fillStyle = tokens.posterBg;
     ctx.fillRect(0, 0, W, H);
 
-    if (frameOn){
-      ctx.fillStyle = tokens.posterInk;
-      ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
-    }
-
-    const innerX = edgeFrameX + frameX;
-    const innerY = edgeFrameY + frameY;
-
-    ctx.fillStyle = tokens.posterBg;
-    ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
-
-    if (marginOn){
-      const thick = DEFAULT_POSTER_MARGIN_THICKNESS;
-      const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
-      ctx.save();
-      ctx.strokeStyle = rgbaFromHex(tokens.posterInk, 1);
-      ctx.lineWidth = thickScaled;
-      const half = thickScaled / 2;
-      ctx.strokeRect(
-        edgeMarginX + half,
-        edgeMarginY + half,
-        W - (edgeMarginX * 2) - thickScaled,
-        H - (edgeMarginY * 2) - thickScaled
-      );
-      ctx.restore();
-    }
-
+    // Dibuja el canvas del mapa tal cual
     const sx = W / POSTER_W;
     const sy = H / POSTER_H;
 
     const mapW = Math.round(780 * sx);
     const mapH = mapW;
-
     const mapX = Math.round((W - mapW) / 2);
-    const mapY = Math.round(innerY + (70 * sy));
+    const mapY = Math.round(70 * sy);
+
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
+    // Texto simple (centrado como antes)
     const fontFamily = state.text.fontFamily;
     ctx.fillStyle = tokens.posterInk;
 
@@ -1817,6 +1711,7 @@
   // Init
   updateSeedFromDateTime();
 
+  // ✅ Moderno por default sin contorno
   if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
   if (state.map.styleId === "poster") state.map.mapCircleMarginEnabled = false;
 

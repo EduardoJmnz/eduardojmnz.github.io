@@ -19,10 +19,8 @@
       --headerH: 66px;
       --editorW: 420px;
 
-      /* ✅ Preview fijo (desktop) */
       --previewZoom: 0.75;
 
-      /* ✅ Tamaño real del poster para calcular stage */
       --posterW: 900px;
       --posterH: 1200px;
     }
@@ -36,10 +34,8 @@
       color:var(--text);
     }
 
-    /* Desktop: sin scroll del body */
     body{ overflow:hidden; }
 
-    /* ✅ Scroll invisible (pero funcional) */
     .noScrollBar{
       scrollbar-width: none;
       -ms-overflow-style: none;
@@ -120,7 +116,6 @@
       overflow:auto;
       padding: 16px;
 
-      /* ✅ Desktop centrado */
       display:flex;
       align-items:flex-start;
       justify-content:center;
@@ -134,7 +129,6 @@
       overflow:hidden;
     }
 
-    /* ✅ Stage = tamaño REAL escalado */
     .previewStage{
       position: relative;
       width: calc(var(--posterW) * var(--previewZoom));
@@ -142,12 +136,10 @@
       overflow: hidden;
       transform-origin: top left;
 
-      /* ✅ Halo/sombra blanca tenue alrededor (como pediste) */
-      filter: drop-shadow(0 0 34px rgba(255,255,255,.10))
-              drop-shadow(0 0 10px rgba(255,255,255,.08));
+      /* ✅ halo tenue blanco alrededor del preview */
+      filter: drop-shadow(0 0 18px rgba(255,255,255,.10)) drop-shadow(0 0 2px rgba(255,255,255,.10));
     }
 
-    /* ✅ Elemento real 900×1200, ABSOLUTO y escalado */
     .previewScale{
       position:absolute;
       top:0;
@@ -282,12 +274,12 @@
       overflow:hidden;
     }
 
-    /* ✅ Tabs */
     .sheetTabs{
       display:grid;
       grid-template-columns: repeat(3, 1fr);
       padding: 12px 12px 10px 12px;
       align-items: end;
+      border-bottom: 1px solid rgba(233,238,252,.08);
     }
 
     .sheetTab{
@@ -296,7 +288,10 @@
       color: rgba(233,238,252,.50);
       font-weight: 400;
       font-size: 13px;
-      padding: 12px 0 20px 0; /* ✅ más espacio con la barra */
+
+      /* ✅ más aire para que no se vea amontonado */
+      padding: 12px 0 18px 0;
+
       cursor:pointer;
       position: relative;
       letter-spacing: .2px;
@@ -311,17 +306,19 @@
       font-weight: 800;
     }
 
-    /* ✅ línea activa fina */
     .sheetTab.active::after{
       content:"";
       position:absolute;
-      left: 10%;
-      right: 10%;
+      left: 14%;
+      right: 14%;
       bottom: 6px;
+
+      /* ✅ más fina */
       height: 4px;
+
       background: var(--accentSolid);
       border-radius: 999px;
-      box-shadow: 0 0 16px rgba(124,255,250,.22);
+      box-shadow: 0 0 18px rgba(124,255,250,.22);
     }
 
     .sheetBody{
@@ -334,21 +331,15 @@
     .title{ font-weight:800; margin-bottom:4px; }
     .sub{ font-size:12px; color:var(--muted); margin-bottom:12px; }
 
-    /* ✅ espaciado entre grupos */
-    .groupBlock{ margin-top: 18px; }
-    .groupBlock:first-child{ margin-top: 0; }
-
     .rowToggle{
       display:flex; justify-content:space-between; align-items:center;
-      padding:12px 12px;
+      padding:10px 10px;
       border:1px solid var(--stroke);
       border-radius:12px;
       background: rgba(255,255,255,.02);
       gap: 12px;
+      margin-bottom: 12px; /* ✅ separa toggles */
     }
-
-    /* ✅ más aire entre toggles */
-    .toggleStack{ display:flex; flex-direction:column; gap: 14px; margin-top: 16px; }
 
     .formRow{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
     .label{ font-size:12px; color:var(--muted); }
@@ -495,13 +486,18 @@
       opacity: .92;
     }
 
-    /* ✅ Swatches: 5 por fila */
+    /* ✅ Group spacing (secciones) */
+    .groupBlock{
+      margin-top: 18px;
+      padding-top: 6px;
+    }
+
+    /* ✅ Swatches (5 por fila) */
     .swatchRow{
       display:grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 10px;
+      gap: 12px;
       margin-top: 10px;
-      align-items:start;
     }
 
     .swatchTile{
@@ -510,40 +506,26 @@
       text-align:center;
     }
     .swatchCircle{
-      width: 44px;
-      height: 44px;
+      width: 34px;
+      height: 34px;
       border-radius: 999px;
       margin: 0 auto;
-      border: 2px solid rgba(0,0,0,0);
-      background: rgba(0,0,0,.18);
-      box-shadow: 0 10px 24px rgba(0,0,0,.28);
       position: relative;
-      overflow:hidden;
+      border: 1px solid rgba(233,238,252,.14);
+      background: rgba(0,0,0,.18);
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
     .swatchTile.active .swatchCircle{
       border-color: rgba(255,210,90,.95);
-      box-shadow: 0 0 0 2px rgba(255,210,90,.25), 0 10px 24px rgba(0,0,0,.28);
+      box-shadow: 0 0 0 2px rgba(255,210,90,.20), 0 10px 18px rgba(0,0,0,.25);
     }
-
-    /* ⭐ Estrella 4 puntas (reemplaza el círculo interno) */
     .swatchStar{
-      position:absolute;
-      left:50%;
-      top:50%;
-      transform: translate(-50%,-50%);
-      width: 16px;
-      height: 16px;
-      background: rgba(255,255,255,.9);
-      -webkit-clip-path: polygon(
-        50% 0%,
-        62% 38%,
-        100% 50%,
-        62% 62%,
-        50% 100%,
-        38% 62%,
-        0% 50%,
-        38% 38%
-      );
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
       clip-path: polygon(
         50% 0%,
         62% 38%,
@@ -554,16 +536,13 @@
         0% 50%,
         38% 38%
       );
-      box-shadow: 0 0 14px rgba(255,255,255,.18);
-      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 0 10px rgba(255,255,255,.18);
     }
-
     .swatchName{
       margin-top: 8px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 800;
-      color: var(--text);
-      opacity: .92;
+      color: rgba(233,238,252,.88);
       line-height: 1.1;
     }
 
@@ -605,13 +584,15 @@
       }
 
       .sheetTabs{ padding: 12px 12px 10px 12px; }
-      .sheetTab{ font-size: 13px; padding: 12px 0 20px 0; }
+      .sheetTab{ font-size: 13px; padding: 12px 0 18px 0; }
       .sheetTab.active::after{ height: 4px; bottom: 6px; }
 
       .sheetBody{
         padding: 12px;
         overflow: visible;
       }
+
+      .swatchRow{ grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
       :root{ --previewZoom: 0.45; }
     }

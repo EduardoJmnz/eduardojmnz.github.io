@@ -19,7 +19,6 @@
       --headerH: 66px;
       --editorW: 420px;
 
-      /* Mobile bottom sheet height */
       --sheetH: 56vh;
       --sheetMinH: 44vh;
       --sheetMaxH: 76vh;
@@ -32,10 +31,11 @@
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
       background:var(--bg);
       color:var(--text);
-      overflow:hidden;
     }
 
-    /* App layout */
+    /* ✅ En desktop seguimos evitando scroll del body porque el preview/editor manejan overflow */
+    body{ overflow:hidden; }
+
     #app{
       height:100%;
       display:grid;
@@ -56,6 +56,9 @@
       border-bottom: 1px solid var(--stroke);
       background: linear-gradient(180deg, rgba(15,18,26,.85), rgba(12,15,21,.65));
       backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 80;
     }
 
     .brand{
@@ -113,7 +116,7 @@
       max-width: 980px;
       display:flex;
       align-items:flex-start;
-      justify-content:center;
+      justify-content:center; /* ✅ centrado real */
       position:relative;
       padding-bottom: 12px;
     }
@@ -123,16 +126,15 @@
       will-change: transform;
     }
 
+    /* ✅ Zoom en overlay: no empuja el poster */
     .zoomControls{
-      position: sticky;
-      top: 12px;
+      position:absolute;
       left: 12px;
-      align-self: flex-start;
+      top: 12px;
       display:flex;
       gap:10px;
       z-index: 20;
       align-items:center;
-      margin-right: 12px;
     }
 
     .zoomBtn{
@@ -176,7 +178,6 @@
       --mapW: 780px;
       --mapH: 780px;
 
-      /* Text bottom spacing controlled by JS */
       --bottomTextBottom: 100px;
     }
 
@@ -270,7 +271,7 @@
     }
     .poster.rectStyle .metaCol{ align-items:center; text-align:center; }
 
-    /* Editor (Desktop: card/modal style) */
+    /* Editor (Desktop) */
     .editorDock{
       grid-area: editor;
       padding: 16px 16px 16px 0;
@@ -289,8 +290,8 @@
     }
 
     .sheetTop{
-      padding: 14px 14px 10px 14px;
-      border-bottom: 1px solid var(--stroke);
+      padding: 14px 14px 6px 14px;
+      border-bottom: none;
     }
 
     .sheetTitle{
@@ -301,13 +302,13 @@
       text-align:center;
     }
 
-    /* Tabs centered + thick underline */
     .sheetTabs{
-      display:flex;
-      justify-content:center;
-      gap: 28px;
-      padding: 14px 14px 16px 14px;
-      border-bottom: 1px solid var(--stroke);
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      padding: 10px 10px 8px 10px;
+      border-bottom: none;
+      align-items: end;
     }
 
     .sheetTab{
@@ -316,12 +317,13 @@
       color: rgba(233,238,252,.50);
       font-weight: 950;
       font-size: 13px;
-      padding: 8px 0;
+      padding: 10px 0 14px 0;
       cursor:pointer;
       position: relative;
       letter-spacing: .2px;
       -webkit-tap-highlight-color: transparent;
       text-align:center;
+      width: 100%;
     }
 
     .sheetTab .stepNum{
@@ -338,10 +340,10 @@
     .sheetTab.active::after{
       content:"";
       position:absolute;
-      left:-8px;
-      right:-8px;
-      bottom:-14px;
-      height: 6px;              /* ✅ mucho más grande */
+      left: 0;
+      right: 0;
+      bottom: 2px;
+      height: 7px;
       background: var(--accentSolid);
       border-radius: 999px;
       box-shadow: 0 0 22px rgba(124,255,250,.28);
@@ -353,10 +355,10 @@
     }
 
     .card{
-      border:1px solid var(--stroke);
-      border-radius:16px;
-      padding:14px;
-      background: rgba(255,255,255,.02);
+      border:0;
+      border-radius:0;
+      padding:0;
+      background: transparent;
     }
 
     .title{ font-weight:800; margin-bottom:4px; }
@@ -518,100 +520,59 @@
       opacity: .92;
     }
 
-    /* MOBILE: header + preview; bottom sheet fixed */
+    /* ✅ MOBILE: body scroll, modal no fijo, todo en una columna */
     @media (max-width: 980px){
-      html,body{ overflow:hidden; }
+      body{ overflow:auto; } /* ✅ scrolly en toda la página */
 
       #app{
+        height: auto; /* ✅ deja crecer */
+        min-height: 100vh;
         grid-template-columns: 1fr;
-        grid-template-rows: var(--headerH) 1fr;
+        grid-template-rows: var(--headerH) auto auto;
         grid-template-areas:
           "header"
-          "preview";
-      }
-
-      .editorDock{
-        display:none;
+          "preview"
+          "editor";
       }
 
       .previewArea{
+        overflow: visible;        /* ✅ ya no scrollea solo el preview */
         padding: 12px;
-        padding-bottom: calc(var(--sheetH) + env(safe-area-inset-bottom, 0px) + 20px);
       }
 
-      .zoomControls{
-        top: 10px;
-        margin-right: 10px;
-      }
-    }
-
-    /* Bottom sheet (mobile) */
-    .mobileSheet{
-      display:none;
-    }
-
-    @media (max-width: 980px){
-      .mobileSheet{
-        display:block;
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: var(--sheetH);
-        max-height: var(--sheetMaxH);
-        min-height: var(--sheetMinH);
-        background: linear-gradient(180deg, rgba(15,18,26,.95), rgba(12,15,21,.92));
-        border-top: 1px solid var(--stroke);
-        border-left: 1px solid var(--stroke);
-        border-right: 1px solid var(--stroke);
-        border-top-left-radius: 22px;
-        border-top-right-radius: 22px;
-        box-shadow: 0 -18px 70px rgba(0,0,0,.55);
-        overflow:hidden;
-        z-index: 50;
-        padding-bottom: env(safe-area-inset-bottom, 0px);
+      .editorDock{
+        display:block;            /* ✅ editor debajo, no oculto */
+        padding: 0 12px 18px 12px;
+        overflow: visible;
       }
 
-      .mobileGrabber{
-        height: 20px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      }
-      .mobileGrabber::after{
-        content:"";
-        width: 44px;
-        height: 5px;
-        border-radius: 999px;
-        background: rgba(233,238,252,.18);
-        border: 1px solid rgba(233,238,252,.10);
+      .sheet{
+        height: auto;             /* ✅ sheet crece */
+        border-radius: 22px;
       }
 
-      .mobileSheet .sheet{
-        border: 0;
-        border-radius: 0;
-        box-shadow: none;
-        height: calc(100% - 20px);
+      .sheetBody{
+        overflow: visible;        /* ✅ no scroll interno del modal */
       }
+
+      /* ✅ ocultamos el sheet “mobile fijo” porque ya usamos el editor normal abajo */
+      .mobileSheet{ display:none !important; }
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <!-- HEADER -->
     <header class="topbar">
       <div class="brand">
         <div class="dot"></div>
         <div class="brandText">
           <div class="brandTitle">Sky Art Creator</div>
-          <div class="brandSub">v2.100126.stepsTabs</div>
+          <div class="brandSub">v2.100126.mobileScroll</div>
         </div>
       </div>
-
       <div class="topbarRight">© 2026</div>
     </header>
 
-    <!-- PREVIEW -->
     <main class="previewArea">
       <div class="previewWrap">
         <div class="zoomControls">
@@ -645,7 +606,6 @@
       </div>
     </main>
 
-    <!-- DESKTOP EDITOR -->
     <aside class="editorDock">
       <div class="sheet">
         <div class="sheetTop">
@@ -657,20 +617,6 @@
         </div>
       </div>
     </aside>
-  </div>
-
-  <!-- MOBILE BOTTOM SHEET -->
-  <div class="mobileSheet" id="mobileSheet">
-    <div class="mobileGrabber"></div>
-    <div class="sheet">
-      <div class="sheetTop">
-        <div class="sheetTitle">Personalización</div>
-      </div>
-      <div class="sheetTabs" id="tabsMobile"></div>
-      <div class="sheetBody">
-        <div class="card" id="sectionContainerMobile"></div>
-      </div>
-    </div>
   </div>
 
   <script src="./app.js"></script>

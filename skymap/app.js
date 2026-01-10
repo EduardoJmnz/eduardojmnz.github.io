@@ -36,8 +36,8 @@
       colorTheme: "mono",
       mapZoom: 1.0,
 
-      // ✅ default: Blanco
-      backgroundMode: "white",
+      // ✅ por default: mismo color que el mapa estelar
+      backgroundMode: "match",
 
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
@@ -47,7 +47,8 @@
       posterMarginThickness: 2,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
-      mapCircleMarginEnabled: false,
+      // ✅ por default: contorno activo (excepto estilo poster)
+      mapCircleMarginEnabled: true,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: 2,
 
@@ -209,26 +210,22 @@
   }
 
   function isWhiteBackgroundMode(){
-    // ✅ en neon nunca existe "white"
     if (isNeonTheme()) return false;
     return state.map.backgroundMode === "white";
   }
 
   function mapOutlineAllowed(){
-    // ✅ en fondo blanco NO hay contorno, y en estilo poster tampoco
-    // ✅ neon: sí permitido
+    // ✅ fondo blanco: no; estilo poster: no
     return !isWhiteBackgroundMode() && !isPosterStyle();
   }
 
-  // ✅ Tokens de color finales
   function computeRenderTokens(){
     const th = colorsFor(state.map.colorTheme);
 
-    // ✅ NEON: todo (mapa, constelaciones, retícula, contorno, textos, marco y margen)
-    // del color seleccionado + fondo negro
+    // ✅ NEON: todo del color seleccionado, fondo negro
     if (isNeonTheme()){
-      const neon = th.star;             // color neón
-      const bg = "#000000";             // fondo negro
+      const neon = th.star;
+      const bg = "#000000";
       return {
         posterBg: bg,
         posterInk: neon,
@@ -246,10 +243,6 @@
     }
 
     if (isWhiteBackgroundMode()){
-      // Fondo blanco:
-      // - Poster bg = blanco
-      // - Poster “tinta” (texto, marco, margen) = th.bg
-      // - Mapa: bg = th.bg, estrellas = th.star (color del tema)
       return {
         posterBg: "#FFFFFF",
         posterInk: th.bg,
@@ -266,7 +259,6 @@
       };
     }
 
-    // Fondo igual al mapa estelar (todo blanco sobre bg del tema)
     return {
       posterBg: th.bg,
       posterInk: "#FFFFFF",
@@ -284,7 +276,7 @@
   }
 
   function syncOutlineThickness(){
-    // contorno del mapa = grosor del margen del póster
+    // ✅ contorno del mapa = grosor del margen del póster (mismo valor)
     state.map.mapCircleMarginThickness = state.map.posterMarginThickness;
   }
 
@@ -367,7 +359,7 @@
     enforceDecorRules();
     syncOutlineThickness();
 
-    // ✅ si fondo blanco => contorno apagado forzado
+    // ✅ si fondo blanco => contorno apagado
     if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
 
     const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
@@ -379,11 +371,10 @@
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
-    // Fondo general + “tinta”
     $poster.style.background = tokens.posterBg;
     $poster.style.color = tokens.posterInk;
 
-    // ---------- MARCO (ÁREA) ----------
+    // MARCO (ÁREA)
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = tokens.posterInk;
@@ -394,12 +385,12 @@
       $posterFrameArea.style.inset = `${frameEdge}px`;
     }
 
-    // ---------- PAPEL (ÁREA INTERIOR) ----------
+    // PAPEL INTERIOR
     const innerInset = frameEdge + framePx;
     $posterPaper.style.background = tokens.posterBg;
     $posterPaper.style.inset = `${innerInset}px`;
 
-    // ---------- MARGEN (LÍNEA) ----------
+    // MARGEN (LÍNEA)
     const thickness = clamp(
       state.map.posterMarginThickness || 2,
       1,
@@ -411,7 +402,6 @@
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(tokens.posterInk, 1) : "transparent";
 
-    // Bottom spacing
     const baseBottom = isPosterStyle() ? 60 : 100;
     const safeBottomWhenMarginOn = marginEdge + thickness + 18;
     const finalBottom = marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom;
@@ -433,6 +423,9 @@
       $poster.style.setProperty("--mapW", "780px");
       $poster.style.setProperty("--mapH", "780px");
     }
+
+    // ✅ estilo poster no puede llevar contorno
+    if (st.id === "poster") state.map.mapCircleMarginEnabled = false;
   }
 
   function applyPosterPaddingLayout(){
@@ -466,7 +459,7 @@
     for (let i = 0; i <= steps; i++){
       const t = (i / steps) * Math.PI * 2;
       const x = 16 * Math.pow(Math.sin(t), 3);
-      const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(3*t) - Math.cos(4*t);
       const px = cx + x * s * 1.10;
       const py = cy - y * s * 1.15;
       if (i === 0) ctx.moveTo(px, py);
@@ -638,7 +631,9 @@
 
     const outlineEnabled = !!state.map.mapCircleMarginEnabled && mapOutlineAllowed();
     const showOutline = outlineEnabled;
-    const outlineW = clamp(state.map.posterMarginThickness || 2, 1, 10);
+
+    // ✅ contorno EXACTAMENTE del mismo grosor del margen del póster (mismo valor)
+    const outlineW = clamp(state.map.posterMarginThickness || 2, 1, POSTER_LINE_THICK_MAX);
 
     ctx.clearRect(0, 0, mapW, mapH);
 
@@ -769,8 +764,8 @@
   }
 
   function renderPosterAndMap(){
-    // ✅ si es neon, forzamos match (no existe blanco)
     if (isNeonTheme()) state.map.backgroundMode = "match";
+    if (isPosterStyle()) state.map.mapCircleMarginEnabled = false; // ✅ regla poster
 
     const tokens = computeRenderTokens();
 
@@ -905,9 +900,8 @@
 
     const s = document.createElement("div");
     s.className = "sub";
-    s.textContent = "Selecciona un estilo, color y opciones del mapa.";
+    s.textContent = "Selecciona un estilo de poster, los colores y las opcines de personalizacion para tu mapa o genera un aleatorio. ¡Cada mapa es unico y diferente!";
 
-    // ✅ Poster Aleatorio ARRIBA de estilos
     const randomRow = document.createElement("div");
     randomRow.className = "formRow";
     randomRow.classList.add("stackGap");
@@ -925,7 +919,6 @@
       state.map.styleId = pick(MAP_STYLES).id;
       state.map.colorTheme = pick(COLOR_THEMES).id;
 
-      // ✅ neon => sin blanco
       if (isNeonTheme()) state.map.backgroundMode = "match";
 
       const allowG = isGridAllowedForCurrentStyle();
@@ -942,7 +935,6 @@
         const marco = pickBool();
         state.map.posterFrameEnabled = marco;
         if (marco){
-          // ✅ tamaño fijo max (sin slider)
           state.map.posterFramePct = POSTER_FRAME_PCT_MAX;
           updatePosterFrameInsetPx();
         }
@@ -951,14 +943,15 @@
         state.map.posterMarginThickness = 2;
       }
 
-      if (state.map.styleId === "romantico") {
-        state.map.mapCircleMarginEnabled = true;
-        state.map.showGrid = false;
-      } else if (state.map.styleId === "poster"){
+      // ✅ por default contorno ON excepto poster
+      if (state.map.styleId === "poster") {
         state.map.mapCircleMarginEnabled = false;
       } else {
-        state.map.mapCircleMarginEnabled = pickBool();
+        state.map.mapCircleMarginEnabled = true;
       }
+
+      if (state.map.styleId === "romantico") state.map.showGrid = false;
+      if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
       state.map.seed = (Math.random() * 1e9) | 0;
 
@@ -976,29 +969,26 @@
     const grid = document.createElement("div");
     grid.className = "styleGrid";
 
-    // ✅ helpers para el selector de fondo (se reconstruye)
     let bgSel = null;
     const rebuildBgOptions = () => {
       if (!bgSel) return;
 
       bgSel.innerHTML = "";
 
-      // ✅ neon: NO muestra blanco
       if (isNeonTheme()){
         state.map.backgroundMode = "match";
         const opt = document.createElement("option");
         opt.value = "match";
-        opt.textContent = getThemeName(); // ej "Neón Azul"
+        opt.textContent = getThemeName();
         bgSel.appendChild(opt);
         bgSel.value = "match";
         bgSel.disabled = true;
         return;
       }
 
-      // normal: match + blanco
       const optMatch = document.createElement("option");
       optMatch.value = "match";
-      optMatch.textContent = getThemeName(); // ej "Mono"
+      optMatch.textContent = getThemeName();
       bgSel.appendChild(optMatch);
 
       const optWhite = document.createElement("option");
@@ -1093,12 +1083,10 @@
           }
         }
 
-        if (st.id === "poster"){
-          state.map.mapCircleMarginEnabled = false;
-        }
+        // ✅ contorno: por default ON, excepto poster
+        state.map.mapCircleMarginEnabled = (st.id !== "poster");
 
         if (st.id === "romantico") state.map.mapCircleMarginEnabled = true;
-
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
         if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
@@ -1112,7 +1100,6 @@
 
     styleRow.appendChild(grid);
 
-    // ✅ Color del Mapa estelar
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
     colorRow.innerHTML = `<div class="label">Color del Mapa estelar</div>`;
@@ -1127,7 +1114,6 @@
     });
     colorSel.value = state.map.colorTheme;
 
-    // ✅ Color de fondo (match/blanco) con reglas neon
     const bgRow = document.createElement("div");
     bgRow.className = "formRow";
     bgRow.classList.add("stackGap");
@@ -1140,9 +1126,7 @@
 
     bgSel.onchange = () => {
       state.map.backgroundMode = bgSel.value;
-
       if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
-
       renderPosterAndMap();
       renderAll();
     };
@@ -1150,10 +1134,7 @@
 
     colorSel.onchange = () => {
       state.map.colorTheme = colorSel.value;
-
-      // ✅ neon => fuerza match y quita blanco (UI)
       if (isNeonTheme()) state.map.backgroundMode = "match";
-
       rebuildBgOptions();
       renderPosterAndMap();
       renderAll();
@@ -1188,8 +1169,6 @@
         state.map.posterFrameEnabled = val;
         if (val) {
           state.map.posterMarginEnabled = false;
-
-          // ✅ tamaño fijo máximo (sin slider)
           state.map.posterFramePct = POSTER_FRAME_PCT_MAX;
           updatePosterFrameInsetPx();
         }
@@ -1221,6 +1200,7 @@
         const v = Number(marginThick.value);
         state.map.posterMarginThickness = v;
         syncOutlineThickness();
+        drawMap();             // ✅ basta con redibujar mapa para ver contorno igual
         renderPosterAndMap();
         renderAll();
       };
@@ -1298,8 +1278,6 @@
 
     if (showDecor){
       $section.appendChild(frameRow);
-
-      // ✅ sin slider de tamaño del marco
       if (!state.map.posterFrameEnabled){
         $section.appendChild(marginRow);
         if (state.map.posterMarginEnabled) $section.appendChild(marginThickRow);
@@ -1332,6 +1310,7 @@
     $section.appendChild(btns);
   }
 
+  // --- CONTENT / EXPORT (sin cambios funcionales) ---
   function renderSectionContent(){
     $section.innerHTML = "";
 
@@ -1531,7 +1510,6 @@
     const ctx = out.getContext("2d");
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // ✅ neon => fuerza match
     if (isNeonTheme()) state.map.backgroundMode = "match";
 
     const tokens = computeRenderTokens();
@@ -1554,24 +1532,20 @@
     const frameX = Math.round(framePx * (W / POSTER_W));
     const frameY = Math.round(framePx * (H / POSTER_H));
 
-    // Fondo
     ctx.fillStyle = tokens.posterBg;
     ctx.fillRect(0, 0, W, H);
 
-    // Marco (área)
     if (frameOn){
       ctx.fillStyle = tokens.posterInk;
       ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
     }
 
-    // Papel interior
     const innerX = edgeFrameX + frameX;
     const innerY = edgeFrameY + frameY;
 
     ctx.fillStyle = tokens.posterBg;
     ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
 
-    // Margen (línea)
     if (marginOn){
       const thick = clamp(state.map.posterMarginThickness || 2, 1, state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX);
       const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
@@ -1746,9 +1720,8 @@
 
   // Init
   updateSeedFromDateTime();
-
-  // ✅ si arrancas en neon por error, fuerza match
   if (isNeonTheme()) state.map.backgroundMode = "match";
+  if (isPosterStyle()) state.map.mapCircleMarginEnabled = false;
 
   ensurePosterLayers();
   applyPosterLayoutByStyle();

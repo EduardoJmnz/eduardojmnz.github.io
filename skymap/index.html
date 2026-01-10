@@ -298,33 +298,37 @@
       font-size: 16px;
       letter-spacing: .2px;
       margin: 0;
+      text-align:center;
     }
 
-    .sheetSub{
-      margin-top: 4px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    /* Tabs like your figma: active text + green underline */
+    /* Tabs centered + thick underline */
     .sheetTabs{
       display:flex;
-      gap: 18px;
-      padding: 12px 14px 10px 14px;
+      justify-content:center;
+      gap: 28px;
+      padding: 14px 14px 16px 14px;
       border-bottom: 1px solid var(--stroke);
     }
 
     .sheetTab{
       background: transparent;
       border: 0;
-      color: rgba(233,238,252,.55);
-      font-weight: 900;
+      color: rgba(233,238,252,.50);
+      font-weight: 950;
       font-size: 13px;
       padding: 8px 0;
       cursor:pointer;
       position: relative;
       letter-spacing: .2px;
       -webkit-tap-highlight-color: transparent;
+      text-align:center;
+    }
+
+    .sheetTab .stepNum{
+      display:block;
+      font-size: 12px;
+      opacity: .85;
+      margin-bottom: 2px;
     }
 
     .sheetTab.active{
@@ -334,13 +338,13 @@
     .sheetTab.active::after{
       content:"";
       position:absolute;
-      left:0;
-      right:0;
-      bottom:-10px;
-      height:2px;
+      left:-8px;
+      right:-8px;
+      bottom:-14px;
+      height: 6px;              /* ✅ mucho más grande */
       background: var(--accentSolid);
       border-radius: 999px;
-      box-shadow: 0 0 18px rgba(124,255,250,.25);
+      box-shadow: 0 0 22px rgba(124,255,250,.28);
     }
 
     .sheetBody{
@@ -527,12 +531,11 @@
       }
 
       .editorDock{
-        display:none; /* ✅ en mobile usamos bottom sheet fijo */
+        display:none;
       }
 
       .previewArea{
         padding: 12px;
-        /* ✅ deja espacio para que el sheet no tape el preview */
         padding-bottom: calc(var(--sheetH) + env(safe-area-inset-bottom, 0px) + 20px);
       }
 
@@ -601,7 +604,7 @@
         <div class="dot"></div>
         <div class="brandText">
           <div class="brandTitle">Sky Art Creator</div>
-          <div class="brandSub">v2.100126.mobileSheet</div>
+          <div class="brandSub">v2.100126.stepsTabs</div>
         </div>
       </div>
 
@@ -642,12 +645,11 @@
       </div>
     </main>
 
-    <!-- DESKTOP EDITOR (modal look) -->
+    <!-- DESKTOP EDITOR -->
     <aside class="editorDock">
       <div class="sheet">
         <div class="sheetTop">
           <div class="sheetTitle">Personalización</div>
-          <div class="sheetSub">Ajusta diseño, contenido y exportación.</div>
         </div>
         <div class="sheetTabs" id="tabs"></div>
         <div class="sheetBody">
@@ -663,7 +665,6 @@
     <div class="sheet">
       <div class="sheetTop">
         <div class="sheetTitle">Personalización</div>
-        <div class="sheetSub">Ajusta diseño, contenido y exportación.</div>
       </div>
       <div class="sheetTabs" id="tabsMobile"></div>
       <div class="sheetBody">

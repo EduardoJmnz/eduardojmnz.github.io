@@ -18,10 +18,6 @@
 
       --headerH: 66px;
       --editorW: 420px;
-
-      --sheetH: 56vh;
-      --sheetMinH: 44vh;
-      --sheetMaxH: 76vh;
     }
 
     *{ box-sizing:border-box; }
@@ -33,8 +29,18 @@
       color:var(--text);
     }
 
-    /* ✅ En desktop seguimos evitando scroll del body porque el preview/editor manejan overflow */
+    /* ✅ Desktop: sin scroll del body */
     body{ overflow:hidden; }
+
+    /* ✅ Scroll invisible (pero funcional) */
+    .noScrollBar{
+      scrollbar-width: none;         /* Firefox */
+      -ms-overflow-style: none;      /* IE/Edge legacy */
+    }
+    .noScrollBar::-webkit-scrollbar{ /* WebKit */
+      width: 0;
+      height: 0;
+    }
 
     #app{
       height:100%;
@@ -116,9 +122,10 @@
       max-width: 980px;
       display:flex;
       align-items:flex-start;
-      justify-content:center; /* ✅ centrado real */
+      justify-content:center;
       position:relative;
       padding-bottom: 12px;
+      overflow:hidden; /* ✅ evita “brinco” horizontal en móvil */
     }
 
     .previewScale{
@@ -126,7 +133,7 @@
       will-change: transform;
     }
 
-    /* ✅ Zoom en overlay: no empuja el poster */
+    /* Zoom en overlay */
     .zoomControls{
       position:absolute;
       left: 12px;
@@ -135,6 +142,7 @@
       gap:10px;
       z-index: 20;
       align-items:center;
+      pointer-events:auto;
     }
 
     .zoomBtn{
@@ -291,7 +299,6 @@
 
     .sheetTop{
       padding: 14px 14px 6px 14px;
-      border-bottom: none;
     }
 
     .sheetTitle{
@@ -307,15 +314,15 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 0;
       padding: 10px 10px 8px 10px;
-      border-bottom: none;
       align-items: end;
     }
 
+    /* ✅ Tabs: 1) en la MISMA línea + tipografía regular */
     .sheetTab{
       background: transparent;
       border: 0;
       color: rgba(233,238,252,.50);
-      font-weight: 950;
+      font-weight: 400;          /* ✅ regular */
       font-size: 13px;
       padding: 10px 0 14px 0;
       cursor:pointer;
@@ -324,17 +331,12 @@
       -webkit-tap-highlight-color: transparent;
       text-align:center;
       width: 100%;
-    }
-
-    .sheetTab .stepNum{
-      display:block;
-      font-size: 12px;
-      opacity: .85;
-      margin-bottom: 2px;
+      line-height: 1.1;
     }
 
     .sheetTab.active{
       color: var(--text);
+      font-weight: 400;          /* ✅ regular también activo */
     }
 
     .sheetTab.active::after{
@@ -520,12 +522,12 @@
       opacity: .92;
     }
 
-    /* ✅ MOBILE: body scroll, modal no fijo, todo en una columna */
+    /* ✅ MOBILE: body scroll + todo en una columna + tamaños más compactos */
     @media (max-width: 980px){
-      body{ overflow:auto; } /* ✅ scrolly en toda la página */
+      body{ overflow:auto; } /* scrolly de toda la página */
 
       #app{
-        height: auto; /* ✅ deja crecer */
+        height: auto;
         min-height: 100vh;
         grid-template-columns: 1fr;
         grid-template-rows: var(--headerH) auto auto;
@@ -536,27 +538,73 @@
       }
 
       .previewArea{
-        overflow: visible;        /* ✅ ya no scrollea solo el preview */
+        overflow: visible;
         padding: 12px;
       }
 
       .editorDock{
-        display:block;            /* ✅ editor debajo, no oculto */
+        display:block;
         padding: 0 12px 18px 12px;
         overflow: visible;
       }
 
       .sheet{
-        height: auto;             /* ✅ sheet crece */
-        border-radius: 22px;
+        height: auto;
+        border-radius: 20px;
+      }
+
+      .sheetTop{
+        padding: 12px 12px 4px 12px;
+      }
+
+      .sheetTitle{
+        font-size: 15px;
+      }
+
+      .sheetTabs{
+        padding: 8px 8px 6px 8px;
+      }
+
+      .sheetTab{
+        font-size: 12.5px;
+        padding: 10px 0 12px 0;
+      }
+
+      .sheetTab.active::after{
+        height: 6px;
       }
 
       .sheetBody{
-        overflow: visible;        /* ✅ no scroll interno del modal */
+        padding: 12px;
+        overflow: visible; /* ✅ sin scroll interno */
       }
 
-      /* ✅ ocultamos el sheet “mobile fijo” porque ya usamos el editor normal abajo */
-      .mobileSheet{ display:none !important; }
+      .fieldHeader .fieldLabel{
+        font-size: 15px;
+      }
+
+      .fieldInput{
+        font-size: 15px;
+        padding: 13px 12px;
+      }
+
+      .zoomControls{
+        left: 10px;
+        top: 10px;
+        gap: 8px;
+      }
+
+      .zoomBtn{
+        width:40px;
+        height:40px;
+        border-radius: 12px;
+      }
+
+      .zoomLabel{
+        min-height:40px;
+        padding: 9px 10px;
+        border-radius: 12px;
+      }
     }
   </style>
 </head>
@@ -567,13 +615,13 @@
         <div class="dot"></div>
         <div class="brandText">
           <div class="brandTitle">Sky Art Creator</div>
-          <div class="brandSub">v2.100126.mobileScroll</div>
+          <div class="brandSub">v2.100126.hideScroll+adaptive</div>
         </div>
       </div>
       <div class="topbarRight">© 2026</div>
     </header>
 
-    <main class="previewArea">
+    <main class="previewArea noScrollBar">
       <div class="previewWrap">
         <div class="zoomControls">
           <button class="zoomBtn" id="zoomOut" title="Zoom out">−</button>
@@ -612,7 +660,7 @@
           <div class="sheetTitle">Personalización</div>
         </div>
         <div class="sheetTabs" id="tabs"></div>
-        <div class="sheetBody">
+        <div class="sheetBody noScrollBar">
           <div class="card" id="sectionContainer"></div>
         </div>
       </div>

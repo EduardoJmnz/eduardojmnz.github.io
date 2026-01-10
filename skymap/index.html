@@ -141,20 +141,10 @@
       height: calc(var(--posterH) * var(--previewZoom));
       overflow: hidden;
       transform-origin: top left;
-    }
 
-    /* ✅ Glow simple para que no se pierda con el fondo */
-    .previewStage::after{
-      content:"";
-      position:absolute;
-      inset: 0;
-      pointer-events:none;
-      border-radius: calc(26px * var(--previewZoom));
-      box-shadow:
-        0 0 0 2px rgba(255,255,255,.07),
-        0 0 26px rgba(255,255,255,.10);
-      opacity: .9;
-      z-index: 20;
+      /* ✅ Halo/sombra blanca tenue alrededor (como pediste) */
+      filter: drop-shadow(0 0 34px rgba(255,255,255,.10))
+              drop-shadow(0 0 10px rgba(255,255,255,.08));
     }
 
     /* ✅ Elemento real 900×1200, ABSOLUTO y escalado */
@@ -167,7 +157,6 @@
       transform-origin: top left;
       will-change: transform;
       transform: scale(var(--previewZoom));
-      z-index: 10;
     }
 
     .poster{
@@ -535,17 +524,40 @@
       border-color: rgba(255,210,90,.95);
       box-shadow: 0 0 0 2px rgba(255,210,90,.25), 0 10px 24px rgba(0,0,0,.28);
     }
-    .swatchDot{
+
+    /* ⭐ Estrella 4 puntas (reemplaza el círculo interno) */
+    .swatchStar{
       position:absolute;
       left:50%;
       top:50%;
       transform: translate(-50%,-50%);
-      width: 12px;
-      height: 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.08);
-      box-shadow: 0 0 12px rgba(255,255,255,.10);
+      width: 16px;
+      height: 16px;
+      background: rgba(255,255,255,.9);
+      -webkit-clip-path: polygon(
+        50% 0%,
+        62% 38%,
+        100% 50%,
+        62% 62%,
+        50% 100%,
+        38% 62%,
+        0% 50%,
+        38% 38%
+      );
+      clip-path: polygon(
+        50% 0%,
+        62% 38%,
+        100% 50%,
+        62% 62%,
+        50% 100%,
+        38% 62%,
+        0% 50%,
+        38% 38%
+      );
+      box-shadow: 0 0 14px rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.10);
     }
+
     .swatchName{
       margin-top: 8px;
       font-size: 12px;

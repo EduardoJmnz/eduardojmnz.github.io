@@ -200,9 +200,6 @@
     state.map.mapCircleMarginThickness = state.map.posterMarginThickness;
   }
 
-  // --------------------------
-  // CAPAS: marco(área) + papel + margen(línea)
-  // --------------------------
   let $posterFrameArea = null;
   let $posterPaper = null;
   let $posterMarginLine = null;
@@ -718,7 +715,6 @@
     });
   }
 
-  // Skeleton previews
   function drawStyleTextSkeleton(ctx, w, h, styleId, color){
     ctx.save();
     ctx.fillStyle = color;
@@ -1595,7 +1591,6 @@
     renderPosterAndMap();
   }
 
-  // Init
   updateSeedFromDateTime();
   ensurePosterLayers();
   applyPosterLayoutByStyle();

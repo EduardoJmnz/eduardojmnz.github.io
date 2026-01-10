@@ -23,7 +23,6 @@
       subtitle: "A moment to remember",
       place: "Mexico City, MX",
       coords: "19.4326, -99.1332",
-      // ✅ default dd.mm.yyyy
       date: "25.12.1995",
       time: "19:30",
       fontKey: "system",
@@ -86,7 +85,6 @@
     { key: "rounded", name: "Rounded (Friendly)", css: "'Trebuchet MS', 'Verdana', system-ui, Arial" },
   ];
 
-  // ✅ eliminado Carbon
   const COLOR_THEMES = [
     { id: "mono",      name: "Mono" },
     { id: "marino",    name: "Marino" },
@@ -141,17 +139,14 @@
 
   function isValidDDMMYYYY(v){
     const s = String(v || "").trim();
-    // dd.mm.yyyy (validación simple)
     if (!/^\d{2}\.\d{2}\.\d{4}$/.test(s)) return false;
     const [dd, mm, yyyy] = s.split(".").map(n => parseInt(n, 10));
     if (!Number.isFinite(dd) || !Number.isFinite(mm) || !Number.isFinite(yyyy)) return false;
     if (yyyy < 1000 || yyyy > 9999) return false;
     if (mm < 1 || mm > 12) return false;
     if (dd < 1 || dd > 31) return false;
-    // checks rápidos por mes (sin bisiesto súper estricto, suficiente para UI)
     const maxByMonth = [31,28,31,30,31,30,31,31,30,31,30,31];
     let max = maxByMonth[mm-1] || 31;
-    // bisiesto básico
     const leap = (yyyy % 4 === 0 && (yyyy % 100 !== 0 || yyyy % 400 === 0));
     if (mm === 2 && leap) max = 29;
     return dd <= max;
@@ -187,15 +182,15 @@
 
   function colorsFor(theme){
     const THEMES = {
-      mono:      { bg: "#0A0B0D", star: "#FFFFFF", line: "rgba(255,255,255,0.16)" },
-      marino:    { bg: "#0B0D12", star: "#FFFFFF", line: "rgba(255,255,255,0.22)" },
-      ice:       { bg: "#071016", star: "#E9F6FF", line: "rgba(233,246,255,0.18)" },
-      warm:      { bg: "#140E0A", star: "#F6E7C9", line: "rgba(246,231,201,0.20)" },
-      forest:    { bg: "#06130E", star: "#EAF7F1", line: "rgba(234,247,241,0.18)" },
-      rose:      { bg: "#16080C", star: "#FFE9EF", line: "rgba(255,233,239,0.18)" },
-      neonBlue:  { bg: "#05050A", star: "#4EA7FF", line: "rgba(78,167,255,0.20)" },
-      neonGreen: { bg: "#05050A", star: "#3CFF9B", line: "rgba(60,255,155,0.20)" },
-      neonRose:  { bg: "#05050A", star: "#FF4FD8", line: "rgba(255,79,216,0.20)" },
+      mono:      { bg: "#0A0B0D", star: "#FFFFFF" },
+      marino:    { bg: "#0B0D12", star: "#FFFFFF" },
+      ice:       { bg: "#071016", star: "#E9F6FF" },
+      warm:      { bg: "#140E0A", star: "#F6E7C9" },
+      forest:    { bg: "#06130E", star: "#EAF7F1" },
+      rose:      { bg: "#16080C", star: "#FFE9EF" },
+      neonBlue:  { bg: "#05050A", star: "#4EA7FF" },
+      neonGreen: { bg: "#05050A", star: "#3CFF9B" },
+      neonRose:  { bg: "#05050A", star: "#FF4FD8" },
     };
     return THEMES[theme] || THEMES.mono;
   }
@@ -248,8 +243,10 @@
         mapBg: bg,
         stars: neon,
 
-        gridLine: rgbaFromHex(neon, 0.35),
-        constLine: rgbaFromHex(neon, 0.55),
+        // ✅ Retícula sin opacidad
+        gridLine: rgbaFromHex(neon, 1.0),
+
+        constLine: rgbaFromHex(neon, 1.0),
         constNode: rgbaFromHex(neon, 1.0),
 
         outline: rgbaFromHex(neon, 1.0),
@@ -265,8 +262,10 @@
         mapBg: th.bg,
         stars: th.star,
 
-        gridLine: "rgba(255,255,255,0.22)",
-        constLine: "rgba(255,255,255,0.22)",
+        // ✅ Retícula sin opacidad (aunque sea "blanca")
+        gridLine: "rgba(255,255,255,1)",
+
+        constLine: "rgba(255,255,255,1)",
         constNode: "#FFFFFF",
         outline: "rgba(255,255,255,1)",
         theme: th,
@@ -280,8 +279,10 @@
       mapBg: th.bg,
       stars: "#FFFFFF",
 
-      gridLine: "rgba(255,255,255,0.22)",
-      constLine: "rgba(255,255,255,0.22)",
+      // ✅ Retícula sin opacidad
+      gridLine: "rgba(255,255,255,1)",
+
+      constLine: "rgba(255,255,255,1)",
       constNode: "#FFFFFF",
       outline: "rgba(255,255,255,1)",
 
@@ -477,39 +478,67 @@
     ctx.closePath();
   }
 
+  // ✅ Retícula como tu imagen:
+  // - proyección "polar" (centro arriba), círculos concéntricos + meridianos
+  // - trazo punteado fino
+  // - SIN opacidad (alpha 1)
   function drawCurvedGrid(ctx, w, h, gridLine){
     ctx.save();
     ctx.strokeStyle = gridLine;
-    ctx.lineWidth = 1.15;
-    ctx.globalAlpha = 0.22;
+    ctx.globalAlpha = 1;
 
-    const meridians = 7;
-    const parallels = 6;
+    // “puntillado” como en la imagen
+    ctx.lineWidth = 1.1;
+    ctx.setLineDash([1, 5]);
+    ctx.lineCap = "round";
 
-    for (let i = 0; i < meridians; i++){
-      const t = i / (meridians - 1);
-      const x = w * (0.12 + t * 0.76);
-      const bend = (Math.abs(t - 0.5) / 0.5);
-      const curve = (1 - bend) * (w * 0.18);
+    const cx = w / 2;
+    const cy = h / 2;
 
+    const R = Math.min(w, h) / 2;
+
+    // Desplazamos el “polo” hacia arriba (como tu imagen)
+    const poleX = cx;
+    const poleY = cy - R * 0.58;
+
+    // Clip al círculo del mapa (ya hay clip externo en circle mode, pero esto ayuda si se llama en rect)
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, R - 2, 0, Math.PI * 2);
+    ctx.clip();
+
+    // Círculos concéntricos (paralelos) alrededor del polo
+    const rings = 10;
+    for (let i = 1; i <= rings; i++){
+      const rr = (R * 1.18) * (i / rings); // un poco mayor para que los arcos llenen el disco
       ctx.beginPath();
-      ctx.moveTo(x, h * 0.06);
-      ctx.quadraticCurveTo(x + curve * (t < 0.5 ? -1 : 1), h * 0.50, x, h * 0.94);
+      ctx.arc(poleX, poleY, rr, 0, Math.PI * 2);
       ctx.stroke();
     }
 
-    for (let j = 0; j < parallels; j++){
-      const t = j / (parallels - 1);
-      const y = h * (0.16 + t * 0.68);
-      const bend = (Math.abs(t - 0.5) / 0.5);
-      const curve = (1 - bend) * (h * 0.16);
+    // Meridianos (rayos desde el polo)
+    const spokes = 18;
+    for (let i = 0; i < spokes; i++){
+      const a = (i / spokes) * Math.PI * 2;
+
+      // línea larga, pero recortada por el clip
+      const x2 = poleX + Math.cos(a) * (R * 2.4);
+      const y2 = poleY + Math.sin(a) * (R * 2.4);
 
       ctx.beginPath();
-      ctx.moveTo(w * 0.06, y);
-      ctx.quadraticCurveTo(w * 0.50, y + curve * (t < 0.5 ? 1 : -1), w * 0.94, y);
+      ctx.moveTo(poleX, poleY);
+      ctx.lineTo(x2, y2);
       ctx.stroke();
     }
 
+    // círculo pequeño del polo (en tu imagen se nota un aro)
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.arc(poleX, poleY, R * 0.12, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore(); // clip
     ctx.restore();
   }
 
@@ -545,12 +574,12 @@
       const my = pts.reduce((s,p)=>s+p.y,0)/pts.length;
       pts.sort((p1,p2)=>Math.atan2(p1.y-my,p1.x-mx)-Math.atan2(p2.y-my,p2.x-mx));
 
-      ctx.globalAlpha = 0.9;
+      ctx.globalAlpha = 1;
       ctx.beginPath();
       pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
       ctx.stroke();
 
-      ctx.globalAlpha = 0.95;
+      ctx.globalAlpha = 1;
       pts.forEach((p) => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, nodeR, 0, Math.PI*2);
@@ -716,6 +745,9 @@
         ctx.scale(z, z);
         ctx.translate(-cx, -cy);
       }
+
+      // (En romántico no metemos retícula por estilo actual; si quieres, la habilitamos)
+      if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawCurvedGrid(ctx, mapW, mapH, tokens.gridLine);
 
       drawStars(ctx, mapW, mapH, rand, tokens.stars);
 
@@ -900,7 +932,7 @@
     ctx.restore();
   }
 
-  function makeSwatchTile({ name, circleBg, dotBg, active, onClick }){
+  function makeSwatchTile({ name, circleBg, starBg, active, onClick }){
     const tile = document.createElement("div");
     tile.className = "swatchTile" + (active ? " active" : "");
 
@@ -908,11 +940,11 @@
     c.className = "swatchCircle";
     c.style.background = circleBg;
 
-    const dot = document.createElement("div");
-    dot.className = "swatchDot";
-    dot.style.background = dotBg;
+    const star = document.createElement("div");
+    star.className = "swatchStar";
+    star.style.background = starBg;
 
-    c.appendChild(dot);
+    c.appendChild(star);
 
     const label = document.createElement("div");
     label.className = "swatchName";
@@ -982,10 +1014,9 @@
 
       state.map.mapCircleMarginEnabled = (state.map.styleId !== "poster");
       if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
+      if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
 
       state.map.seed = (Math.random() * 1e9) | 0;
-
-      if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
 
       renderPosterAndMap();
       renderAll();
@@ -1113,13 +1144,13 @@
     COLOR_THEMES.forEach(th => {
       const c = colorsFor(th.id);
       const circleBg = th.id.startsWith("neon") ? "#000000" : c.bg;
-      const dotBg = c.star;
+      const starBg = c.star;
 
       swatchRow.appendChild(
         makeSwatchTile({
           name: th.name,
           circleBg,
-          dotBg,
+          starBg,
           active: state.map.colorTheme === th.id,
           onClick: () => {
             state.map.colorTheme = th.id;
@@ -1148,13 +1179,13 @@
     {
       const th = colorsFor(state.map.colorTheme);
       const circleBg = isNeonTheme() ? "#000000" : th.bg;
-      const dotBg = isNeonTheme() ? th.star : "#FFFFFF";
+      const starBg = isNeonTheme() ? th.star : "#FFFFFF";
 
       bgSwatches.appendChild(
         makeSwatchTile({
           name: getThemeName(),
           circleBg,
-          dotBg,
+          starBg,
           active: state.map.backgroundMode === "match" || isNeonTheme(),
           onClick: () => {
             state.map.backgroundMode = "match";
@@ -1170,7 +1201,7 @@
         makeSwatchTile({
           name: "Blanco",
           circleBg: "#FFFFFF",
-          dotBg: "rgba(0,0,0,.25)",
+          starBg: "rgba(0,0,0,.25)",
           active: state.map.backgroundMode === "white",
           onClick: () => {
             state.map.backgroundMode = "white";
@@ -1436,7 +1467,6 @@
         const body = document.createElement("div");
         body.className = "fieldBody";
 
-        // ✅ dd.mm.yyyy
         const dateInp = document.createElement("input");
         dateInp.className = "fieldInput";
         dateInp.type = "text";
@@ -1445,19 +1475,16 @@
         dateInp.value = state.text.date || "";
         dateInp.oninput = () => {
           state.text.date = dateInp.value;
-          // recalcula seed siempre
           updateSeedFromDateTime();
           renderPosterText();
           drawMap();
 
-          // feedback visual simple: si inválido, borde rojito
           if (dateInp.value.trim() && !isValidDDMMYYYY(dateInp.value)) {
             dateInp.style.borderColor = "rgba(255,90,90,.55)";
           } else {
             dateInp.style.borderColor = "";
           }
         };
-        // init valid state
         if (dateInp.value.trim() && !isValidDDMMYYYY(dateInp.value)) {
           dateInp.style.borderColor = "rgba(255,90,90,.55)";
         }
@@ -1538,6 +1565,7 @@
   }
 
   function exportPoster(format, sizeKey){
+    // (export igual que tu versión; no lo cambié para no romper flujo)
     const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
     const dpi = state.export.dpi || 300;
 

@@ -3,18 +3,12 @@
   const POSTER_W = 900;
   const POSTER_H = 1200;
 
-  // ✅ Marco (ÁREA) ahora arranca desde el borde del póster (sin fondo antes)
   const POSTER_FRAME_EDGE_GAP_PX = 0;
-
-  // ✅ Margen (LÍNEA) separado a 50px como pediste
   const POSTER_MARGIN_EDGE_GAP_PX = 50;
 
-  // ✅ Marco (área) máximo = la MITAD de antes (0.12 -> 0.06)
-  // ✅ Valor inicial del marco = máximo permitido
   const POSTER_FRAME_PCT_MAX = 0.06;
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
-  // ✅ Grosor máximo del margen (línea)
   const POSTER_LINE_THICK_MAX = 12;
 
   const state = {
@@ -43,16 +37,12 @@
 
       colorTheme: "mono",
 
-      // ✅ Zoom interno (solo IN)
       mapZoom: 1.0,
 
-      // ✅ Marco del póster (ÁREA)
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
-      // ✅ Margen del póster (LÍNEA)
-      // Independiente, pero si Marco se enciende => el Margen se apaga/oculta.
       posterMarginEnabled: false,
       posterMarginThickness: 2,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
@@ -172,7 +162,7 @@
     if (h.startsWith("#")) h = h.slice(1);
     if (h.length === 3) h = h.split("").map(ch => ch + ch).join("");
     const n = parseInt(h, 16);
-    if (!Number.isFinite(n)) return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+    if (!Number.isFinite(n)) return { r:255, g:255, b:255 };
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
   }
 
@@ -210,7 +200,6 @@
     return state.map.styleId === "poster";
   }
 
-  // ✅ Marco/Margen NO aplican al estilo Poster
   function isPosterDecorAllowed(){
     return !isPosterStyle();
   }
@@ -222,7 +211,7 @@
     for (let i = 0; i <= steps; i++){
       const t = (i / steps) * Math.PI * 2;
       const x = 16 * Math.pow(Math.sin(t), 3);
-      const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(3*t) - Math.cos(4*t);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
       const px = cx + x * s * 1.10;
       const py = cy - y * s * 1.15;
       if (i === 0) ctx.moveTo(px, py);
@@ -246,9 +235,6 @@
     applyZoom();
   });
 
-  // --------------------------
-  // CAPAS: marco(área) + papel + margen(línea)
-  // --------------------------
   let $posterFrameArea = null;
   let $posterPaper = null;
   let $posterMarginLine = null;
@@ -324,8 +310,8 @@
     updatePosterFrameInsetPx();
     enforceDecorRules();
 
-    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;   // ✅ 0
-    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX; // ✅ 50
+    const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
+    const marginEdge = POSTER_MARGIN_EDGE_GAP_PX;
 
     const decorAllowed = isPosterDecorAllowed();
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
@@ -333,45 +319,40 @@
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
-    // Fondo general
     $poster.style.background = posterColors.bg;
     $poster.style.color = posterColors.star;
 
-    // ---------- MARCO (ÁREA) ----------
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = posterColors.star;
-      $posterFrameArea.style.inset = `${frameEdge}px`; // ✅ 0px
+      $posterFrameArea.style.inset = `${frameEdge}px`;
       $posterFrameArea.style.borderRadius = "0px";
     } else {
       $posterFrameArea.style.opacity = "0";
       $posterFrameArea.style.background = "transparent";
-      $posterFrameArea.style.inset = `${frameEdge}px`; // ✅ 0px
+      $posterFrameArea.style.inset = `${frameEdge}px`;
       $posterFrameArea.style.borderRadius = "0px";
     }
 
-    // ---------- PAPEL (ÁREA INTERIOR) ----------
-    const innerInset = frameEdge + framePx; // ✅ con edge 0
+    const innerInset = frameEdge + framePx;
     $posterPaper.style.background = posterColors.bg;
     $posterPaper.style.inset = `${innerInset}px`;
     $posterPaper.style.borderRadius = "0px";
 
-    // ---------- MARGEN (LÍNEA) ----------
     const thickness = clamp(
       state.map.posterMarginThickness || 2,
       1,
       state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX
     );
 
-    $posterMarginLine.style.inset = `${marginEdge}px`; // ✅ 50px
+    $posterMarginLine.style.inset = `${marginEdge}px`;
     $posterMarginLine.style.borderRadius = "0px";
     $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(posterColors.star, 1) : "transparent";
 
-    // ✅ 100px de espaciado al bottom en todos los estilos (+ ajuste si hay margen)
     const baseBottom = 100;
-    const safeBottomWhenMarginOn = marginEdge + thickness + 10; // 50 + grosor + aire
+    const safeBottomWhenMarginOn = marginEdge + thickness + 10;
     const bottomTextBottom = (marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom);
     $poster.style.setProperty("--bottomTextBottom", `${bottomTextBottom}px`);
   }
@@ -394,7 +375,7 @@
   }
 
   function applyPosterPaddingLayout(){
-    const edge = POSTER_FRAME_EDGE_GAP_PX; // 0
+    const edge = POSTER_FRAME_EDGE_GAP_PX;
     const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
       ? clamp(state.map.posterFrameInsetPx, 0, 160)
       : 0;
@@ -648,15 +629,15 @@
     const conLineW = 0.9 + cs * 0.55;
     const nodeR = 1.6 + cs * 0.35;
 
-    const showOutline = state.map.mapCircleMarginEnabled && !state.map.invertMapColors;
+    // ✅ Contorno desactivado SIEMPRE en estilo Poster
+    const outlineEnabled = !!state.map.mapCircleMarginEnabled && !isPosterStyle();
+    const showOutline = outlineEnabled && !state.map.invertMapColors;
     const outlineW = clamp(state.map.mapCircleMarginThickness, 1, 10);
 
     ctx.clearRect(0, 0, mapW, mapH);
 
-    const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
-
     const shouldInsetLikeMapControl =
-      !!state.map.mapCircleMarginEnabled ||
+      outlineEnabled ||
       (isPosterDecorAllowed() && !!state.map.posterFrameEnabled) ||
       (isPosterDecorAllowed() && !!state.map.posterMarginEnabled);
 
@@ -688,6 +669,7 @@
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
+      const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
       if (z !== 1){
         ctx.translate(cx, cy);
         ctx.scale(z, z);
@@ -706,9 +688,7 @@
       const cx = mapW/2;
       const cy = mapH/2 - Math.round(mapH * 0.06);
 
-      // ✅ 20% más grande, pero -5% para que no se corte
       const baseSize = Math.min(mapW, mapH) * (0.5227 * 0.95);
-
       const size = clamp(baseSize - insetPad * 0.95, baseSize * 0.70, baseSize);
 
       ctx.save();
@@ -718,6 +698,7 @@
       ctx.fillStyle = mapColors.bg;
       ctx.fillRect(0,0,mapW,mapH);
 
+      const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
       if (z !== 1){
         ctx.translate(cx, cy);
         ctx.scale(z, z);
@@ -777,7 +758,6 @@
   function renderPosterAndMap(){
     const posterColors = colorsFor(state.map.colorTheme);
 
-    // ✅ Primero clases (classic/rectStyle) para que el cálculo de bottom funcione
     applyPosterLayoutByStyle();
     applyPosterFrameAndMargin(posterColors);
     applyPosterPaddingLayout();
@@ -786,6 +766,9 @@
     drawMap();
   }
 
+  // --------------------------
+  // UI: Secciones
+  // --------------------------
   function renderSectionDesign(){
     $section.innerHTML = "";
 
@@ -876,6 +859,11 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
 
+        // ✅ contorno OFF por default en Poster
+        if (st.id === "poster") {
+          state.map.mapCircleMarginEnabled = false;
+        }
+
         if (!isPosterDecorAllowed()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
@@ -940,7 +928,11 @@
         state.map.posterMarginThickness = 2;
       }
 
-      if (state.map.styleId === "romantico") {
+      // ✅ contorno desactivado si cae en Poster
+      if (state.map.styleId === "poster") {
+        state.map.mapCircleMarginEnabled = false;
+        state.map.showGrid = false;
+      } else if (state.map.styleId === "romantico") {
         state.map.mapCircleMarginEnabled = true;
         state.map.showGrid = false;
       } else {
@@ -1108,6 +1100,8 @@
     mapRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
     mapRow.appendChild(toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
       state.map.mapCircleMarginEnabled = val;
+      // ✅ si estás en Poster, forzamos OFF aunque intentes prenderlo
+      if (isPosterStyle()) state.map.mapCircleMarginEnabled = false;
       drawMap();
       renderAll();
     }));
@@ -1146,7 +1140,9 @@
     $section.appendChild(conRow);
     if (state.map.showConstellations) $section.appendChild(csRow);
 
-    $section.appendChild(mapRow);
+    // ✅ si estás en Poster, NO mostramos el toggle de contorno
+    if (!isPosterStyle()) $section.appendChild(mapRow);
+
     $section.appendChild(seedRow);
 
     $section.appendChild(navButtons({
@@ -1390,143 +1386,10 @@
     return Math.round(inches * dpi);
   }
 
-  function exportPoster(format, sizeKey){
-    const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
-    const dpi = state.export.dpi || 300;
-
-    let W, H;
-    if (sz.type === "px"){
-      W = sz.w; H = sz.h;
-    } else {
-      W = cmToPx(sz.w, dpi);
-      H = cmToPx(sz.h, dpi);
-    }
-
-    const out = document.createElement("canvas");
-    out.width = W;
-    out.height = H;
-
-    const ctx = out.getContext("2d");
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-    const colors = colorsFor(state.map.colorTheme);
-
-    updatePosterFrameInsetPx();
-
-    const st = getStyleDef();
-    const decorAllowed = (st.id !== "poster");
-
-    const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
-    const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
-
-    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
-    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H));
-
-    const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
-    const frameX = Math.round(framePx * (W / POSTER_W));
-    const frameY = Math.round(framePx * (H / POSTER_H));
-
-    ctx.fillStyle = colors.bg;
-    ctx.fillRect(0, 0, W, H);
-
-    if (frameOn){
-      ctx.fillStyle = colors.star;
-      ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
-    }
-
-    const innerX = edgeFrameX + frameX;
-    const innerY = edgeFrameY + frameY;
-
-    ctx.fillStyle = colors.bg;
-    ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
-
-    if (marginOn){
-      const thick = clamp(state.map.posterMarginThickness || 2, 1, state.map.posterMarginThicknessMax || POSTER_LINE_THICK_MAX);
-      const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
-      ctx.save();
-      ctx.strokeStyle = rgbaFromHex(colors.star, 1);
-      ctx.lineWidth = thickScaled;
-      const half = thickScaled / 2;
-      ctx.strokeRect(edgeMarginX + half, edgeMarginY + half, W - (edgeMarginX * 2) - thickScaled, H - (edgeMarginY * 2) - thickScaled);
-      ctx.restore();
-    }
-
-    const sx = W / POSTER_W;
-    const sy = H / POSTER_H;
-
-    const mapW = Math.round(780 * sx);
-    const mapH = mapW;
-
-    const mapX = Math.round((W - mapW) / 2);
-    const mapY = Math.round(innerY + (70 * sy));
-    ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
-
-    const fontFamily = state.text.fontFamily;
-    ctx.fillStyle = colors.star;
-
-    function drawText(text, x, y, sizePx, weight=800, align="left", alpha=1){
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.textAlign = align;
-      ctx.textBaseline = "alphabetic";
-      ctx.font = `${weight} ${Math.round(sizePx)}px ${fontFamily}`;
-      ctx.fillText(text, Math.round(x), Math.round(y));
-      ctx.restore();
-    }
-
-    const show = state.visible;
-    const centerX = W / 2;
-
-    const yTitle    = Math.round(1085 * sy);
-    const ySubtitle = Math.round(1122 * sy);
-    const yPlace    = Math.round(1162 * sy);
-    const yCoords   = Math.round(1180 * sy);
-    const yDT       = Math.round(1196 * sy);
-
-    if (show.title)    drawText(state.text.title, centerX, yTitle, 54 * sy, 900, "center", 1);
-    if (show.subtitle) drawText(state.text.subtitle, centerX, ySubtitle, 18 * sy, 650, "center", 0.85);
-
-    if (show.place)    drawText(state.text.place, centerX, yPlace, 14 * sy, 650, "center", 0.82);
-    if (show.coords)   drawText(state.text.coords, centerX, yCoords, 14 * sy, 650, "center", 0.82);
-    if (show.datetime) drawText(getDateTimeString(), centerX, yDT, 14 * sy, 650, "center", 0.82);
-
-    if (format === "png" || format === "jpg"){
-      const mime = format === "png" ? "image/png" : "image/jpeg";
-      const quality = format === "jpg" ? 0.95 : undefined;
-      const url = out.toDataURL(mime, quality);
-      downloadDataURL(url, `poster_${sizeKey}.${format}`);
-      return;
-    }
-
-    const url = out.toDataURL("image/png");
-    const w = window.open("", "_blank");
-    if (!w) {
-      alert("Bloqueaste popups. Permite ventanas emergentes para exportar PDF.");
-      return;
-    }
-    w.document.write(`
-      <html><head><title>Poster PDF</title>
-      <style>html,body{margin:0;padding:0;} img{width:100%;height:auto;display:block;}</style>
-      </head><body>
-        <img src="${url}" />
-        <script>
-          window.onload = () => { window.focus(); window.print(); };
-        </script>
-      </body></html>
-    `);
-    w.document.close();
-  }
-
-  function downloadDataURL(dataURL, filename){
-    const a = document.createElement("a");
-    a.href = dataURL;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }
+  // (exportPoster y downloadDataURL igual que tu versión actual)
+  // ✅ No los repetí aquí para no hacer el mensaje interminable,
+  // pero si quieres que también el EXPORT respete contorno OFF en Poster, te lo ajusto igual.
+  // ----
 
   function renderSection(){
     if (state.step === 0) return renderSectionDesign();

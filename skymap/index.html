@@ -1,9 +1,8 @@
-<!-- index.html -->
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Sky Art Creator</title>
   <style>
     :root{
@@ -14,67 +13,348 @@
       --muted: rgba(233,238,252,.70);
       --stroke: rgba(233,238,252,.10);
       --accent: rgba(124,255,250,.45);
+      --accentSolid: #7CFFFA;
       --accentFill: rgba(124,255,250,.12);
+
+      --headerH: 66px;
+      --editorW: 420px;
+
+      /* Mobile bottom sheet height */
+      --sheetH: 56vh;
+      --sheetMinH: 44vh;
+      --sheetMaxH: 76vh;
     }
 
     *{ box-sizing:border-box; }
-    html,body{ height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+      overflow:hidden;
+    }
 
-    /* ✅ grid areas para poder reordenar en mobile sin mover HTML */
+    /* App layout */
     #app{
       height:100%;
       display:grid;
-      grid-template-columns: 420px 1fr;
-      grid-template-areas: "left right";
+      grid-template-rows: var(--headerH) 1fr;
+      grid-template-columns: 1fr var(--editorW);
+      grid-template-areas:
+        "header header"
+        "preview editor";
     }
-    .left{ grid-area:left; }
-    .right{ grid-area:right; }
 
-    .left{
-      border-right:1px solid var(--stroke);
-      background: linear-gradient(180deg, var(--panel), var(--panel2));
+    /* Header */
+    .topbar{
+      grid-area: header;
       display:flex;
-      flex-direction:column;
-      min-width:320px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(15,18,26,.85), rgba(12,15,21,.65));
+      backdrop-filter: blur(10px);
     }
-    .header{ padding:16px 16px 8px 16px; }
-    .brand{ display:flex; align-items:center; gap:10px; }
-    .dot{
-      width:12px;height:12px;border-radius:999px;background:#7CFFFA;
-      box-shadow:0 0 24px rgba(124,255,250,.35);
-    }
-    .brandTitle{ font-weight:800; letter-spacing:.3px; }
-    .brandSub{ font-size:12px; color:var(--muted); margin-top:2px; }
 
-    .tabs{
-      display:flex; flex-wrap:wrap; gap:8px;
-      padding: 8px 16px 12px 16px;
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 0;
     }
-    .tab{
+
+    .dot{
+      width:12px;height:12px;border-radius:999px;background: var(--accentSolid);
+      box-shadow:0 0 24px rgba(124,255,250,.35);
+      flex: 0 0 auto;
+    }
+
+    .brandText{ min-width: 0; }
+    .brandTitle{
+      font-weight: 900;
+      letter-spacing: .2px;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .brandSub{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbarRight{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space:nowrap;
+    }
+
+    /* Preview area */
+    .previewArea{
+      grid-area: preview;
+      position:relative;
+      overflow:auto;
+      padding: 16px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+    }
+
+    .previewWrap{
+      width:100%;
+      max-width: 980px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      position:relative;
+      padding-bottom: 12px;
+    }
+
+    .previewScale{
+      transform-origin: top center;
+      will-change: transform;
+    }
+
+    .zoomControls{
+      position: sticky;
+      top: 12px;
+      left: 12px;
+      align-self: flex-start;
+      display:flex;
+      gap:10px;
+      z-index: 20;
+      align-items:center;
+      margin-right: 12px;
+    }
+
+    .zoomBtn{
+      width:44px;
+      height:44px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor:pointer;
+      font-weight:900;
+      font-size: 18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .zoomLabel{
+      padding: 10px 12px;
+      border-radius: 14px;
       border:1px solid var(--stroke);
       background: rgba(255,255,255,.03);
-      color:var(--text);
-      padding:10px 10px;
-      border-radius:12px;
-      cursor:pointer;
-      font-size:13px;
-      user-select:none;
-    }
-    .tab.active{
-      border-color: var(--accent);
-      box-shadow:0 0 0 3px rgba(124,255,250,.10);
+      color: var(--muted);
+      font-size: 12px;
+      min-height:44px;
+      display:flex;
+      align-items:center;
     }
 
-    .panel{
-      padding: 0 16px 16px 16px;
+    .poster{
+      width: 900px;
+      height: 1200px;
+      border-radius: 26px;
+      box-shadow: 0 24px 90px rgba(0,0,0,.55);
+      position:relative;
+      overflow:hidden;
+
+      --posterPad: 0px;
+      --mapW: 780px;
+      --mapH: 780px;
+
+      /* Text bottom spacing controlled by JS */
+      --bottomTextBottom: 100px;
+    }
+
+    .posterInner{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      padding-top: calc(var(--posterPad) + 70px);
+    }
+
+    .mapFrame{
+      width: var(--mapW);
+      height: var(--mapH);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    canvas#mapCanvas{
+      width: var(--mapW);
+      height: var(--mapH);
+      display:block;
+    }
+
+    .bottomText{
+      position:absolute;
+      left: calc(var(--posterPad) + 80px);
+      right: calc(var(--posterPad) + 80px);
+      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
+      padding:0;
+    }
+
+    .tTitle{
+      font-size:54px;
+      letter-spacing:2px;
+      font-weight:900;
+      margin-bottom:10px;
+    }
+    .tSub{
+      font-size:18px;
+      opacity:.85;
+      margin-bottom:22px;
+    }
+    .meta{
+      display:flex;
+      justify-content:flex-start;
+      gap:20px;
+      font-size:14px;
+      opacity:.82;
+    }
+    .metaCol{ display:flex; flex-direction:column; gap:6px; }
+    .metaRow{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Classic */
+    .poster.classic .bottomText{
+      left: calc(var(--posterPad) + 110px);
+      right: calc(var(--posterPad) + 110px);
+      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
+      text-align:center;
+    }
+    .poster.classic .meta{ justify-content:center; }
+    .poster.classic .metaCol{ align-items:center; text-align:center; }
+    .poster.classic .tTitle{ letter-spacing:1.6px; }
+
+    /* Rect style (Poster) */
+    .poster.rectStyle .bottomText{
+      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
+      left: calc(var(--posterPad) + 110px);
+      right: calc(var(--posterPad) + 110px);
+      text-align:center;
+    }
+    .poster.rectStyle .tTitle{
+      font-size: 46px;
+      margin-bottom: 8px;
+      letter-spacing: 1.4px;
+    }
+    .poster.rectStyle .tSub{
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+    .poster.rectStyle .meta{
+      justify-content:center;
+      font-size: 12px;
+      gap: 16px;
+    }
+    .poster.rectStyle .metaCol{ align-items:center; text-align:center; }
+
+    /* Editor (Desktop: card/modal style) */
+    .editorDock{
+      grid-area: editor;
+      padding: 16px 16px 16px 0;
+      overflow:hidden;
+    }
+
+    .sheet{
+      height: 100%;
+      border: 1px solid var(--stroke);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(15,18,26,.92), rgba(12,15,21,.86));
+      box-shadow: 0 24px 90px rgba(0,0,0,.40);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    .sheetTop{
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid var(--stroke);
+    }
+
+    .sheetTitle{
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: .2px;
+      margin: 0;
+    }
+
+    .sheetSub{
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Tabs like your figma: active text + green underline */
+    .sheetTabs{
+      display:flex;
+      gap: 18px;
+      padding: 12px 14px 10px 14px;
+      border-bottom: 1px solid var(--stroke);
+    }
+
+    .sheetTab{
+      background: transparent;
+      border: 0;
+      color: rgba(233,238,252,.55);
+      font-weight: 900;
+      font-size: 13px;
+      padding: 8px 0;
+      cursor:pointer;
+      position: relative;
+      letter-spacing: .2px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .sheetTab.active{
+      color: var(--text);
+    }
+
+    .sheetTab.active::after{
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:-10px;
+      height:2px;
+      background: var(--accentSolid);
+      border-radius: 999px;
+      box-shadow: 0 0 18px rgba(124,255,250,.25);
+    }
+
+    .sheetBody{
+      padding: 14px;
       overflow:auto;
     }
+
     .card{
       border:1px solid var(--stroke);
       border-radius:16px;
       padding:14px;
       background: rgba(255,255,255,.02);
     }
+
     .title{ font-weight:800; margin-bottom:4px; }
     .sub{ font-size:12px; color:var(--muted); margin-bottom:12px; }
 
@@ -99,18 +379,19 @@
     }
     input[type="range"]{ width:100%; }
 
-    .navBtns{
+    .btnRow{
       display:flex;
       justify-content:space-between;
       gap:10px;
       margin-top:12px;
       align-items:center;
     }
+
     .btn{
       border-radius:14px;
       padding:10px 12px;
       cursor:pointer;
-      font-weight:750;
+      font-weight:850;
       user-select:none;
       white-space:nowrap;
       min-height:44px;
@@ -118,6 +399,7 @@
       align-items:center;
       justify-content:center;
       line-height:1;
+      -webkit-tap-highlight-color: transparent;
     }
     .btn.ghost{
       border:1px solid var(--stroke);
@@ -141,6 +423,7 @@
       flex: 0 0 auto;
       transition: 160ms ease;
       box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
+      -webkit-tap-highlight-color: transparent;
     }
     .toggle::after{
       content:"";
@@ -181,8 +464,8 @@
       padding: 14px 14px;
     }
     .fieldHeader .fieldLabel{
-      font-weight: 800;
-      font-size: 18px;
+      font-weight: 900;
+      font-size: 16px;
     }
     .fieldBody{
       padding: 0 14px 14px 14px;
@@ -192,10 +475,10 @@
       border:1px solid var(--stroke);
       background: rgba(0,0,0,.18);
       color: var(--text);
-      padding: 16px 14px;
+      padding: 14px 12px;
       border-radius: 14px;
       outline:none;
-      font-size: 18px;
+      font-size: 16px;
     }
 
     .styleGrid{
@@ -204,14 +487,14 @@
       gap: 14px;
       margin-top: 8px;
     }
-    @media (max-width: 420px){
+    @media (max-width: 520px){
       .styleGrid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
     .styleTile{ cursor:pointer; user-select:none; }
     .stylePoster{
       width:100%;
       aspect-ratio: 3 / 4;
-      border-radius: 8px;
+      border-radius: 10px;
       background: rgba(0,0,0,.18);
       border: 2px solid rgba(0,0,0,0);
       overflow:hidden;
@@ -225,247 +508,114 @@
     .stylePoster canvas{ width:100%; height:100%; display:block; }
     .styleNameLabel{
       margin-top: 8px;
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 12px;
+      font-weight: 800;
       color: var(--text);
       opacity: .92;
     }
 
-    .right{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-      overflow:hidden;
-      position:relative;
-    }
-    .previewWrap{
-      width:100%;
-      height:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      position:relative;
-    }
-    .previewScale{
-      transform-origin: center center;
-      will-change: transform;
-    }
-
-    .previewFooter{
-      position:absolute;
-      right: 16px;
-      bottom: 14px;
-      font-size: 10px;
-      opacity: .55;
-      letter-spacing: .15px;
-      user-select:none;
-      pointer-events:none;
-      z-index: 25;
-    }
-
-    .zoomControls{
-      position:absolute;
-      left: 16px;
-      bottom: 16px;
-      display:flex;
-      gap:10px;
-      z-index: 20;
-      align-items:center;
-    }
-    .zoomBtn{
-      width:44px;
-      height:44px;
-      border-radius: 14px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      cursor:pointer;
-      font-weight:900;
-      font-size: 18px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-    }
-    .zoomLabel{
-      padding: 10px 12px;
-      border-radius: 14px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.03);
-      color: var(--muted);
-      font-size: 12px;
-      min-height:44px;
-      display:flex;
-      align-items:center;
-    }
-
-    .poster{
-      width: 900px;
-      height: 1200px;
-      border-radius: 26px;
-      box-shadow: 0 24px 90px rgba(0,0,0,.55);
-      position:relative;
-      overflow:hidden;
-
-      --posterPad: 0px;
-
-      --mapW: 780px;
-      --mapH: 780px;
-
-      --bottomTextBottom: 100px;
-    }
-
-    .posterInner{
-      position:absolute;
-      inset:0;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:flex-start;
-      padding-top: calc(var(--posterPad) + 70px);
-    }
-
-    .mapFrame{
-      width: var(--mapW);
-      height: var(--mapH);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    canvas#mapCanvas{
-      width: var(--mapW);
-      height: var(--mapH);
-      display:block;
-    }
-
-    .bottomText{
-      position:absolute;
-      left: calc(var(--posterPad) + 80px);
-      right: calc(var(--posterPad) + 80px);
-      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
-      padding:0;
-    }
-    .tTitle{
-      font-size:54px;
-      letter-spacing:2px;
-      font-weight:900;
-      margin-bottom:10px;
-    }
-    .tSub{
-      font-size:18px;
-      opacity:.85;
-      margin-bottom:22px;
-    }
-    .meta{
-      display:flex;
-      justify-content:flex-start;
-      gap:20px;
-      font-size:14px;
-      opacity:.82;
-    }
-    .metaCol{ display:flex; flex-direction:column; gap:6px; }
-    .metaRow{
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .poster.classic .bottomText{
-      left: calc(var(--posterPad) + 110px);
-      right: calc(var(--posterPad) + 110px);
-      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
-      text-align:center;
-    }
-    .poster.classic .meta{ justify-content:center; }
-    .poster.classic .metaCol{ align-items:center; text-align:center; }
-    .poster.classic .tTitle{ letter-spacing:1.6px; }
-
-    .poster.rectStyle .bottomText{
-      bottom: calc(var(--posterPad) + var(--bottomTextBottom));
-      left: calc(var(--posterPad) + 110px);
-      right: calc(var(--posterPad) + 110px);
-      text-align:center;
-    }
-    .poster.rectStyle .tTitle{
-      font-size: 46px;
-      margin-bottom: 8px;
-      letter-spacing: 1.4px;
-    }
-    .poster.rectStyle .tSub{
-      font-size: 16px;
-      margin-bottom: 16px;
-    }
-    .poster.rectStyle .meta{
-      justify-content:center;
-      font-size: 12px;
-      gap: 16px;
-    }
-    .poster.rectStyle .metaCol{ align-items:center; text-align:center; }
-
-    /* ✅ MOBILE: preview arriba, editor abajo */
+    /* MOBILE: header + preview; bottom sheet fixed */
     @media (max-width: 980px){
+      html,body{ overflow:hidden; }
+
       #app{
         grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
+        grid-template-rows: var(--headerH) 1fr;
         grid-template-areas:
-          "right"
-          "left";
+          "header"
+          "preview";
       }
 
-      .right{
+      .editorDock{
+        display:none; /* ✅ en mobile usamos bottom sheet fijo */
+      }
+
+      .previewArea{
         padding: 12px;
-        overflow: auto;
-        align-items: flex-start;
-        justify-content: center;
-        border-bottom: 1px solid var(--stroke);
+        /* ✅ deja espacio para que el sheet no tape el preview */
+        padding-bottom: calc(var(--sheetH) + env(safe-area-inset-bottom, 0px) + 20px);
       }
 
-      .left{
-        border-right: 0;
-        border-bottom: 0;
-        min-width: 0;
+      .zoomControls{
+        top: 10px;
+        margin-right: 10px;
+      }
+    }
+
+    /* Bottom sheet (mobile) */
+    .mobileSheet{
+      display:none;
+    }
+
+    @media (max-width: 980px){
+      .mobileSheet{
+        display:block;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: var(--sheetH);
+        max-height: var(--sheetMaxH);
+        min-height: var(--sheetMinH);
+        background: linear-gradient(180deg, rgba(15,18,26,.95), rgba(12,15,21,.92));
+        border-top: 1px solid var(--stroke);
+        border-left: 1px solid var(--stroke);
+        border-right: 1px solid var(--stroke);
+        border-top-left-radius: 22px;
+        border-top-right-radius: 22px;
+        box-shadow: 0 -18px 70px rgba(0,0,0,.55);
+        overflow:hidden;
+        z-index: 50;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
       }
 
-      .previewWrap{
-        height: auto;
-        align-items: flex-start;
-        justify-content: center;
+      .mobileGrabber{
+        height: 20px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      }
+      .mobileGrabber::after{
+        content:"";
+        width: 44px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(233,238,252,.18);
+        border: 1px solid rgba(233,238,252,.10);
       }
 
-      .previewFooter{ display:none; }
+      .mobileSheet .sheet{
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        height: calc(100% - 20px);
+      }
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <aside class="left">
-      <div class="header">
-        <div class="brand">
-          <div class="dot"></div>
-          <div>
-            <div class="brandTitle">Sky Art Creator</div>
-            <div class="brandSub">v2.090126.5</div>
-          </div>
+    <!-- HEADER -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="dot"></div>
+        <div class="brandText">
+          <div class="brandTitle">Sky Art Creator</div>
+          <div class="brandSub">v2.100126.mobileSheet</div>
         </div>
       </div>
 
-      <div class="tabs" id="tabs"></div>
+      <div class="topbarRight">© 2026</div>
+    </header>
 
-      <div class="panel">
-        <div class="card" id="sectionContainer"></div>
-      </div>
-    </aside>
-
-    <main class="right">
+    <!-- PREVIEW -->
+    <main class="previewArea">
       <div class="previewWrap">
         <div class="zoomControls">
           <button class="zoomBtn" id="zoomOut" title="Zoom out">−</button>
           <button class="zoomBtn" id="zoomIn" title="Zoom in">+</button>
           <div class="zoomLabel" id="zoomLabel">75%</div>
         </div>
-
-        <div class="previewFooter">© Sky Art Creator 2026 · all rights reserved</div>
 
         <div class="previewScale" id="previewScale">
           <div class="poster" id="poster">
@@ -491,6 +641,35 @@
         </div><!-- /previewScale -->
       </div>
     </main>
+
+    <!-- DESKTOP EDITOR (modal look) -->
+    <aside class="editorDock">
+      <div class="sheet">
+        <div class="sheetTop">
+          <div class="sheetTitle">Personalización</div>
+          <div class="sheetSub">Ajusta diseño, contenido y exportación.</div>
+        </div>
+        <div class="sheetTabs" id="tabs"></div>
+        <div class="sheetBody">
+          <div class="card" id="sectionContainer"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- MOBILE BOTTOM SHEET -->
+  <div class="mobileSheet" id="mobileSheet">
+    <div class="mobileGrabber"></div>
+    <div class="sheet">
+      <div class="sheetTop">
+        <div class="sheetTitle">Personalización</div>
+        <div class="sheetSub">Ajusta diseño, contenido y exportación.</div>
+      </div>
+      <div class="sheetTabs" id="tabsMobile"></div>
+      <div class="sheetBody">
+        <div class="card" id="sectionContainerMobile"></div>
+      </div>
+    </div>
   </div>
 
   <script src="./app.js"></script>

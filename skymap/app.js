@@ -41,7 +41,7 @@
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
-      posterMarginEnabled: true,          // ✅ clásico default ON (como pediste)
+      posterMarginEnabled: true,          // ✅ clásico default ON
       posterMarginThickness: 2,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
@@ -127,14 +127,6 @@
 
   function isMobile(){
     return window.matchMedia("(max-width: 980px)").matches;
-  }
-
-  function getTabsEl(){
-    return isMobile() ? $tabsMobile : $tabsDesktop;
-  }
-
-  function getSectionEl(){
-    return isMobile() ? $sectionMobile : $sectionDesktop;
   }
 
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
@@ -233,8 +225,8 @@
     if (isMobile()){
       state.ui.minZoom = 0.18;
       state.ui.maxZoom = 0.75;
-      // ✅ por default que SI se vea en iPhone
-      if (!state.ui.zoom || state.ui.zoom > 0.42) state.ui.zoom = 0.34;
+      // ✅ Mobile default = 42%
+      if (!state.ui.zoom || state.ui.zoom > 0.60) state.ui.zoom = 0.42;
     } else {
       state.ui.minZoom = 0.35;
       state.ui.maxZoom = 1.25;
@@ -366,7 +358,7 @@
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(posterColors.star, 1) : "transparent";
 
-    // ✅ Espaciado bottom global 100px; Poster un poco más abajo (como ya venías ajustando)
+    // ✅ Global bottom spacing
     const baseBottom = isPosterStyle() ? 130 : 100;
 
     // ✅ si margen ON, sube texto para no sobreponer
@@ -762,23 +754,103 @@
     return t;
   }
 
-  // Tabs (Figma style)
-  function renderTabs(){
-    const $tabs = getTabsEl();
+  // ---- Tabs (render both desktop + mobile so never missing) ----
+  function renderTabsInto($tabs){
     if (!$tabs) return;
-
     $tabs.innerHTML = "";
     STEPS.forEach((s, idx) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "sheetTab" + (idx === state.step ? " active" : "");
-      b.textContent = s.label;
+      b.innerHTML = `<span class="stepNum">${idx+1})</span>${s.label}`;
       b.onclick = () => { state.step = idx; renderAll(); };
       $tabs.appendChild(b);
     });
   }
 
-  // -------- Sections (same logic, different container) --------
+  // Skeleton for style previews (text layout)
+  function drawStyleTextSkeleton(ctx, w, h, styleId, color){
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.28;
+
+    const padX = 22;
+    const bottomPad = 20;
+
+    if (styleId === "classic"){
+      // centered title/sub + 3 meta lines
+      const titleW = Math.round(w * 0.58);
+      const subW   = Math.round(w * 0.38);
+      const x1 = Math.round((w - titleW)/2);
+      const x2 = Math.round((w - subW)/2);
+
+      const yTitle = h - bottomPad - 52;
+      const ySub   = h - bottomPad - 38;
+      const yMeta1 = h - bottomPad - 20;
+      const yMeta2 = h - bottomPad - 10;
+      const yMeta3 = h - bottomPad;
+
+      ctx.fillRect(x1, yTitle, titleW, 6);
+      ctx.globalAlpha = 0.20;
+      ctx.fillRect(x2, ySub, subW, 5);
+
+      ctx.globalAlpha = 0.18;
+      const metaW = Math.round(w * 0.46);
+      const xm = Math.round((w - metaW)/2);
+      ctx.fillRect(xm, yMeta1, metaW, 4);
+      ctx.fillRect(xm, yMeta2, metaW * 0.88, 4);
+      ctx.fillRect(xm, yMeta3, metaW * 0.76, 4);
+    }
+    else if (styleId === "poster"){
+      // centered slightly higher (poster layout)
+      const titleW = Math.round(w * 0.52);
+      const subW   = Math.round(w * 0.34);
+      const x1 = Math.round((w - titleW)/2);
+      const x2 = Math.round((w - subW)/2);
+
+      const yTitle = h - bottomPad - 56;
+      const ySub   = h - bottomPad - 42;
+      const yMeta1 = h - bottomPad - 24;
+      const yMeta2 = h - bottomPad - 14;
+      const yMeta3 = h - bottomPad - 4;
+
+      ctx.fillRect(x1, yTitle, titleW, 6);
+      ctx.globalAlpha = 0.20;
+      ctx.fillRect(x2, ySub, subW, 5);
+
+      ctx.globalAlpha = 0.18;
+      const metaW = Math.round(w * 0.44);
+      const xm = Math.round((w - metaW)/2);
+      ctx.fillRect(xm, yMeta1, metaW, 4);
+      ctx.fillRect(xm, yMeta2, metaW * 0.88, 4);
+      ctx.fillRect(xm, yMeta3, metaW * 0.76, 4);
+    }
+    else {
+      // moderno / romantico = left-ish title/sub + meta
+      const x = padX;
+      const titleW = Math.round(w * 0.55);
+      const subW   = Math.round(w * 0.36);
+
+      const yTitle = h - bottomPad - 52;
+      const ySub   = h - bottomPad - 38;
+      const yMeta1 = h - bottomPad - 20;
+      const yMeta2 = h - bottomPad - 10;
+      const yMeta3 = h - bottomPad;
+
+      ctx.fillRect(x, yTitle, titleW, 6);
+      ctx.globalAlpha = 0.20;
+      ctx.fillRect(x, ySub, subW, 5);
+
+      ctx.globalAlpha = 0.18;
+      ctx.fillRect(x, yMeta1, Math.round(w * 0.46), 4);
+      ctx.fillRect(x, yMeta2, Math.round(w * 0.40), 4);
+      ctx.fillRect(x, yMeta3, Math.round(w * 0.32), 4);
+    }
+
+    ctx.restore();
+  }
+
+  // -------- Sections (render into given container) --------
   function renderSectionDesign($section){
     $section.innerHTML = "";
 
@@ -857,6 +929,9 @@
       ctx.globalAlpha = 1;
       ctx.restore();
 
+      // ✅ skeleton texto para diferenciar estilo
+      drawStyleTextSkeleton(ctx, 180, 240, st.id, mc.star);
+
       poster.appendChild(c);
 
       const name = document.createElement("div");
@@ -899,6 +974,64 @@
     });
 
     styleRow.appendChild(grid);
+
+    // ✅ Regresado: botón aleatorio
+    const randomRow = document.createElement("div");
+    randomRow.className = "formRow";
+    randomRow.classList.add("stackGap");
+
+    const randomBtn = document.createElement("button");
+    randomBtn.type = "button";
+    randomBtn.className = "btn primary";
+    randomBtn.textContent = "Poster Aleatorio";
+    randomBtn.onclick = () => {
+      const r = Math.random;
+      const pick = (arr) => arr[Math.floor(r() * arr.length)];
+      const pickBool = () => r() > 0.5;
+      const pickRange = (min, max) => min + r() * (max - min);
+
+      state.map.styleId = pick(MAP_STYLES).id;
+      state.map.colorTheme = pick(COLOR_THEMES).id;
+
+      const allowG = isGridAllowedForCurrentStyle();
+      state.map.showGrid = allowG ? pickBool() : false;
+
+      state.map.showConstellations = pickBool();
+      state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
+      state.map.mapZoom = Math.round(pickRange(1.0, 1.6) * 20) / 20;
+
+      state.map.invertMapColors = pickBool();
+      if (state.map.colorTheme === "white") state.map.invertMapColors = true;
+
+      if (!isPosterDecorAllowed()){
+        state.map.posterFrameEnabled = false;
+        state.map.posterMarginEnabled = false;
+      } else {
+        const marco = pickBool();
+        state.map.posterFrameEnabled = marco;
+        state.map.posterFramePct = marco ? POSTER_FRAME_PCT_MAX : state.map.posterFramePct;
+        updatePosterFrameInsetPx();
+
+        // ✅ si marco ON, margen OFF
+        state.map.posterMarginEnabled = !marco ? pickBool() : false;
+        state.map.posterMarginThickness = 2;
+      }
+
+      if (state.map.styleId === "romantico") {
+        state.map.mapCircleMarginEnabled = true;
+        state.map.showGrid = false;
+      } else if (state.map.styleId === "poster"){
+        state.map.mapCircleMarginEnabled = false;
+      } else {
+        state.map.mapCircleMarginEnabled = pickBool();
+      }
+
+      state.map.seed = (Math.random() * 1e9) | 0;
+
+      renderPosterAndMap();
+      renderAll();
+    };
+    randomRow.appendChild(randomBtn);
 
     const colorRow = document.createElement("div");
     colorRow.className = "formRow";
@@ -1076,6 +1209,7 @@
     $section.appendChild(t);
     $section.appendChild(s);
     $section.appendChild(styleRow);
+    $section.appendChild(randomRow); // ✅ aquí volvió
     $section.appendChild(colorRow);
     $section.appendChild(mapZoomRow);
     $section.appendChild(invertRow);
@@ -1506,18 +1640,21 @@
     $section.appendChild(btns);
   }
 
-  function renderSection(){
-    const $section = getSectionEl();
+  function renderSectionInto($section){
     if (!$section) return;
-
     if (state.step === 0) return renderSectionDesign($section);
     if (state.step === 1) return renderSectionContent($section);
     return renderSectionExport($section);
   }
 
   function renderAll(){
-    renderTabs();
-    renderSection();
+    // ✅ Render siempre en ambos (desktop+mobile) para que nunca quede “vacío”
+    renderTabsInto($tabsDesktop);
+    renderTabsInto($tabsMobile);
+
+    renderSectionInto($sectionDesktop);
+    renderSectionInto($sectionMobile);
+
     renderPosterFont();
     renderPosterText();
     renderPosterAndMap();
@@ -1535,6 +1672,6 @@
 
   window.addEventListener("resize", () => {
     applyResponsiveDefaultZoom();
-    renderAll(); // ✅ importante: cambia entre desktop/mobile containers
+    renderAll();
   });
 })();

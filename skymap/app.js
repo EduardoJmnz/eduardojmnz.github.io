@@ -25,8 +25,8 @@
       place: "Mexico City, MX",
       coords: "19.4326, -99.1332",
 
-      // ✅ default dd.mm.yyyy
-      date: "25.12.1995",
+      // ✅ para input[type="date"] debe ser ISO
+      date: "1995-12-25",
       time: "19:30",
 
       fontKey: "system",
@@ -180,7 +180,6 @@
   function colorsFor(theme){
     const THEMES = {
       mono:      { bg: "#0A0B0D", star: "#FFFFFF", line: "#FFFFFF" },
-      // white eliminado del mapa (pero fondo blanco lo seguimos manejando como modo)
       marino:    { bg: "#0B0D12", star: "#FFFFFF", line: "#FFFFFF" },
       ice:       { bg: "#071016", star: "#E9F6FF", line: "#E9F6FF" },
       warm:      { bg: "#140E0A", star: "#F6E7C9", line: "#F6E7C9" },
@@ -214,7 +213,6 @@
   }
 
   function mapOutlineAllowed(){
-    // Fondo blanco: NO contorno. Poster: NO contorno.
     return !isWhiteBackgroundMode() && !isPosterStyle();
   }
 
@@ -226,7 +224,6 @@
     const th = colorsFor(state.map.colorTheme);
     const neon = isNeonThemeId(state.map.colorTheme);
 
-    // ✅ Neon: todo color seleccionado y fondo negro
     if (neon){
       return {
         posterBg: "#000000",
@@ -245,10 +242,7 @@
       };
     }
 
-    // Fondo blanco (solo no-neon)
     if (isWhiteBackgroundMode()){
-      // Nota: aquí el “tema blanco” ya no existe como color de mapa,
-      // pero el modo “fondo blanco” sí existe.
       return {
         posterBg: "#FFFFFF",
         posterInk: th.bg,
@@ -266,7 +260,6 @@
       };
     }
 
-    // Fondo igual al mapa estelar
     return {
       posterBg: th.bg,
       posterInk: "#FFFFFF",
@@ -371,10 +364,7 @@
     if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
 
     const st = getStyleDef();
-
-    // classic: siempre on
     if (st.id === "classic") state.map.mapCircleMarginEnabled = true;
-    // poster: no
     if (st.id === "poster") state.map.mapCircleMarginEnabled = false;
 
     const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
@@ -472,7 +462,7 @@
     ctx.closePath();
   }
 
-  // ✅ Retícula globo: horizontales ok + meridianos completos (izq+der)
+  // ✅ Retícula globo (ya corregida izq+der)
   function drawGlobeGrid(ctx, w, h, gridLine){
     const cx = w / 2;
     const cy = h / 2;
@@ -530,7 +520,7 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
-    // ---------- PARALELOS (horizontales) ----------
+    // ---------- PARALELOS ----------
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
     const lonSteps = 240;
 
@@ -551,9 +541,7 @@
       strokePath(frontPts, isPolarRing ? alphaFront : alphaFront,       isPolarRing ? lwFront + 1.0 : lwFront);
     }
 
-    // ---------- MERIDIANOS (verticales) ----------
-    // ✅ Antes sólo estaban en [-90..90] (eso proyecta sólo el lado derecho).
-    // ✅ Ahora agregamos también el hemisferio izquierdo: lon + 180.
+    // ---------- MERIDIANOS ----------
     const baseLonsDeg = [];
     for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
     baseLonsDeg.push(-90, 90);
@@ -579,7 +567,6 @@
         else backPts.push(p);
       }
 
-      // ✅ dibuja ambos lados: frente fuerte + atrás tenue (como referencia)
       strokePath(backPts,  alphaBack,  lwBack);
       strokePath(frontPts, alphaFront, lwFront);
     }
@@ -955,24 +942,23 @@
     ctx.restore();
   }
 
-  // ✅ nueva “estrella” (SVG real) para que no parezca X
-  function makeFourPointStarSvg(){
+  // ✅ estrella SVG con color configurable
+  function makeFourPointStarSvg(colorHexOrCss){
     const svgNS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("width", "14");
     svg.setAttribute("height", "14");
     svg.setAttribute("viewBox", "0 0 14 14");
-    svg.style.opacity = "0.85";
+    svg.style.opacity = "0.92";
 
     const p = document.createElementNS(svgNS, "path");
-    // 4 puntas (sparkle)
     p.setAttribute("d", "M7 0 L8.8 5.2 L14 7 L8.8 8.8 L7 14 L5.2 8.8 L0 7 L5.2 5.2 Z");
-    p.setAttribute("fill", "rgba(255,255,255,0.92)");
+    p.setAttribute("fill", colorHexOrCss || "rgba(255,255,255,0.92)");
     svg.appendChild(p);
     return svg;
   }
 
-  function renderColorSwatches({ title, items, activeId, onPick, previewColorFn }){
+  function renderColorSwatches({ title, items, activeId, onPick, dotColorFn, starColorFn }){
     const wrap = document.createElement("div");
     wrap.className = "formRow";
     wrap.innerHTML = `<div class="label">${title}</div>`;
@@ -986,9 +972,10 @@
 
       const dot = document.createElement("div");
       dot.className = "swatchDot";
-      dot.style.background = previewColorFn(it);
+      dot.style.background = dotColorFn(it);
 
-      dot.appendChild(makeFourPointStarSvg());
+      // ✅ estrella con color por swatch
+      dot.appendChild(makeFourPointStarSvg(starColorFn(it)));
 
       const name = document.createElement("div");
       name.className = "swatchName";
@@ -1210,7 +1197,7 @@
 
     const gap2 = document.createElement("div"); gap2.className = "groupGap";
 
-    // 3) Color del mapa (swatches) — SIN blanco
+    // 3) Color del mapa (swatches)
     const mapColorRow = renderColorSwatches({
       title: "Color del Mapa estelar",
       items: COLOR_THEMES,
@@ -1221,10 +1208,15 @@
         renderPosterAndMap();
         renderAll();
       },
-      previewColorFn: (it) => {
-        const th = colorsFor(it.id);
-        if (isNeonThemeId(it.id)) return th.star;
-        return th.bg;
+      // ✅ neon: swatch NEGRO
+      dotColorFn: (it) => {
+        if (isNeonThemeId(it.id)) return "#000000";
+        return colorsFor(it.id).bg;
+      },
+      // ✅ neon: estrella del color neon, normal: blanca
+      starColorFn: (it) => {
+        if (isNeonThemeId(it.id)) return colorsFor(it.id).star;
+        return "rgba(255,255,255,0.92)";
       }
     });
 
@@ -1250,11 +1242,26 @@
         renderPosterAndMap();
         renderAll();
       },
-      previewColorFn: (it) => {
+      dotColorFn: (it) => {
+        // white: swatch blanco
         if (it.id === "white") return "#FFFFFF";
-        const th = colorsFor(state.map.colorTheme);
+
+        // match:
+        // - si neon => negro
         if (isNeonThemeId(state.map.colorTheme)) return "#000000";
-        return th.bg;
+
+        // - si normal => bg del tema
+        return colorsFor(state.map.colorTheme).bg;
+      },
+      starColorFn: (it) => {
+        // ✅ white: estrella NEGRA
+        if (it.id === "white") return "#000000";
+
+        // match: si neon => estrella neon
+        if (isNeonThemeId(state.map.colorTheme)) return colorsFor(state.map.colorTheme).star;
+
+        // match normal: estrella blanca
+        return "rgba(255,255,255,0.92)";
       }
     });
 
@@ -1492,6 +1499,7 @@
       return card;
     }
 
+    // ✅ regresado a como estaba antes (date/time nativo)
     function dateTimeCard(){
       const card = document.createElement("div");
       card.className = "fieldCard";
@@ -1519,8 +1527,7 @@
 
         const dateInp = document.createElement("input");
         dateInp.className = "fieldInput";
-        dateInp.type = "text";
-        dateInp.placeholder = "dd.mm.yyyy";
+        dateInp.type = "date";
         dateInp.value = state.text.date || "";
         dateInp.oninput = () => {
           state.text.date = dateInp.value;
@@ -1836,7 +1843,6 @@
   applyPosterPaddingLayout();
   setMapSizeFromPosterPad();
 
-  // reglas iniciales por estilo:
   if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
   if (state.map.styleId === "poster") state.map.mapCircleMarginEnabled = false;
 

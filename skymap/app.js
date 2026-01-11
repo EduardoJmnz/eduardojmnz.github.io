@@ -49,7 +49,7 @@
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
 
-      // ✅ margen fijo ON por default (como lo vienes usando en classic)
+      // ✅ margen fijo
       posterMarginEnabled: true,
       posterMarginThickness: POSTER_MARGIN_THICKNESS_FIXED,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
@@ -92,10 +92,9 @@
     { key: "rounded", name: "Rounded (Friendly)", css: "'Trebuchet MS', 'Verdana', system-ui, Arial" },
   ];
 
-  // ✅ sin Carbon
+  // ✅ sin Carbon y ✅ SIN Blanco en el mapa
   const COLOR_THEMES = [
     { id: "mono",      name: "Mono" },
-    { id: "white",     name: "Blanco" },
     { id: "marino",    name: "Marino" },
     { id: "ice",       name: "Hielo" },
     { id: "warm",      name: "Cálido" },
@@ -181,7 +180,7 @@
   function colorsFor(theme){
     const THEMES = {
       mono:      { bg: "#0A0B0D", star: "#FFFFFF", line: "#FFFFFF" },
-      white:     { bg: "#F5F5F2", star: "#111111", line: "#111111" },
+      // white eliminado del mapa (pero fondo blanco lo seguimos manejando como modo)
       marino:    { bg: "#0B0D12", star: "#FFFFFF", line: "#FFFFFF" },
       ice:       { bg: "#071016", star: "#E9F6FF", line: "#E9F6FF" },
       warm:      { bg: "#140E0A", star: "#F6E7C9", line: "#F6E7C9" },
@@ -220,7 +219,6 @@
   }
 
   function isOutlineToggleAllowedByStyle(){
-    // romantico sí toggle, classic no (siempre on), moderno no por default pero podría? tú pediste: moderno no tiene contorno por default.
     return (state.map.styleId === "romantico");
   }
 
@@ -237,7 +235,6 @@
         mapBg: "#000000",
         stars: th.star,
 
-        // grid/const/outline sin opacidad aquí; la opacidad la controla drawGlobeGrid (70%)
         gridLine: th.star,
         constLine: th.star,
         constNode: th.star,
@@ -250,6 +247,8 @@
 
     // Fondo blanco (solo no-neon)
     if (isWhiteBackgroundMode()){
+      // Nota: aquí el “tema blanco” ya no existe como color de mapa,
+      // pero el modo “fondo blanco” sí existe.
       return {
         posterBg: "#FFFFFF",
         posterInk: th.bg,
@@ -369,19 +368,12 @@
     enforceDecorRules();
     syncOutlineThickness();
 
-    // ✅ reglas por estilo contorno
     if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
 
     const st = getStyleDef();
 
     // classic: siempre on
     if (st.id === "classic") state.map.mapCircleMarginEnabled = true;
-
-    // moderno: default off
-    if (st.id === "moderno") {
-      // si venimos cambiando de otro estilo, no forzamos siempre; solo lo forzamos al entrar (lo manejamos en onStylePick)
-    }
-
     // poster: no
     if (st.id === "poster") state.map.mapCircleMarginEnabled = false;
 
@@ -394,11 +386,9 @@
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
-    // Fondo + tinta
     $poster.style.background = tokens.posterBg;
     $poster.style.color = tokens.posterInk;
 
-    // Marco (área)
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = tokens.posterInk;
@@ -409,20 +399,16 @@
       $posterFrameArea.style.inset = `${frameEdge}px`;
     }
 
-    // Papel interior
     const innerInset = frameEdge + framePx;
     $posterPaper.style.background = tokens.posterBg;
     $posterPaper.style.inset = `${innerInset}px`;
 
-    // Margen (línea) fijo 6
     const thickness = POSTER_MARGIN_THICKNESS_FIXED;
-
     $posterMarginLine.style.inset = `${marginEdge}px`;
     $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(tokens.posterInk, 1) : "transparent";
 
-    // Bottom spacing
     const baseBottom = isPosterStyle() ? 60 : 100;
     const safeBottomWhenMarginOn = marginEdge + thickness + 18;
     const finalBottom = marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom;
@@ -486,7 +472,7 @@
     ctx.closePath();
   }
 
-  // ✅ Retícula tipo globo (como tu imagen), con frente 70% y atrás tenue
+  // ✅ Retícula globo: horizontales ok + meridianos completos (izq+der)
   function drawGlobeGrid(ctx, w, h, gridLine){
     const cx = w / 2;
     const cy = h / 2;
@@ -544,7 +530,7 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
-    // paralelos
+    // ---------- PARALELOS (horizontales) ----------
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
     const lonSteps = 240;
 
@@ -565,27 +551,38 @@
       strokePath(frontPts, isPolarRing ? alphaFront : alphaFront,       isPolarRing ? lwFront + 1.0 : lwFront);
     }
 
-        // meridianos (VERTICALES) — dibujar completos para que se vean ambos lados
+    // ---------- MERIDIANOS (verticales) ----------
+    // ✅ Antes sólo estaban en [-90..90] (eso proyecta sólo el lado derecho).
+    // ✅ Ahora agregamos también el hemisferio izquierdo: lon + 180.
+    const baseLonsDeg = [];
+    for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
+    baseLonsDeg.push(-90, 90);
+
     const lonsDeg = [];
-    for (let d = -75; d <= 75; d += 15) lonsDeg.push(d);
-    lonsDeg.push(-90, 90);
+    for (const b of baseLonsDeg){
+      lonsDeg.push(b);
+      lonsDeg.push(b + 180); // ✅ lado izquierdo
+    }
 
     const latSteps = 260;
 
     for (const lonDeg of lonsDeg){
-      const lon = lonDeg * Math.PI / 180;
-      const pts = [];
+      const lon = (lonDeg * Math.PI / 180) % (Math.PI * 2);
+
+      const frontPts = [];
+      const backPts  = [];
 
       for (let i = 0; i <= latSteps; i++){
         const lat = (-90 + (i / latSteps) * 180) * Math.PI / 180;
         const p = projectSphere(lat, lon);
-        pts.push(p);
+        if (p.z >= 0) frontPts.push(p);
+        else backPts.push(p);
       }
 
-      // ✅ dibuja TODO el meridiano con la misma opacidad (como en referencia)
-      strokePath(pts, alphaFront, lwFront);
+      // ✅ dibuja ambos lados: frente fuerte + atrás tenue (como referencia)
+      strokePath(backPts,  alphaBack,  lwBack);
+      strokePath(frontPts, alphaFront, lwFront);
     }
-
 
     // círculo exterior tenue
     ctx.save();
@@ -679,11 +676,6 @@
       ctx.translate(mapW/2, mapH/2);
       ctx.scale(z, z);
       ctx.translate(-mapW/2, -mapH/2);
-    }
-
-    if (state.map.showGrid && isGridAllowedForCurrentStyle()){
-      // en rect no se usa globo, pero aquí casi no aplica porque “rect” es poster style
-      // lo dejamos simple
     }
 
     drawStars(ctx, mapW, mapH, rand, tokens.stars);
@@ -963,6 +955,23 @@
     ctx.restore();
   }
 
+  // ✅ nueva “estrella” (SVG real) para que no parezca X
+  function makeFourPointStarSvg(){
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("width", "14");
+    svg.setAttribute("height", "14");
+    svg.setAttribute("viewBox", "0 0 14 14");
+    svg.style.opacity = "0.85";
+
+    const p = document.createElementNS(svgNS, "path");
+    // 4 puntas (sparkle)
+    p.setAttribute("d", "M7 0 L8.8 5.2 L14 7 L8.8 8.8 L7 14 L5.2 8.8 L0 7 L5.2 5.2 Z");
+    p.setAttribute("fill", "rgba(255,255,255,0.92)");
+    svg.appendChild(p);
+    return svg;
+  }
+
   function renderColorSwatches({ title, items, activeId, onPick, previewColorFn }){
     const wrap = document.createElement("div");
     wrap.className = "formRow";
@@ -979,9 +988,7 @@
       dot.className = "swatchDot";
       dot.style.background = previewColorFn(it);
 
-      const star = document.createElement("div");
-      star.className = "star4";
-      dot.appendChild(star);
+      dot.appendChild(makeFourPointStarSvg());
 
       const name = document.createElement("div");
       name.className = "swatchName";
@@ -1026,7 +1033,6 @@
       state.map.styleId = pick(MAP_STYLES).id;
       state.map.colorTheme = pick(COLOR_THEMES).id;
 
-      // neon: fuerza match y sin blanco
       if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
 
       const allowG = isGridAllowedForCurrentStyle();
@@ -1049,7 +1055,6 @@
         state.map.posterMarginThickness = POSTER_MARGIN_THICKNESS_FIXED;
       }
 
-      // reglas contorno por estilo
       if (state.map.styleId === "poster") {
         state.map.mapCircleMarginEnabled = false;
       } else if (state.map.styleId === "moderno"){
@@ -1065,7 +1070,6 @@
     };
     randomRow.appendChild(randomBtn);
 
-    // GAP
     const gap1 = document.createElement("div"); gap1.className = "groupGap";
 
     // 2) Estilos
@@ -1077,7 +1081,6 @@
     grid.className = "styleGrid";
 
     function previewOutlineByStyle(stId){
-      // classic + romantico: sí (pero delgado en preview)
       if (stId === "classic") return true;
       if (stId === "romantico") return true;
       return false;
@@ -1103,7 +1106,6 @@
       ctx.save();
       const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
 
-      // clip forma
       if (st.shape === "circle"){
         ctx.beginPath();
         ctx.arc(mx+mw/2, my+mw/2, mw/2, 0, Math.PI*2);
@@ -1123,7 +1125,6 @@
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(mx,my,mw,mh);
 
-      // stars quick
       const r = mulberry32(
         st.id === "romantico" ? 202603 :
         st.id === "poster" ? 202604 :
@@ -1140,12 +1141,11 @@
       }
       ctx.globalAlpha = 1;
 
-      // outline preview thinner
       if (previewOutlineByStyle(st.id)){
         ctx.save();
         ctx.strokeStyle = tokens.outline;
         ctx.globalAlpha = 1;
-        ctx.lineWidth = 2; // ✅ más delgada en preview
+        ctx.lineWidth = 2;
         if (st.shape === "circle"){
           ctx.beginPath();
           ctx.arc(mx+mw/2, my+mw/2, (mw/2) - 4, 0, Math.PI*2);
@@ -1176,7 +1176,6 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
 
-        // decor rules
         if (!isPosterDecorAllowed()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
@@ -1190,13 +1189,12 @@
           }
         }
 
-        // contorno rules por estilo
         if (st.id === "poster"){
           state.map.mapCircleMarginEnabled = false;
         } else if (st.id === "moderno"){
-          state.map.mapCircleMarginEnabled = false; // ✅ moderno default NO
+          state.map.mapCircleMarginEnabled = false;
         } else {
-          state.map.mapCircleMarginEnabled = true; // classic + romantico default ON
+          state.map.mapCircleMarginEnabled = true;
         }
 
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
@@ -1212,32 +1210,27 @@
 
     const gap2 = document.createElement("div"); gap2.className = "groupGap";
 
-    // 3) Color del mapa (swatches)
+    // 3) Color del mapa (swatches) — SIN blanco
     const mapColorRow = renderColorSwatches({
       title: "Color del Mapa estelar",
-      items: COLOR_THEMES.filter(x => x.id !== "white" ? true : true), // white allowed in map color
+      items: COLOR_THEMES,
       activeId: state.map.colorTheme,
       onPick: (id) => {
         state.map.colorTheme = id;
-
-        // neon: fuerza match
         if (isNeonThemeId(id)) state.map.backgroundMode = "match";
-
         renderPosterAndMap();
         renderAll();
       },
       previewColorFn: (it) => {
         const th = colorsFor(it.id);
-        // map swatch: usa el color “estrella” o fondo
         if (isNeonThemeId(it.id)) return th.star;
-        if (it.id === "white") return "#F5F5F2";
         return th.bg;
       }
     });
 
     const gap3 = document.createElement("div"); gap3.className = "groupGap";
 
-    // 4) Color de fondo (swatches) - en neon NO mostramos blanco
+    // 4) Color de fondo (swatches)
     const bgItems = (() => {
       const mapThemeName = (COLOR_THEMES.find(x => x.id === state.map.colorTheme)?.name) || "Mapa";
       const base = [{ id: "match", name: mapThemeName }];
@@ -1251,7 +1244,6 @@
       items: bgItems,
       activeId: state.map.backgroundMode,
       onPick: (id) => {
-        // neon no permite white
         if (isNeonThemeId(state.map.colorTheme) && id === "white") return;
         state.map.backgroundMode = id;
         if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
@@ -1260,7 +1252,6 @@
       },
       previewColorFn: (it) => {
         if (it.id === "white") return "#FFFFFF";
-        // match: usa el bg real del tema (o negro en neon)
         const th = colorsFor(state.map.colorTheme);
         if (isNeonThemeId(state.map.colorTheme)) return "#000000";
         return th.bg;
@@ -1292,14 +1283,13 @@
 
     const gap5 = document.createElement("div"); gap5.className = "groupGap";
 
-    // 7) Contorno del mapa (solo si aplica)
+    // 7) Contorno del mapa (solo toggle en romántico)
     const outlineRow = document.createElement("div");
     outlineRow.className = "rowToggle";
     outlineRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
 
     const outlineToggleDisabled = (!mapOutlineAllowed() || !isOutlineToggleAllowedByStyle());
     const outlineToggle = toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
-      // classic siempre on
       if (state.map.styleId === "classic") {
         state.map.mapCircleMarginEnabled = true;
       } else if (state.map.styleId === "moderno") {
@@ -1314,7 +1304,6 @@
     });
 
     if (outlineToggleDisabled){
-      // si no se puede togglear, mantenemos estado correcto y “bloqueamos” visualmente (simple)
       outlineToggle.style.opacity = "0.55";
       outlineToggle.style.pointerEvents = "none";
     }
@@ -1376,7 +1365,6 @@
     };
     mapZoomRow.appendChild(mapZoomRange);
 
-    // ----- render -----
     $section.appendChild(t);
     $section.appendChild(s);
 
@@ -1392,7 +1380,6 @@
     $section.appendChild(bgRow);
     $section.appendChild(gap4);
 
-    // Marco / margen solo si aplica
     if (isPosterDecorAllowed()){
       $section.appendChild(frameRow);
       $section.appendChild(document.createElement("div")).className = "groupGap";
@@ -1404,7 +1391,6 @@
       $section.appendChild(gap5);
     }
 
-    // Contorno (si aplica o si es romantico toggle)
     if (mapOutlineAllowed()){
       $section.appendChild(outlineRow);
       $section.appendChild(document.createElement("div")).className = "groupGap";
@@ -1531,7 +1517,6 @@
         const body = document.createElement("div");
         body.className = "fieldBody";
 
-        // ✅ date como texto dd.mm.yyyy
         const dateInp = document.createElement("input");
         dateInp.className = "fieldInput";
         dateInp.type = "text";
@@ -1658,24 +1643,20 @@
     const frameX = Math.round(framePx * (W / POSTER_W));
     const frameY = Math.round(framePx * (H / POSTER_H));
 
-    // Fondo
     ctx.fillStyle = tokens.posterBg;
     ctx.fillRect(0, 0, W, H);
 
-    // Marco (área)
     if (frameOn){
       ctx.fillStyle = tokens.posterInk;
       ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
     }
 
-    // Papel interior
     const innerX = edgeFrameX + frameX;
     const innerY = edgeFrameY + frameY;
 
     ctx.fillStyle = tokens.posterBg;
     ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
 
-    // Margen (línea) fijo 6
     if (marginOn){
       const thick = POSTER_MARGIN_THICKNESS_FIXED;
       const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
@@ -1859,7 +1840,6 @@
   if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
   if (state.map.styleId === "poster") state.map.mapCircleMarginEnabled = false;
 
-  // neon: fondo match
   if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
 
   renderAll();

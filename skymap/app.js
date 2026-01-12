@@ -593,7 +593,7 @@
     ctx.clip();
 
     // Horizontales (paralelos)
-    const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
+    const latsDeg = [-60, -40, -20, 0, 20, 40, 60];
     const lonSteps = 240;
 
     for (const latDeg of latsDeg){

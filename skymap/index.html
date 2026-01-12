@@ -19,10 +19,9 @@
       --headerH: 66px;
       --editorW: 420px;
 
-      /* ✅ Preview fijo (desktop) */
+      /* ✅ Preview adaptativo: desktop lo setea JS */
       --previewZoom: 0.75;
 
-      /* ✅ Tamaño real del poster para calcular stage */
       --posterW: 900px;
       --posterH: 1200px;
     }
@@ -77,13 +76,11 @@
       gap:10px;
       min-width: 0;
     }
-
     .dot{
       width:12px;height:12px;border-radius:999px;background: var(--accentSolid);
       box-shadow:0 0 24px rgba(124,255,250,.35);
       flex: 0 0 auto;
     }
-
     .brandText{ min-width: 0; }
     .brandTitle{
       font-weight: 900;
@@ -100,7 +97,6 @@
       overflow:hidden;
       text-overflow: ellipsis;
     }
-
     .topbarRight{
       display:flex;
       align-items:center;
@@ -110,13 +106,12 @@
       white-space:nowrap;
     }
 
-    /* Preview area */
+    /* ✅ Preview: sin scroll en desktop (debe encajar) */
     .previewArea{
       grid-area: preview;
       position:relative;
-      overflow:auto;
+      overflow:hidden;
       padding: 16px;
-
       display:flex;
       align-items:flex-start;
       justify-content:center;
@@ -126,11 +121,11 @@
       width:100%;
       max-width: 980px;
       position:relative;
-      padding-bottom: 12px;
-      overflow:hidden;
+      padding-bottom: 0;
+      overflow: visible;
     }
 
-    /* ✅ Sombra blanca tenue alrededor del preview (no glow) */
+    /* ✅ “sombra blanca tenue” alrededor del preview */
     .previewStage{
       position: relative;
       width: calc(var(--posterW) * var(--previewZoom));
@@ -305,7 +300,7 @@
       font-weight: 800;
     }
 
-    /* ✅ barra más delgada y con más “aire” */
+    /* ✅ barra más fina */
     .sheetTab.active::after{
       content:"";
       position:absolute;
@@ -328,6 +323,42 @@
     .title{ font-weight:800; margin-bottom:4px; }
     .sub{ font-size:12px; color:var(--muted); margin-bottom:12px; }
 
+    /* ✅ FIELD CARD (igual al screenshot) */
+    .fieldCard{
+      border:1px solid rgba(233,238,252,.10);
+      border-radius:16px;
+      background: rgba(255,255,255,.02);
+      overflow:hidden;
+      margin-bottom: 12px;
+    }
+    .fieldHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 14px 14px;
+      gap: 12px;
+    }
+    .fieldHeader .fieldLabel{
+      font-weight: 900;
+      font-size: 16px;
+    }
+    .fieldBody{
+      padding: 0 14px 14px 14px;
+    }
+
+    /* ✅ input dentro del card como en la imagen */
+    .fieldInput{
+      width:100%;
+      border:1px solid rgba(233,238,252,.10);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      padding: 14px 12px;
+      border-radius: 14px;
+      outline:none;
+      font-size: 16px;
+    }
+    input[type="range"]{ width:100%; }
+
     .rowToggle{
       display:flex; justify-content:space-between; align-items:center;
       padding:10px 10px;
@@ -340,7 +371,6 @@
     .formRow{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
     .label{ font-size:12px; color:var(--muted); }
 
-    /* ✅ estilo “bonito original” */
     .input, .select{
       border:1px solid var(--stroke);
       background: rgba(255,255,255,.02);
@@ -350,7 +380,6 @@
       outline:none;
       width:100%;
     }
-    input[type="range"]{ width:100%; }
 
     .btnRow{
       display:flex;
@@ -421,7 +450,6 @@
       background: rgba(124,255,250,.95);
     }
 
-    /* Grupos con aire */
     .groupGap{ height: 12px; }
 
     .styleGrid{
@@ -457,7 +485,7 @@
       opacity: .92;
     }
 
-    /* ✅ Swatches */
+    /* Swatches */
     .swatchGrid{
       display:grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -557,7 +585,7 @@
       <div class="topbarRight">© wolffel 2026</div>
     </header>
 
-    <main class="previewArea noScrollBar">
+    <main class="previewArea noScrollBar" id="previewArea">
       <div class="previewWrap">
         <div class="previewStage">
           <div class="previewScale" id="previewScale">

@@ -9,11 +9,8 @@
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
   // ✅ fijos
-  const POSTER_MARGIN_THICKNESS_FIXED = 4;
-  const OUTLINE_THICKNESS_FIXED = 6; // ✅ contorno = 6
-
-  // ✅ color “beige” para labels (sliders)
-  const UI_BEIGE = "#E7D8B5";
+  const POSTER_MARGIN_THICKNESS_FIXED = 4; // ✅ pedido: 4
+  const OUTLINE_THICKNESS_FIXED = 6;       // ✅ pedido: 6
 
   const TITLE_MAX = 120;
   const SUB_MAX = 240;
@@ -45,7 +42,7 @@
 
       backgroundMode: "match",
 
-      // ✅ Moderno: YA SÍ permite marco/margen
+      // ✅ ahora: Moderno SÍ permite marco y margen (solo Poster los fuerza OFF)
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
@@ -54,7 +51,8 @@
       posterMarginThickness: POSTER_MARGIN_THICKNESS_FIXED,
 
       mapCircleMarginEnabled: true,
-      mapCircleInsetPct: 0.10, // se usa solo para encoger mapa cuando hay marco/margen
+      mapCircleInsetPct: 0.10,
+      mapCircleMarginThickness: OUTLINE_THICKNESS_FIXED,
 
       constellationSize: 2.0,
       seed: 12345,
@@ -102,7 +100,7 @@
     { id: "ice",       name: "Hielo" },
     { id: "warm",      name: "Cálido" },
     { id: "forest",    name: "Bosque" },
-    { id: "rose",      name: "Caramelo" }, // ✅ Rosa -> Caramelo
+    { id: "rose",      name: "Caramelo" }, // ✅ antes "Rosa"
     { id: "neonBlue",  name: "Neón Azul" },
     { id: "neonGreen", name: "Neón Verde" },
     { id: "neonRose",  name: "Neón Rosa" },
@@ -158,7 +156,7 @@
       mono:      { bg: "#0A0B0D", star: "#FFFFFF" },
       marino:    { bg: "#0B0D12", star: "#FFFFFF" },
       ice:       { bg: "#071016", star: "#E9F6FF" },
-      warm:      { bg: "#140E0A", star: "#F6E7C9" },
+      warm:      { bg: "#140E0A", star: "#F6E7C9" }, // ✅ beige para “Cálido”
       forest:    { bg: "#06130E", star: "#EAF7F1" },
       rose:      { bg: "#16080C", star: "#FFE9EF" },
       neonBlue:  { bg: "#05050A", star: "#4EA7FF" },
@@ -270,6 +268,7 @@
 
   function syncThickness(){
     state.map.posterMarginThickness = POSTER_MARGIN_THICKNESS_FIXED;
+    state.map.mapCircleMarginThickness = OUTLINE_THICKNESS_FIXED;
   }
 
   function updatePreviewZoom(){
@@ -350,15 +349,13 @@
   let $posterMarginLine = null;
 
   function ensurePosterLayers(){
-    const POSTER_RADIUS = "26px";
-
     if (!$posterFrameArea){
       $posterFrameArea = document.createElement("div");
       $posterFrameArea.id = "posterFrameArea";
       Object.assign($posterFrameArea.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: "0px", // ✅ MARCO SIN REDONDEO
+        borderRadius: "0px",
         zIndex: "0",
         pointerEvents: "none",
         background: "transparent",
@@ -373,7 +370,7 @@
       Object.assign($posterPaper.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: POSTER_RADIUS, // ✅ PAPEL (Y POSTER) SÍ REDONDEADO
+        borderRadius: "0px",
         zIndex: "1",
         pointerEvents: "none",
         background: "transparent",
@@ -387,7 +384,7 @@
       Object.assign($posterMarginLine.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: "0px", // ✅ MARGEN SIN REDONDEO
+        borderRadius: "0px",
         zIndex: "2",
         pointerEvents: "none",
         border: "0px solid transparent",
@@ -411,7 +408,7 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    // ✅ Poster: fuerza OFF (Moderno sí)
+    // ✅ Poster: fuerza OFF marco/margen (Moderno ya NO)
     if (isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
@@ -420,11 +417,11 @@
     const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
     const marginEdge = POSTER_MARGIN_EDGE_GAP_PX;
 
-    const frameOn = !!state.map.posterFrameEnabled;
-    const marginOn = !!state.map.posterMarginEnabled && !frameOn;
+    const frameOn = !!state.map.posterFrameEnabled && !isPoster();
+    const marginOn = !!state.map.posterMarginEnabled && !frameOn && !isPoster();
 
-    $poster.classList.toggle("frameOn", frameOn);
-    $poster.classList.toggle("marginOn", marginOn);
+    // ✅ sin puntas redondeadas cuando hay marco o margen
+    $poster.style.borderRadius = (frameOn || marginOn) ? "0px" : "26px";
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
@@ -460,11 +457,7 @@
   function applyPosterLayoutByStyle(){
     const st = getStyleDef();
 
-    $poster.classList.toggle("classic",   st.id === "classic");
-    $poster.classList.toggle("modern",    st.id === "moderno");
-    $poster.classList.toggle("romantico", st.id === "romantico");
-    $poster.classList.toggle("posterStyle", st.id === "poster");
-
+    $poster.classList.toggle("classic", st.layout === "classic");
     $poster.classList.toggle("rectStyle", st.shape === "rect");
 
     if (st.shape === "rect") {
@@ -478,7 +471,7 @@
 
   function applyPosterPaddingLayout(){
     const edge = POSTER_FRAME_EDGE_GAP_PX;
-    const frame = state.map.posterFrameEnabled ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
+    const frame = (!isPoster() && state.map.posterFrameEnabled) ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
     const pad = edge + frame;
     $poster.style.setProperty("--posterPad", `${pad}px`);
   }
@@ -488,7 +481,7 @@
     if (st.shape !== "circle") return;
 
     const base = isModern() ? 740 : 780;
-    const frame = state.map.posterFrameEnabled ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
+    const frame = (!isPoster() && state.map.posterFrameEnabled) ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
     const size = clamp(base - Math.round(frame * 0.6), 600, base);
 
     $poster.style.setProperty("--mapW", `${size}px`);
@@ -512,7 +505,7 @@
   }
 
   // ==========================================================
-  // Retícula con radio fijo + filtro líneas rectas
+  // Retícula con radio fijo + filtro “líneas rectas”
   // ==========================================================
   function drawGlobeGridWithRadius(ctx, cx, cy, R, gridLine){
     const tiltX = 24 * Math.PI / 180;
@@ -703,7 +696,7 @@
     ctx.globalAlpha = 1;
   }
 
-  // ✅ Rect: retícula NO se zoom; zoom solo estrellas + constelaciones
+  // Rect: retícula NO se zoom; zoom solo estrellas + constelaciones
   function drawRectMap(ctx, mapW, mapH, tokens, rand, showOutline, outlineW, conLineW, nodeR){
     ctx.save();
 
@@ -744,9 +737,9 @@
   }
 
   // ✅ drawMap:
-  // - Contorno NO encoge mapa
-  // - El mapa solo se hace chico cuando hay marco o margen
-  // - Retícula NO se zoom (solo estrellas/constelaciones)
+  // - el contorno YA NO hace el mapa más chico
+  // - el contorno se dibuja AL FINAL (para que no se “coma” la mitad y se vea delgado)
+  // - el mapa solo se hace chico con marco o margen
   function drawMap(){
     syncThickness();
 
@@ -773,12 +766,12 @@
     const outlineEnabled = !!state.map.mapCircleMarginEnabled;
     const outlineW = OUTLINE_THICKNESS_FIXED;
 
-    const frameOn = !!state.map.posterFrameEnabled;
-    const marginOn = !!state.map.posterMarginEnabled && !frameOn;
+    const frameOn = (!isPoster()) && !!state.map.posterFrameEnabled;
+    const marginOn = (!isPoster()) && !!state.map.posterMarginEnabled && !frameOn;
 
-    // ✅ SOLO marco/margen encogen el mapa (NO contorno)
-    const shouldInsetLikeMapControl = frameOn || marginOn;
-    const insetPad = shouldInsetLikeMapControl
+    // ✅ solo marco/margen reducen el mapa (contorno NO)
+    const shouldInset = frameOn || marginOn;
+    const insetPad = shouldInset
       ? Math.round(Math.min(mapW, mapH) * (state.map.mapCircleInsetPct || 0.10))
       : 0;
 
@@ -789,21 +782,9 @@
     if (st.shape === "circle"){
       const cx = mapW/2, cy = mapH/2;
       const rOuter = Math.min(mapW,mapH)/2;
-
       const rContent = rOuter - insetPad;
 
-      // ✅ contorno “hacia adentro” sin afectar el tamaño percibido del mapa
-      if (outlineEnabled){
-        ctx.save();
-        ctx.strokeStyle = tokens.outline;
-        ctx.lineWidth = outlineW;
-        ctx.globalAlpha = 1;
-        ctx.beginPath();
-        ctx.arc(cx, cy, Math.max(0, rContent - outlineW/2), 0, Math.PI*2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
+      // clip al tamaño real (solo cambia por marco/margen)
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, rContent, 0, Math.PI*2);
@@ -812,12 +793,10 @@
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(0,0,mapW,mapH);
 
-      // ✅ retícula sin zoom
       if (state.map.showGrid && isGridAllowedForCurrentStyle()){
         drawGlobeGridWithRadius(ctx, cx, cy, rContent * 0.96, tokens.gridLine);
       }
 
-      // ✅ zoom SOLO estrellas + constelaciones
       ctx.save();
       if (z !== 1){
         ctx.translate(cx, cy);
@@ -831,7 +810,19 @@
       }
       ctx.restore();
 
-      ctx.restore();
+      ctx.restore(); // clip
+
+      // ✅ contorno al FINAL (ya no se “adelgaza”)
+      if (outlineEnabled){
+        ctx.save();
+        ctx.strokeStyle = tokens.outline;
+        ctx.lineWidth = outlineW;
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, Math.max(0, rContent - outlineW/2), 0, Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+      }
       return;
     }
 
@@ -862,7 +853,7 @@
       }
       ctx.restore();
 
-      ctx.restore();
+      ctx.restore(); // clip
 
       if (outlineEnabled){
         ctx.save();
@@ -995,6 +986,9 @@
       name.className = "swatchName";
       name.textContent = it.name;
 
+      // ✅ beige SOLO para el texto del color “Cálido”
+      if (it.id === "warm") name.style.color = "#F6E7C9";
+
       tile.appendChild(dot);
       tile.appendChild(name);
 
@@ -1043,7 +1037,7 @@
     const p = state.map.stylePrefs[styleId];
     if (!p) return;
 
-    // ✅ Poster: fuerza OFF (Moderno sí)
+    // ✅ Poster forzado OFF; Moderno ya NO
     state.map.posterFrameEnabled = (styleId === "poster") ? false : !!p.frame;
     state.map.posterMarginEnabled = (styleId === "poster") ? false : !!p.margin;
     state.map.mapCircleMarginEnabled = !!p.outline;
@@ -1354,7 +1348,7 @@
 
     $section.appendChild(groupGap());
 
-    // ✅ Marco/Margen NO aparecen SOLO en Poster (Moderno sí)
+    // ✅ Marco/Margen aparecen en Moderno también (solo se ocultan en Poster)
     if (!isPoster()){
       $section.appendChild(fieldCard(
         "Marco del póster",
@@ -1369,8 +1363,7 @@
         (body) => {
           const label = document.createElement("div");
           label.className = "label";
-          label.textContent = "Tamaño"; // ✅ solo “Tamaño”
-          label.style.color = UI_BEIGE; // ✅ beige
+          label.textContent = "Tamaño"; // ✅ antes "Tamaño del marco"
           body.appendChild(label);
 
           const r = document.createElement("input");
@@ -1403,7 +1396,6 @@
           const txt = document.createElement("div");
           txt.className = "label";
           txt.textContent = `Grosor fijo: ${POSTER_MARGIN_THICKNESS_FIXED}px`;
-          txt.style.color = UI_BEIGE; // ✅ beige
           body.appendChild(txt);
         }
       ));
@@ -1423,8 +1415,7 @@
       (body) => {
         const txt = document.createElement("div");
         txt.className = "label";
-        txt.textContent = `Grosor: ${OUTLINE_THICKNESS_FIXED}px`;
-        txt.style.color = UI_BEIGE; // ✅ beige
+        txt.textContent = `Grosor: ${OUTLINE_THICKNESS_FIXED}px`; // ✅ 6
         body.appendChild(txt);
       }
     ));
@@ -1440,8 +1431,7 @@
       (body) => {
         const label = document.createElement("div");
         label.className = "label";
-        label.textContent = "Tamaño"; // ✅ solo “Tamaño”
-        label.style.color = UI_BEIGE; // ✅ beige
+        label.textContent = "Tamaño"; // ✅ antes "Tamaño de constelaciones"
         body.appendChild(label);
 
         const r = document.createElement("input");
@@ -1471,7 +1461,6 @@
     const seedCard = document.createElement("div");
     seedCard.className = "formRow";
     seedCard.innerHTML = `<div class="label">Nuevo cielo</div>`;
-    seedCard.querySelector(".label").style.color = UI_BEIGE; // ✅ beige
     const seedBtn = document.createElement("button");
     seedBtn.type = "button";
     seedBtn.className = "btn ghost";
@@ -1484,7 +1473,6 @@
     const zoomCard = document.createElement("div");
     zoomCard.className = "formRow";
     zoomCard.innerHTML = `<div class="label">Zoom de Estrellas</div>`;
-    zoomCard.querySelector(".label").style.color = UI_BEIGE; // ✅ beige
     const mapZoomRange = document.createElement("input");
     mapZoomRange.type = "range";
     mapZoomRange.min = "1.00";
@@ -1526,7 +1514,6 @@
     const fontRow = document.createElement("div");
     fontRow.className = "formRow";
     fontRow.innerHTML = `<div class="label">Fuente</div>`;
-    fontRow.querySelector(".label").style.color = UI_BEIGE; // ✅ beige
     const fontSel = document.createElement("select");
     fontSel.className = "select";
     FONT_PRESETS.forEach(f => {
@@ -1701,7 +1688,7 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    // ✅ Poster: no marco/margen. Moderno sí.
+    // ✅ Poster: no marco/margen
     const frameOn = (!isPoster()) && !!state.map.posterFrameEnabled;
     const marginOn = (!isPoster()) && !!state.map.posterMarginEnabled && !frameOn;
 
@@ -1842,7 +1829,6 @@
     const sizeRow = document.createElement("div");
     sizeRow.className = "formRow";
     sizeRow.innerHTML = `<div class="label">Medidas</div>`;
-    sizeRow.querySelector(".label").style.color = UI_BEIGE;
 
     const sizeSel = document.createElement("select");
     sizeSel.className = "select";
@@ -1859,7 +1845,6 @@
     const formatRow = document.createElement("div");
     formatRow.className = "formRow";
     formatRow.innerHTML = `<div class="label">Formato</div>`;
-    formatRow.querySelector(".label").style.color = UI_BEIGE;
 
     const formatSel = document.createElement("select");
     formatSel.className = "select";
@@ -1915,7 +1900,7 @@
   function renderAll(){
     if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
 
-    // ✅ Poster: doble seguro OFF
+    // ✅ Poster: doble seguro OFF (Moderno ya NO)
     if (isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;

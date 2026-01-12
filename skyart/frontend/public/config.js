@@ -3,5 +3,6 @@
 // window.SKymapConfig = { apiBase: "https://tu-backend.onrender.com" };
 // En local, puedes dejarlo vacío si sirves frontend+backend en el mismo host.
 window.SKymapConfig = {
-  apiBase: ""
+  apiBase: "https://eduardojmnz-github-io-skyart.onrender.com"
 };
+

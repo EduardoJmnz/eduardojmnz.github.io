@@ -819,7 +819,8 @@
       ctx.fillRect(0,0,mapW,mapH);
 
       if (state.map.showGrid && isGridAllowedForCurrentStyle()){
-        drawGlobeGridWithRadius(ctx, cx, cy, rContent * 0.96, tokens.gridLine);
+        drawGlobeGridWithRadius(ctx, cx, cy, rContent, tokens.gridLine);
+
       }
 
       ctx.save();

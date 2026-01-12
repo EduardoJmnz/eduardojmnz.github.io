@@ -16,6 +16,8 @@
       --accentSolid: #7CFFFA;
       --accentFill: rgba(124,255,250,.12);
 
+      --beige: #E9D8B5;
+
       --headerH: 66px;
       --editorW: 420px;
 
@@ -258,7 +260,7 @@
     }
     .poster.rectStyle .metaCol{ align-items:center; text-align:center; }
 
-    /* ✅ Moderno + marco: reduce tipografía para no chocar */
+    /* ✅ Moderno + marco */
     .poster.modern.frameOn .tTitle{ letter-spacing: 1.3px; }
     .poster.modern.frameOn .tSub{ margin-bottom: 16px; }
     .poster.modern.frameOn .meta{ font-size: 12px; }
@@ -294,7 +296,7 @@
       color: rgba(233,238,252,.50);
       font-weight: 400;
       font-size: 13px;
-      padding: 10px 0 18px 0; /* ✅ más espacio */
+      padding: 10px 0 18px 0;
       cursor:pointer;
       position: relative;
       letter-spacing: .2px;
@@ -309,7 +311,6 @@
       font-weight: 800;
     }
 
-    /* ✅ más delgada y fina */
     .sheetTab.active::after{
       content:"";
       position:absolute;
@@ -404,6 +405,9 @@
     .formRow{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
     .label{ font-size:12px; color:var(--muted); }
 
+    /* ✅ beige para labels de sliders */
+    .sliderLabel{ color: var(--beige) !important; }
+
     .input, .select{
       border:1px solid var(--stroke);
       background: rgba(255,255,255,.02);
@@ -447,7 +451,6 @@
       opacity: .92;
     }
 
-    /* ✅ swatches */
     .swatchGrid{
       display:grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -507,7 +510,6 @@
       font-size: 16px;
     }
 
-    /* ✅ MOBILE */
     @media (max-width: 980px){
       body{ overflow:auto; }
 

@@ -10,7 +10,7 @@
 
   // ✅ fijos
   const POSTER_MARGIN_THICKNESS_FIXED = 4; // ✅ pedido: 4
-  const OUTLINE_THICKNESS_FIXED = 6;       // ✅ pedido: 6
+  const OUTLINE_THICKNESS_FIXED = 4;       // ✅ pedido: 6
 
   const TITLE_MAX = 120;
   const SUB_MAX = 240;

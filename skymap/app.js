@@ -10,7 +10,7 @@
 
   const POSTER_LINE_THICK_MAX = 12;
 
-  // ✅ fijo (sin slider)
+  // ✅ fijo (sin slider) — como pediste
   const POSTER_MARGIN_THICKNESS_FIXED = 6;
   const OUTLINE_THICKNESS_FIXED = POSTER_MARGIN_THICKNESS_FIXED;
 
@@ -24,6 +24,7 @@
       subtitle: "A moment to remember",
       place: "Mexico City, MX",
       coords: "19.4326, -99.1332",
+      // default: 25.12.1995 (interno en input date será YYYY-MM-DD)
       date: "1995-12-25",
       time: "19:30",
       fontKey: "system",
@@ -39,7 +40,7 @@
       colorTheme: "mono",
       mapZoom: 1.0,
 
-      // default: mismo color que el mapa
+      // default: mismo color que mapa
       backgroundMode: "match",
 
       posterFrameEnabled: false,
@@ -50,6 +51,7 @@
       posterMarginThickness: POSTER_MARGIN_THICKNESS_FIXED,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
+      // ✅ contorno ON por default, pero el usuario lo puede apagar en cualquier estilo
       mapCircleMarginEnabled: true,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: OUTLINE_THICKNESS_FIXED,
@@ -87,7 +89,7 @@
     { key: "rounded", name: "Rounded (Friendly)", css: "'Trebuchet MS', 'Verdana', system-ui, Arial" },
   ];
 
-  // ✅ sin Carbon y sin Blanco en mapa
+  // ✅ sin Carbon, sin Blanco en mapa
   const COLOR_THEMES = [
     { id: "mono",      name: "Mono" },
     { id: "marino",    name: "Marino" },
@@ -98,6 +100,11 @@
     { id: "neonBlue",  name: "Neón Azul" },
     { id: "neonGreen", name: "Neón Verde" },
     { id: "neonRose",  name: "Neón Rosa" },
+  ];
+
+  const BG_SWATCHES = [
+    { id: "match", name: "Mono" },  // el texto se actualiza dinámico con el nombre del mapa
+    { id: "white", name: "Blanco" },
   ];
 
   const EXPORT_SIZES = [
@@ -122,25 +129,18 @@
 
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
-  // ✅ Desktop: zoom adaptativo para que NO haya scroll y encaje perfecto
+  // ✅ Desktop: zoom adaptativo para que NO haya scroll
   function updatePreviewZoom(){
     const isMobile = window.matchMedia("(max-width: 980px)").matches;
-    if (isMobile) return; // móvil usa CSS
-
+    if (isMobile) return;
     if (!$previewArea) return;
 
-    // espacio real disponible del contenedor (ya sin header porque es grid)
-    const w = $previewArea.clientWidth - 32;  // padding aprox
+    const w = $previewArea.clientWidth - 32;
     const h = $previewArea.clientHeight - 32;
-
     if (w <= 0 || h <= 0) return;
 
-    // zoom para que 900x1200 quepa completo
     const z = Math.min(w / POSTER_W, h / POSTER_H);
-
-    // un poquito de aire y límites sanos
     const finalZ = clamp(z * 0.98, 0.35, 0.95);
-
     document.documentElement.style.setProperty("--previewZoom", finalZ.toFixed(4));
   }
 
@@ -165,6 +165,18 @@
 
   function isNeonThemeId(id){
     return String(id || "").startsWith("neon");
+  }
+
+  function getStyleDef(){
+    return MAP_STYLES.find(s => s.id === state.map.styleId) || MAP_STYLES[0];
+  }
+
+  function isGridAllowedForCurrentStyle(){
+    return (state.map.styleId === "classic" || state.map.styleId === "moderno");
+  }
+
+  function getSelectedThemeName(){
+    return (COLOR_THEMES.find(t => t.id === state.map.colorTheme)?.name) || "Mono";
   }
 
   function getDateTimeString(){
@@ -197,51 +209,24 @@
 
   function colorsFor(theme){
     const THEMES = {
-      mono:      { bg: "#0A0B0D", star: "#FFFFFF", line: "#FFFFFF" },
-      marino:    { bg: "#0B0D12", star: "#FFFFFF", line: "#FFFFFF" },
-      ice:       { bg: "#071016", star: "#E9F6FF", line: "#E9F6FF" },
-      warm:      { bg: "#140E0A", star: "#F6E7C9", line: "#F6E7C9" },
-      forest:    { bg: "#06130E", star: "#EAF7F1", line: "#EAF7F1" },
-      rose:      { bg: "#16080C", star: "#FFE9EF", line: "#FFE9EF" },
-      neonBlue:  { bg: "#05050A", star: "#4EA7FF", line: "#4EA7FF" },
-      neonGreen: { bg: "#05050A", star: "#3CFF9B", line: "#3CFF9B" },
-      neonRose:  { bg: "#05050A", star: "#FF4FD8", line: "#FF4FD8" },
+      mono:      { bg: "#0A0B0D", star: "#FFFFFF" },
+      marino:    { bg: "#0B0D12", star: "#FFFFFF" },
+      ice:       { bg: "#071016", star: "#E9F6FF" },
+      warm:      { bg: "#140E0A", star: "#F6E7C9" },
+      forest:    { bg: "#06130E", star: "#EAF7F1" },
+      rose:      { bg: "#16080C", star: "#FFE9EF" },
+      neonBlue:  { bg: "#05050A", star: "#4EA7FF" },
+      neonGreen: { bg: "#05050A", star: "#3CFF9B" },
+      neonRose:  { bg: "#05050A", star: "#FF4FD8" },
     };
     return THEMES[theme] || THEMES.mono;
-  }
-
-  function getStyleDef(){
-    return MAP_STYLES.find(s => s.id === state.map.styleId) || MAP_STYLES[0];
-  }
-
-  function isGridAllowedForCurrentStyle(){
-    return (state.map.styleId === "classic" || state.map.styleId === "moderno");
-  }
-
-  function isPosterStyle(){
-    return state.map.styleId === "poster";
-  }
-
-  function isPosterDecorAllowed(){
-    return !isPosterStyle();
-  }
-
-  function isWhiteBackgroundMode(){
-    return state.map.backgroundMode === "white";
-  }
-
-  function mapOutlineAllowed(){
-    return !isWhiteBackgroundMode() && !isPosterStyle();
-  }
-
-  function outlineToggleAllowedByStyle(){
-    return state.map.styleId === "romantico";
   }
 
   function computeRenderTokens(){
     const th = colorsFor(state.map.colorTheme);
     const neon = isNeonThemeId(state.map.colorTheme);
 
+    // ✅ Neon: fondo negro + TODO en color neon
     if (neon){
       return {
         posterBg: "#000000",
@@ -257,7 +242,8 @@
       };
     }
 
-    if (isWhiteBackgroundMode()){
+    if (state.map.backgroundMode === "white"){
+      // fondo blanco: poster blanco, tinta = bg del tema
       return {
         posterBg: "#FFFFFF",
         posterInk: th.bg,
@@ -272,6 +258,7 @@
       };
     }
 
+    // match (default)
     return {
       posterBg: th.bg,
       posterInk: "#FFFFFF",
@@ -291,6 +278,9 @@
     state.map.mapCircleMarginThickness = OUTLINE_THICKNESS_FIXED;
   }
 
+  // --------------------------
+  // CAPAS: marco(área) + papel + margen(línea)
+  // --------------------------
   let $posterFrameArea = null;
   let $posterPaper = null;
   let $posterMarginLine = null;
@@ -351,14 +341,10 @@
   }
 
   function enforceDecorRules(){
-    if (!isPosterDecorAllowed()){
-      state.map.posterFrameEnabled = false;
-      state.map.posterMarginEnabled = false;
-      return;
-    }
-    if (state.map.posterFrameEnabled){
-      state.map.posterMarginEnabled = false;
-    }
+    // Poster (rect) puede ocultar decor si tú quieres; aquí lo dejamos permitido
+    // Si quisieras bloquear marco/margen en poster, aquí sería:
+    // if (state.map.styleId === "poster"){ state.map.posterFrameEnabled = false; state.map.posterMarginEnabled = false; }
+    if (state.map.posterFrameEnabled) state.map.posterMarginEnabled = false;
   }
 
   function applyPosterFrameAndMargin(tokens){
@@ -370,9 +356,8 @@
     const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
     const marginEdge = POSTER_MARGIN_EDGE_GAP_PX;
 
-    const decorAllowed = isPosterDecorAllowed();
-    const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
-    const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
+    const frameOn = !!state.map.posterFrameEnabled;
+    const marginOn = !!state.map.posterMarginEnabled && !frameOn;
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
@@ -399,7 +384,7 @@
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(tokens.posterInk, 1) : "transparent";
 
-    const baseBottom = isPosterStyle() ? 60 : 100;
+    const baseBottom = (state.map.styleId === "poster") ? 60 : 100;
     const safeBottomWhenMarginOn = marginEdge + thickness + 18;
     const finalBottom = marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom;
     $poster.style.setProperty("--bottomTextBottom", `${finalBottom}px`);
@@ -424,10 +409,7 @@
 
   function applyPosterPaddingLayout(){
     const edge = POSTER_FRAME_EDGE_GAP_PX;
-    const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
-      ? clamp(state.map.posterFrameInsetPx, 0, 160)
-      : 0;
-
+    const frame = state.map.posterFrameEnabled ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
     const pad = edge + frame;
     $poster.style.setProperty("--posterPad", `${pad}px`);
   }
@@ -437,10 +419,7 @@
     if (st.shape !== "circle") return;
 
     const base = 780;
-    const frame = (isPosterDecorAllowed() && state.map.posterFrameEnabled)
-      ? clamp(state.map.posterFrameInsetPx, 0, 160)
-      : 0;
-
+    const frame = state.map.posterFrameEnabled ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
     const size = clamp(base - Math.round(frame * 0.6), 640, 780);
     $poster.style.setProperty("--mapW", `${size}px`);
     $poster.style.setProperty("--mapH", `${size}px`);
@@ -462,14 +441,14 @@
     ctx.closePath();
   }
 
-  // ✅ retícula globo con 70% en el frente (igual a tu referencia)
+  // ✅ retícula globo (como tu referencia), con 70% en frente
   function drawGlobeGrid(ctx, w, h, gridLine){
     const cx = w / 2;
     const cy = h / 2;
     const R  = Math.min(w, h) * 0.48;
 
     const tiltX = 24 * Math.PI / 180;
-    const rotY  = 0;
+    const sinX = Math.sin(tiltX), cosX = Math.cos(tiltX);
 
     const alphaFront = 0.70;
     const alphaBack  = 0.18;
@@ -477,17 +456,11 @@
     const lwFront = 1.35;
     const lwBack  = 1.00;
 
-    const sinX = Math.sin(tiltX), cosX = Math.cos(tiltX);
-
-    function projectSphere(lat, lon){
+    function project(lat, lon){
       let x = Math.cos(lat) * Math.cos(lon);
       let y = Math.sin(lat);
       let z = Math.cos(lat) * Math.sin(lon);
 
-      // rot Y (0)
-      z = z;
-
-      // rot X
       const y2 = y * cosX - z * sinX;
       const z2 = y * sinX + z * cosX;
       y = y2; z = z2;
@@ -515,7 +488,7 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
-    // Paralelos (incluye aro superior)
+    // Paralelos
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
     const lonSteps = 240;
 
@@ -526,14 +499,14 @@
 
       for (let i = 0; i <= lonSteps; i++){
         const lon = (i / lonSteps) * Math.PI * 2;
-        const p = projectSphere(lat, lon);
+        const p = project(lat, lon);
         if (p.z >= 0) frontPts.push(p);
         else backPts.push(p);
       }
 
-      const isPolarRing = (latDeg === 75);
-      strokePath(backPts,  alphaBack,  isPolarRing ? lwBack + 0.2 : lwBack);
-      strokePath(frontPts, alphaFront, isPolarRing ? lwFront + 1.0 : lwFront);
+      const isPolar = latDeg === 75;
+      strokePath(backPts,  alphaBack,  isPolar ? lwBack + 0.2 : lwBack);
+      strokePath(frontPts, alphaFront, isPolar ? lwFront + 1.0 : lwFront);
     }
 
     // Meridianos (izq + der)
@@ -551,13 +524,12 @@
 
     for (const lonDeg of lonsDeg){
       const lon = (lonDeg * Math.PI / 180) % (Math.PI * 2);
-
       const frontPts = [];
       const backPts  = [];
 
       for (let i = 0; i <= latSteps; i++){
         const lat = (-90 + (i / latSteps) * 180) * Math.PI / 180;
-        const p = projectSphere(lat, lon);
+        const p = project(lat, lon);
         if (p.z >= 0) frontPts.push(p);
         else backPts.push(p);
       }
@@ -579,6 +551,24 @@
     ctx.restore();
   }
 
+  function drawStars(ctx, w, h, rand, starsColor){
+    const N = Math.floor(680 + rand()*80);
+    for (let i = 0; i < N; i++){
+      const x = rand() * w;
+      const y = rand() * h;
+      const big = rand() > 0.92;
+      const r = big ? (1.5 + rand() * 1.8) : (rand() * 1.2);
+      const a = big ? (0.75 + rand() * 0.25) : (0.35 + rand() * 0.55);
+
+      ctx.beginPath();
+      ctx.globalAlpha = a;
+      ctx.fillStyle = starsColor;
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
   function drawConstellations(ctx, w, h, rand, constLine, constNode, lineW, nodeR){
     const count = 6;
     ctx.save();
@@ -595,7 +585,6 @@
 
       const points = 4 + Math.floor(rand() * 4);
       const pts = [];
-
       const rx = 40 + rand() * 110;
       const ry = 40 + rand() * 110;
 
@@ -628,41 +617,6 @@
     ctx.globalAlpha = 1;
   }
 
-  function drawStars(ctx, w, h, rand, starsColor){
-    const N = Math.floor(680 + rand()*80);
-    for (let i = 0; i < N; i++){
-      const x = rand() * w;
-      const y = rand() * h;
-
-      const big = rand() > 0.92;
-      const r = big ? (1.5 + rand() * 1.8) : (rand() * 1.2);
-      const a = big ? (0.75 + rand() * 0.25) : (0.35 + rand() * 0.55);
-
-      ctx.beginPath();
-      ctx.globalAlpha = a;
-      ctx.fillStyle = starsColor;
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  function enforceOutlineRulesByStyle(){
-    if (state.map.styleId === "poster"){
-      state.map.mapCircleMarginEnabled = false;
-      return;
-    }
-    if (state.map.styleId === "classic"){
-      state.map.mapCircleMarginEnabled = true;
-      return;
-    }
-    if (state.map.styleId === "moderno"){
-      state.map.mapCircleMarginEnabled = false;
-      return;
-    }
-    if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
-  }
-
   function drawRectMap(ctx, mapW, mapH, tokens, rand, showOutline, outlineW, conLineW, nodeR){
     ctx.save();
 
@@ -675,6 +629,8 @@
       ctx.scale(z, z);
       ctx.translate(-mapW/2, -mapH/2);
     }
+
+    if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawGlobeGrid(ctx, mapW, mapH, tokens.gridLine);
 
     drawStars(ctx, mapW, mapH, rand, tokens.stars);
 
@@ -697,7 +653,6 @@
 
   function drawMap(){
     syncThickness();
-    enforceOutlineRulesByStyle();
 
     const mapW = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) || 780);
     const mapH = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) || 780);
@@ -719,8 +674,8 @@
     const conLineW = 0.9 + cs * 0.55;
     const nodeR = 1.6 + cs * 0.35;
 
-    const outlineEnabled = !!state.map.mapCircleMarginEnabled && mapOutlineAllowed();
-    const showOutline = outlineEnabled;
+    // ✅ contorno: siempre puede prender/apagar el usuario (si quieres bloquearlo en poster, cambia a: && st.shape !== "rect")
+    const outlineEnabled = !!state.map.mapCircleMarginEnabled;
     const outlineW = OUTLINE_THICKNESS_FIXED;
 
     ctx.clearRect(0, 0, mapW, mapH);
@@ -733,7 +688,7 @@
       const rOuter = Math.min(mapW,mapH)/2;
       const rInner = rOuter - insetPad;
 
-      if (showOutline){
+      if (outlineEnabled){
         ctx.save();
         ctx.strokeStyle = tokens.outline;
         ctx.lineWidth = outlineW;
@@ -758,9 +713,7 @@
         ctx.translate(-cx, -cy);
       }
 
-      if (state.map.showGrid && isGridAllowedForCurrentStyle()){
-        drawGlobeGrid(ctx, mapW, mapH, tokens.gridLine);
-      }
+      if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawGlobeGrid(ctx, mapW, mapH, tokens.gridLine);
 
       drawStars(ctx, mapW, mapH, rand, tokens.stars);
 
@@ -800,7 +753,7 @@
 
       ctx.restore();
 
-      if (showOutline){
+      if (outlineEnabled){
         ctx.save();
         ctx.strokeStyle = tokens.outline;
         ctx.lineWidth = outlineW;
@@ -813,7 +766,7 @@
     }
 
     if (st.shape === "rect"){
-      drawRectMap(ctx, mapW, mapH, tokens, rand, showOutline, outlineW, conLineW, nodeR);
+      drawRectMap(ctx, mapW, mapH, tokens, rand, outlineEnabled, outlineW, conLineW, nodeR);
       return;
     }
   }
@@ -845,8 +798,6 @@
     setMapSizeFromPosterPad();
 
     drawMap();
-
-    // ✅ recalcula zoom después de layout
     updatePreviewZoom();
   }
 
@@ -864,7 +815,7 @@
       onChange(checked);
     }
 
-    t.onclick = () => set(!checked);
+    t.onclick = (e) => { e.stopPropagation(); set(!checked); };
     t.onkeydown = (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
@@ -886,7 +837,7 @@
     });
   }
 
-  function makeFourPointStarSvg(colorHexOrCss){
+  function makeFourPointStarSvg(color){
     const svgNS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("width", "14");
@@ -896,12 +847,12 @@
 
     const p = document.createElementNS(svgNS, "path");
     p.setAttribute("d", "M7 0 L8.8 5.2 L14 7 L8.8 8.8 L7 14 L5.2 8.8 L0 7 L5.2 5.2 Z");
-    p.setAttribute("fill", colorHexOrCss || "rgba(255,255,255,0.92)");
+    p.setAttribute("fill", color || "rgba(255,255,255,0.92)");
     svg.appendChild(p);
     return svg;
   }
 
-  function renderColorSwatches({ title, items, activeId, onPick, dotColorFn, starColorFn }){
+  function renderSwatchGrid({ title, items, activeId, onPick, dotBg, starColor }){
     const wrap = document.createElement("div");
     wrap.className = "formRow";
     wrap.innerHTML = `<div class="label">${title}</div>`;
@@ -915,9 +866,9 @@
 
       const dot = document.createElement("div");
       dot.className = "swatchDot";
-      dot.style.background = dotColorFn(it);
+      dot.style.background = dotBg(it);
 
-      dot.appendChild(makeFourPointStarSvg(starColorFn(it)));
+      dot.appendChild(makeFourPointStarSvg(starColor(it)));
 
       const name = document.createElement("div");
       name.className = "swatchName";
@@ -927,7 +878,6 @@
       tile.appendChild(name);
 
       tile.onclick = () => onPick(it.id);
-
       grid.appendChild(tile);
     });
 
@@ -935,7 +885,12 @@
     return wrap;
   }
 
-  // ✅ FIELD CARD helper (igual al screenshot)
+  function groupGap(){
+    const g = document.createElement("div");
+    g.className = "groupGap";
+    return g;
+  }
+
   function fieldCard(label, enabled, onToggle, renderBody){
     const card = document.createElement("div");
     card.className = "fieldCard";
@@ -963,6 +918,87 @@
     return card;
   }
 
+  function drawStyleTextSkeleton(ctx, w, h, styleId, color){
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.28;
+
+    const padX = 22;
+    const bottomPad = 20;
+
+    if (styleId === "classic"){
+      const titleW = Math.round(w * 0.58);
+      const subW   = Math.round(w * 0.38);
+      const x1 = Math.round((w - titleW)/2);
+      const x2 = Math.round((w - subW)/2);
+
+      const yTitle = h - bottomPad - 52;
+      const ySub   = h - bottomPad - 38;
+      const yMeta1 = h - bottomPad - 20;
+      const yMeta2 = h - bottomPad - 10;
+      const yMeta3 = h - bottomPad;
+
+      ctx.fillRect(x1, yTitle, titleW, 6);
+      ctx.globalAlpha = 0.20;
+      ctx.fillRect(x2, ySub, subW, 5);
+
+      ctx.globalAlpha = 0.18;
+      const metaW = Math.round(w * 0.46);
+      const xm = Math.round((w - metaW)/2);
+      ctx.fillRect(xm, yMeta1, metaW, 4);
+      ctx.fillRect(xm, yMeta2, metaW * 0.88, 4);
+      ctx.fillRect(xm, yMeta3, metaW * 0.76, 4);
+    }
+    else if (styleId === "poster"){
+      const titleW = Math.round(w * 0.52);
+      const subW   = Math.round(w * 0.34);
+      const x1 = Math.round((w - titleW)/2);
+      const x2 = Math.round((w - subW)/2);
+
+      const yTitle = h - bottomPad - 56;
+      const ySub   = h - bottomPad - 42;
+      const yMeta1 = h - bottomPad - 24;
+      const yMeta2 = h - bottomPad - 14;
+      const yMeta3 = h - bottomPad - 4;
+
+      ctx.fillRect(x1, yTitle, titleW, 6);
+      ctx.globalAlpha = 0.20;
+      ctx.fillRect(x2, ySub, subW, 5);
+
+      ctx.globalAlpha = 0.18;
+      const metaW = Math.round(w * 0.44);
+      const xm = Math.round((w - metaW)/2);
+      ctx.fillRect(xm, yMeta1, metaW, 4);
+      ctx.fillRect(xm, yMeta2, metaW * 0.88, 4);
+      ctx.fillRect(xm, yMeta3, metaW * 0.76, 4);
+    }
+    else {
+      const x = padX;
+      const titleW = Math.round(w * 0.55);
+      const subW   = Math.round(w * 0.36);
+
+      const yTitle = h - bottomPad - 52;
+      const ySub   = h - bottomPad - 38;
+      const yMeta1 = h - bottomPad - 20;
+      const yMeta2 = h - bottomPad - 10;
+      const yMeta3 = h - bottomPad;
+
+      ctx.fillRect(x, yTitle, titleW, 6);
+      ctx.globalAlpha = 0.20;
+      ctx.fillRect(x, ySub, subW, 5);
+
+      ctx.globalAlpha = 0.18;
+      ctx.fillRect(x, yMeta1, Math.round(w * 0.46), 4);
+      ctx.fillRect(x, yMeta2, Math.round(w * 0.40), 4);
+      ctx.fillRect(x, yMeta3, Math.round(w * 0.32), 4);
+    }
+
+    ctx.restore();
+  }
+
+  // --------------------------
+  // ✅ DISEÑO (RESTAURADO)
+  // --------------------------
   function renderSectionDesign(){
     $section.innerHTML = "";
 
@@ -974,21 +1010,358 @@
     s.className = "sub";
     s.textContent = "Selecciona un estilo de poster, los colores y las opcines de personalizacion para tu mapa o genera un aleatorio. ¡Cada mapa es unico y diferente!";
 
-    // (aquí no reescribo todo el diseño; conservas tu orden y swatches)
-    // Para mantener este mensaje corto: dejo tu render actual y sólo garantizo que
-    // los sliders/toggles en Contenido ya quedan “como screenshot”.
-
-    // Si quieres también convertir los toggles de Diseño a fieldCard como en el screenshot,
-    // dime y lo hacemos (es mecánico).
-
-    // Por ahora: al menos aseguramos el layout general y mapa
     $section.appendChild(t);
     $section.appendChild(s);
 
-    const note = document.createElement("div");
-    note.className = "sub";
-    note.textContent = "✅ Ajuste aplicado: inputs tipo “card” como referencia + preview adaptativo sin scroll (desktop).";
-    $section.appendChild(note);
+    // 1) Aleatorio
+    const randomBtn = document.createElement("button");
+    randomBtn.type = "button";
+    randomBtn.className = "btn primary";
+    randomBtn.style.width = "100%";
+    randomBtn.textContent = "Poster Aleatorio";
+    randomBtn.onclick = () => {
+      const r = Math.random;
+      const pick = (arr) => arr[Math.floor(r() * arr.length)];
+      const pickBool = () => r() > 0.5;
+      const pickRange = (min, max) => min + r() * (max - min);
+
+      state.map.styleId = pick(MAP_STYLES).id;
+      state.map.colorTheme = pick(COLOR_THEMES).id;
+
+      state.map.showGrid = isGridAllowedForCurrentStyle() ? pickBool() : false;
+      state.map.showConstellations = pickBool();
+      state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
+      state.map.mapZoom = Math.round(pickRange(1.0, 1.6) * 20) / 20;
+
+      // Neón => fuerza match
+      if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
+
+      state.map.posterFrameEnabled = pickBool();
+      state.map.posterMarginEnabled = !state.map.posterFrameEnabled ? pickBool() : false;
+
+      // contorno random (pero permitido en todos)
+      state.map.mapCircleMarginEnabled = pickBool();
+
+      state.map.seed = (Math.random() * 1e9) | 0;
+
+      renderPosterAndMap();
+      renderAll();
+    };
+    $section.appendChild(randomBtn);
+
+    $section.appendChild(groupGap());
+
+    // 2) Estilos (previews)
+    const styleRow = document.createElement("div");
+    styleRow.className = "formRow";
+    styleRow.innerHTML = `<div class="label">Estilos</div>`;
+
+    const grid = document.createElement("div");
+    grid.className = "styleGrid";
+
+    MAP_STYLES.forEach(st => {
+      const tile = document.createElement("div");
+      tile.className = "styleTile" + (state.map.styleId === st.id ? " active" : "");
+
+      const poster = document.createElement("div");
+      poster.className = "stylePoster";
+
+      const c = document.createElement("canvas");
+      c.width = 180; c.height = 240;
+      const ctx = c.getContext("2d");
+
+      const tokens = computeRenderTokens();
+      ctx.clearRect(0,0,180,240);
+      ctx.fillStyle = tokens.posterBg;
+      ctx.fillRect(0,0,180,240);
+
+      ctx.save();
+      const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
+
+      // shape clip
+      if (st.shape === "circle"){
+        ctx.beginPath();
+        ctx.arc(mx+mw/2, my+mw/2, mw/2, 0, Math.PI*2);
+        ctx.clip();
+      } else if (st.shape === "heart"){
+        const cx = mx + mw/2;
+        const cy = my + mw/2 - 6;
+        const size = mw * 0.50;
+        heartPath(ctx, cx, cy, size);
+        ctx.clip();
+      } else {
+        ctx.beginPath();
+        ctx.rect(mx, my, mw, mh);
+        ctx.clip();
+      }
+
+      // map bg
+      ctx.fillStyle = tokens.mapBg;
+      ctx.fillRect(mx,my,mw,mh);
+
+      // stars
+      const r = mulberry32(
+        st.id === "romantico" ? 202603 :
+        st.id === "poster" ? 202604 :
+        st.id === "moderno" ? 202605 : 202602
+      );
+      for (let i=0;i<160;i++){
+        const x = mx + r()*mw;
+        const y = my + r()*mh;
+        ctx.globalAlpha = 0.22 + r()*0.55;
+        ctx.fillStyle = tokens.stars;
+        ctx.beginPath();
+        ctx.arc(x,y,r()*0.9,0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+
+      // ✅ en preview: clásico y romántico muestran contorno, moderno y poster no
+      const showOutlinePreview = (st.id === "classic" || st.id === "romantico");
+      if (showOutlinePreview){
+        ctx.save();
+        ctx.strokeStyle = tokens.outline;
+        ctx.globalAlpha = 0.9;
+        ctx.lineWidth = 2; // ✅ más delgado en mini preview
+        if (st.shape === "circle"){
+          ctx.beginPath();
+          ctx.arc(mx+mw/2, my+mw/2, mw/2 - 2, 0, Math.PI*2);
+          ctx.stroke();
+        } else if (st.shape === "heart"){
+          const cx = mx + mw/2;
+          const cy = my + mw/2 - 6;
+          const size = mw * 0.50;
+          heartPath(ctx, cx, cy, size);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      drawStyleTextSkeleton(ctx, 180, 240, st.id, tokens.posterInk);
+
+      poster.appendChild(c);
+
+      const name = document.createElement("div");
+      name.className = "styleNameLabel";
+      name.textContent = st.name;
+
+      tile.appendChild(poster);
+      tile.appendChild(name);
+
+      tile.onclick = () => {
+        state.map.styleId = st.id;
+        // ✅ ya NO cambiamos contorno ni forzamos nada aquí (para evitar bugs)
+        // el usuario manda con el toggle de contorno
+        renderPosterAndMap();
+        renderAll();
+      };
+
+      grid.appendChild(tile);
+    });
+
+    styleRow.appendChild(grid);
+    $section.appendChild(styleRow);
+
+    $section.appendChild(groupGap());
+
+    // 3) Color mapa (swatches)
+    $section.appendChild(renderSwatchGrid({
+      title: "Color del Mapa estelar",
+      items: COLOR_THEMES,
+      activeId: state.map.colorTheme,
+      onPick: (id) => {
+        state.map.colorTheme = id;
+        if (isNeonThemeId(id)) state.map.backgroundMode = "match";
+        renderPosterAndMap();
+        renderAll();
+      },
+      dotBg: (it) => {
+        const neon = isNeonThemeId(it.id);
+        if (neon) return "#000000";
+        return colorsFor(it.id).bg;
+      },
+      starColor: (it) => {
+        const neon = isNeonThemeId(it.id);
+        if (neon) return colorsFor(it.id).star;
+        return "#FFFFFF";
+      }
+    }));
+
+    $section.appendChild(groupGap());
+
+    // 4) Color fondo (swatches) — neón: solo match
+    const isNeon = isNeonThemeId(state.map.colorTheme);
+    const bgItems = isNeon ? [{ id:"match", name: getSelectedThemeName() }] : [
+      { id:"match", name: getSelectedThemeName() },
+      { id:"white", name: "Blanco" },
+    ];
+
+    $section.appendChild(renderSwatchGrid({
+      title: "Color de fondo",
+      items: bgItems,
+      activeId: state.map.backgroundMode,
+      onPick: (id) => {
+        state.map.backgroundMode = id;
+        renderPosterAndMap();
+        renderAll();
+      },
+      dotBg: (it) => {
+        if (it.id === "white") return "#FFFFFF";
+        // match: usa bg del tema
+        return colorsFor(state.map.colorTheme).bg;
+      },
+      starColor: (it) => {
+        if (it.id === "white") return "#000000"; // ✅ estrella negra en fondo blanco
+        return "#FFFFFF";
+      }
+    }));
+
+    $section.appendChild(groupGap());
+
+    // 5) Marco del poster (toggle + slider cuando ON)
+    $section.appendChild(fieldCard(
+      "Marco del póster",
+      !!state.map.posterFrameEnabled,
+      (val) => {
+        state.map.posterFrameEnabled = val;
+        if (val) state.map.posterMarginEnabled = false;
+        renderPosterAndMap();
+        renderAll();
+      },
+      (body) => {
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = "Tamaño del marco";
+        body.appendChild(label);
+
+        const r = document.createElement("input");
+        r.type = "range";
+        r.min = "0.00";
+        r.max = String(POSTER_FRAME_PCT_MAX);
+        r.step = "0.005";
+        r.value = String(state.map.posterFramePct ?? POSTER_FRAME_PCT_DEFAULT);
+        r.oninput = () => {
+          state.map.posterFramePct = Number(r.value);
+          updatePosterFrameInsetPx();
+          renderPosterAndMap();
+          renderAll();
+        };
+        body.appendChild(r);
+      }
+    ));
+
+    // 6) Margen del poster (toggle, sin slider)
+    $section.appendChild(fieldCard(
+      "Margen del poster",
+      !!state.map.posterMarginEnabled,
+      (val) => {
+        state.map.posterMarginEnabled = val;
+        if (val) state.map.posterFrameEnabled = false;
+        renderPosterAndMap();
+        renderAll();
+      },
+      (body) => {
+        const txt = document.createElement("div");
+        txt.className = "label";
+        txt.textContent = `Grosor fijo: ${POSTER_MARGIN_THICKNESS_FIXED}px`;
+        body.appendChild(txt);
+      }
+    ));
+
+    $section.appendChild(groupGap());
+
+    // 7) Contorno del mapa (toggle — ya NO cambia estilo)
+    $section.appendChild(fieldCard(
+      "Contorno del mapa",
+      !!state.map.mapCircleMarginEnabled,
+      (val) => {
+        state.map.mapCircleMarginEnabled = val;
+        drawMap();
+        renderAll();
+      },
+      (body) => {
+        const txt = document.createElement("div");
+        txt.className = "label";
+        txt.textContent = `Grosor: ${OUTLINE_THICKNESS_FIXED}px`;
+        body.appendChild(txt);
+      }
+    ));
+
+    // 8) Constelaciones (toggle + slider tamaño)
+    $section.appendChild(fieldCard(
+      "Constelaciones",
+      !!state.map.showConstellations,
+      (val) => {
+        state.map.showConstellations = val;
+        drawMap();
+        renderAll();
+      },
+      (body) => {
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = "Tamaño de constelaciones";
+        body.appendChild(label);
+
+        const r = document.createElement("input");
+        r.type = "range";
+        r.min = "1";
+        r.max = "4";
+        r.step = "0.5";
+        r.value = String(state.map.constellationSize);
+        r.oninput = () => { state.map.constellationSize = Number(r.value); drawMap(); };
+        body.appendChild(r);
+      }
+    ));
+
+    // 9) Retícula (toggle) — solo clásico y moderno
+    if (isGridAllowedForCurrentStyle()){
+      $section.appendChild(fieldCard(
+        "Retícula",
+        !!state.map.showGrid,
+        (val) => {
+          state.map.showGrid = val;
+          drawMap();
+          renderAll();
+        },
+        () => {}
+      ));
+    } else {
+      // si no aplica, apágala sin mostrar
+      state.map.showGrid = false;
+    }
+
+    $section.appendChild(groupGap());
+
+    // 10) Nuevo cielo
+    const seedCard = document.createElement("div");
+    seedCard.className = "formRow";
+    seedCard.innerHTML = `<div class="label">Nuevo cielo</div>`;
+    const seedBtn = document.createElement("button");
+    seedBtn.type = "button";
+    seedBtn.className = "btn ghost";
+    seedBtn.style.width = "100%";
+    seedBtn.textContent = "Generar nuevo cielo";
+    seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
+    seedCard.appendChild(seedBtn);
+    $section.appendChild(seedCard);
+
+    // 11) Zoom de Estrellas
+    const zoomCard = document.createElement("div");
+    zoomCard.className = "formRow";
+    zoomCard.innerHTML = `<div class="label">Zoom de Estrellas</div>`;
+    const mapZoomRange = document.createElement("input");
+    mapZoomRange.type = "range";
+    mapZoomRange.min = "1.00";
+    mapZoomRange.max = "1.60";
+    mapZoomRange.step = "0.05";
+    mapZoomRange.value = String(state.map.mapZoom);
+    mapZoomRange.oninput = () => {
+      state.map.mapZoom = Number(mapZoomRange.value);
+      drawMap();
+    };
+    zoomCard.appendChild(mapZoomRange);
+    $section.appendChild(zoomCard);
 
     const btns = document.createElement("div");
     btns.className = "btnRow";
@@ -1007,6 +1380,9 @@
     $section.appendChild(btns);
   }
 
+  // --------------------------
+  // CONTENIDO (cards como tu screenshot)
+  // --------------------------
   function renderSectionContent(){
     $section.innerHTML = "";
 
@@ -1043,7 +1419,6 @@
     $section.appendChild(s);
     $section.appendChild(fontRow);
 
-    // ✅ Cards como screenshot
     $section.appendChild(fieldCard(
       "Título",
       state.visible.title,
@@ -1160,6 +1535,9 @@
     $section.appendChild(btns);
   }
 
+  // --------------------------
+  // EXPORT
+  // --------------------------
   function cmToPx(cm, dpi){
     const inches = cm / 2.54;
     return Math.round(inches * dpi);
@@ -1193,10 +1571,8 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    const st = getStyleDef();
-    const decorAllowed = (st.id !== "poster");
-    const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
-    const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
+    const frameOn = !!state.map.posterFrameEnabled;
+    const marginOn = !!state.map.posterMarginEnabled && !frameOn;
 
     const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
     const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
@@ -1386,6 +1762,7 @@
   }
 
   function renderAll(){
+    // neón: fuerza match
     if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
 
     renderTabs();
@@ -1402,13 +1779,7 @@
   applyPosterPaddingLayout();
   setMapSizeFromPosterPad();
 
-  if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
-  if (state.map.styleId === "poster") state.map.mapCircleMarginEnabled = false;
-  if (state.map.styleId === "classic") state.map.mapCircleMarginEnabled = true;
-
-  // ✅ primer cálculo de zoom (desktop)
   updatePreviewZoom();
-
   renderAll();
 
   window.addEventListener("resize", () => {

@@ -1,0 +1,7 @@
+{
+  "name": "skymap-frontend",
+  "private": true,
+  "scripts": {
+    "dev": "npx --yes http-server public -p 5173 -c-1"
+  }
+}

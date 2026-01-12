@@ -42,6 +42,7 @@
 
       backgroundMode: "match",
 
+      // ⚠️ Moderno: marco/margen NO se usan (se fuerzan apagados)
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
@@ -49,6 +50,7 @@
       posterMarginEnabled: true,
       posterMarginThickness: POSTER_MARGIN_THICKNESS_FIXED,
 
+      // ✅ Contorno en todos (moderno sí, poster sí, si el usuario lo prende)
       mapCircleMarginEnabled: true,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: OUTLINE_THICKNESS_FIXED,
@@ -56,10 +58,10 @@
       constellationSize: 2.0,
       seed: 12345,
 
-      // ✅ settings por estilo (para defaults y recordar toggles)
+      // ✅ defaults + remember toggles per-style
       stylePrefs: {
         classic:   { frame: false, margin: true,  outline: true  },
-        moderno:   { frame: false, margin: false, outline: false },
+        moderno:   { frame: false, margin: false, outline: false }, // default moderno sin contorno
         poster:    { frame: false, margin: false, outline: false },
         romantico: { frame: false, margin: false, outline: true  },
       }
@@ -189,7 +191,6 @@
   function formatDateDDMMYYYY(iso){
     const s = String(iso || "").trim();
     if (!s) return "";
-    // iso expected yyyy-mm-dd
     const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return s;
     return `${m[3]}.${m[2]}.${m[1]}`;
@@ -277,7 +278,6 @@
     state.map.mapCircleMarginThickness = OUTLINE_THICKNESS_FIXED;
   }
 
-  // ✅ preview zoom adaptativo desktop
   function updatePreviewZoom(){
     const isMobile = window.matchMedia("(max-width: 980px)").matches;
     if (isMobile) return;
@@ -293,7 +293,7 @@
   }
 
   // --------------------------
-  // ✅ Autosize texto para que quepa
+  // Autosize texto
   // --------------------------
   const measureCanvas = document.createElement("canvas");
   const mctx = measureCanvas.getContext("2d");
@@ -317,12 +317,8 @@
     const maxW = bottom.clientWidth;
     if (!maxW) return;
 
-    const frameOn = !!state.map.posterFrameEnabled;
-    const modernFrameTight = isModern() && frameOn;
-
-    // bases
-    const baseTitle = modernFrameTight ? 44 : (isPoster() ? 46 : 54);
-    const baseSub   = modernFrameTight ? 14 : (isPoster() ? 16 : 18);
+    const baseTitle = isPoster() ? 46 : 54;
+    const baseSub   = isPoster() ? 16 : 18;
 
     const titleText = ($pTitle.textContent || "").trim();
     const subText = ($pSubtitle.textContent || "").trim();
@@ -419,8 +415,9 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    // ✅ Moderno: NO margen disponible (si acaso quedó prendido, lo apagamos)
+    // ✅ Moderno: fuerza OFF marco y margen (ya no existen en UI)
     if (isModern()){
+      state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
     }
 
@@ -431,10 +428,6 @@
     const marginOn = !!state.map.posterMarginEnabled && !frameOn;
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
-
-    // clases para CSS
-    $poster.classList.toggle("modern", isModern());
-    $poster.classList.toggle("frameOn", frameOn);
 
     $poster.style.background = tokens.posterBg;
     $poster.style.color = tokens.posterInk;
@@ -459,15 +452,10 @@
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(tokens.posterInk, 1) : "transparent";
 
-    // spacing bottom (seguro)
     const baseBottom = isPoster() ? 60 : 100;
     const safeBottomWhenMarginOn = marginEdge + thickness + 18;
     const finalBottom = marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom;
     $poster.style.setProperty("--bottomTextBottom", `${finalBottom}px`);
-
-    // ✅ Moderno con marco: reduce top para ganar aire
-    const innerTop = (isModern() && frameOn) ? 54 : 70;
-    $poster.style.setProperty("--innerTop", `${innerTop}px`);
   }
 
   function applyPosterLayoutByStyle(){
@@ -496,12 +484,11 @@
     const st = getStyleDef();
     if (st.shape !== "circle") return;
 
-    const base = 780;
-    const frame = state.map.posterFrameEnabled ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
+    // ✅ Moderno un poco más pequeño para garantizar que jamás “toque” nada
+    const base = isModern() ? 740 : 780;
 
-    // ✅ Moderno con marco: reducción más agresiva para que NO se salga
-    const factor = (isModern() && state.map.posterFrameEnabled) ? 1.05 : 0.60;
-    const size = clamp(base - Math.round(frame * factor), 600, 780);
+    const frame = state.map.posterFrameEnabled ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
+    const size = clamp(base - Math.round(frame * 0.6), 600, base);
 
     $poster.style.setProperty("--mapW", `${size}px`);
     $poster.style.setProperty("--mapH", `${size}px`);
@@ -523,7 +510,10 @@
     ctx.closePath();
   }
 
-  function drawGlobeGrid(ctx, w, h, gridLine){
+  // ==========================================================
+  // ✅ BACKUP: Retícula ACTUAL (guardada por si quieres volver)
+  // ==========================================================
+  function drawGlobeGrid_SAVED__current(ctx, w, h, gridLine){
     const cx = w / 2;
     const cy = h / 2;
     const R  = Math.min(w, h) * 0.48;
@@ -569,6 +559,132 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
+    const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
+    const lonSteps = 240;
+
+    for (const latDeg of latsDeg){
+      const lat = latDeg * Math.PI / 180;
+      const frontPts = [];
+      const backPts  = [];
+
+      for (let i = 0; i <= lonSteps; i++){
+        const lon = (i / lonSteps) * Math.PI * 2;
+        const p = project(lat, lon);
+        if (p.z >= 0) frontPts.push(p);
+        else backPts.push(p);
+      }
+
+      const isPolar = latDeg === 75;
+      strokePath(backPts,  alphaBack,  isPolar ? lwBack + 0.2 : lwBack);
+      strokePath(frontPts, alphaFront, isPolar ? lwFront + 1.0 : lwFront);
+    }
+
+    const baseLonsDeg = [];
+    for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
+    baseLonsDeg.push(-90, 90);
+
+    const lonsDeg = [];
+    for (const b of baseLonsDeg){
+      lonsDeg.push(b);
+      lonsDeg.push(b + 180);
+    }
+
+    const latSteps = 260;
+
+    for (const lonDeg of lonsDeg){
+      const lon = (lonDeg * Math.PI / 180) % (Math.PI * 2);
+      const frontPts = [];
+      const backPts  = [];
+
+      for (let i = 0; i <= latSteps; i++){
+        const lat = (-90 + (i / latSteps) * 180) * Math.PI / 180;
+        const p = project(lat, lon);
+        if (p.z >= 0) frontPts.push(p);
+        else backPts.push(p);
+      }
+
+      strokePath(backPts,  alphaBack,  lwBack);
+      strokePath(frontPts, alphaFront, lwFront);
+    }
+
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    ctx.lineWidth = 1.1;
+    ctx.strokeStyle = gridLine;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ==========================================================
+  // ✅ Retícula NUEVA: elimina 2 líneas superiores planas
+  // ==========================================================
+  function drawGlobeGrid(ctx, w, h, gridLine){
+    const cx = w / 2;
+    const cy = h / 2;
+    const R  = Math.min(w, h) * 0.48;
+
+    const tiltX = 24 * Math.PI / 180;
+    const sinX = Math.sin(tiltX), cosX = Math.cos(tiltX);
+
+    const alphaFront = 0.70;
+    const alphaBack  = 0.18;
+
+    const lwFront = 1.35;
+    const lwBack  = 1.00;
+
+    function project(lat, lon){
+      let x = Math.cos(lat) * Math.cos(lon);
+      let y = Math.sin(lat);
+      let z = Math.cos(lat) * Math.sin(lon);
+
+      const y2 = y * cosX - z * sinX;
+      const z2 = y * sinX + z * cosX;
+      y = y2; z = z2;
+
+      return { sx: cx + x * R, sy: cy - y * R, z };
+    }
+
+    function yRange(points){
+      if (!points || points.length < 2) return 0;
+      let min = Infinity, max = -Infinity;
+      for (const p of points){
+        if (p.sy < min) min = p.sy;
+        if (p.sy > max) max = p.sy;
+      }
+      return max - min;
+    }
+
+    function strokePath(points, alpha, lw){
+      if (points.length < 2) return;
+
+      // ✅ Si la “curva” salió casi horizontal (range Y muy pequeño), NO la dibujamos.
+      // Esto elimina las 2 líneas superiores planas.
+      const yr = yRange(points);
+      if (yr < 2.0) return;
+
+      ctx.save();
+      ctx.strokeStyle = gridLine;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = lw;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      ctx.moveTo(points[0].sx, points[0].sy);
+      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].sx, points[i].sy);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.clip();
+
+    // (deja las mismas latitudes que te gustaron)
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
     const lonSteps = 240;
 
@@ -860,7 +976,6 @@
     $pCoords.style.display = state.visible.coords ? "block" : "none";
     $pDatetime.style.display = state.visible.datetime ? "block" : "none";
 
-    // ✅ hard limits
     const title = String(state.text.title || "").slice(0, TITLE_MAX);
     const sub = String(state.text.subtitle || "").slice(0, SUB_MAX);
 
@@ -873,7 +988,6 @@
     $pCoords.textContent = state.text.coords || "";
     $pDatetime.textContent = getDateTimeString();
 
-    // ✅ autosize
     applyAutoTextSizing();
   }
 
@@ -1009,15 +1123,14 @@
   }
 
   // --------------------------
-  // ✅ Defaults por estilo
+  // Defaults por estilo
   // --------------------------
   function loadPrefsForStyle(styleId){
     const p = state.map.stylePrefs[styleId];
     if (!p) return;
 
-    state.map.posterFrameEnabled = !!p.frame;
-
-    // Moderno: margin no aplica
+    // ✅ Moderno: fuerza frame/margin OFF siempre
+    state.map.posterFrameEnabled = (styleId === "moderno") ? false : !!p.frame;
     state.map.posterMarginEnabled = (styleId === "moderno") ? false : !!p.margin;
 
     state.map.mapCircleMarginEnabled = !!p.outline;
@@ -1025,13 +1138,16 @@
 
   function savePrefsForStyle(styleId){
     const p = state.map.stylePrefs[styleId] || (state.map.stylePrefs[styleId] = { frame:false, margin:false, outline:false });
-    p.frame = !!state.map.posterFrameEnabled;
-    p.margin = !!state.map.posterMarginEnabled;
+
+    // ✅ Moderno: nunca guardar frame/margin encendidos
+    p.frame = (styleId === "moderno") ? false : !!state.map.posterFrameEnabled;
+    p.margin = (styleId === "moderno") ? false : !!state.map.posterMarginEnabled;
+
     p.outline = !!state.map.mapCircleMarginEnabled;
   }
 
   // --------------------------
-  // ✅ DISEÑO
+  // DISEÑO
   // --------------------------
   function drawStyleTextSkeleton(ctx, w, h, styleId, color){
     ctx.save();
@@ -1142,8 +1258,13 @@
       state.map.styleId = pick(MAP_STYLES).id;
       state.map.colorTheme = pick(COLOR_THEMES).id;
 
-      // defaults por estilo
       loadPrefsForStyle(state.map.styleId);
+
+      // ✅ Moderno: sigue sin marco/margen
+      if (isModern()){
+        state.map.posterFrameEnabled = false;
+        state.map.posterMarginEnabled = false;
+      }
 
       state.map.showGrid = isGridAllowedForCurrentStyle() ? pickBool() : false;
       state.map.showConstellations = pickBool();
@@ -1219,7 +1340,6 @@
       ctx.globalAlpha = 1;
       ctx.restore();
 
-      // preview: clásico/romántico con contorno, moderno/poster no
       const showOutlinePreview = (st.id === "classic" || st.id === "romantico");
       if (showOutlinePreview && st.shape !== "rect"){
         ctx.save();
@@ -1256,11 +1376,14 @@
         savePrefsForStyle(prevStyle);
 
         state.map.styleId = st.id;
-
-        // ✅ aplica defaults/recuerdo de toggles del estilo
         loadPrefsForStyle(st.id);
 
-        // grid no permitido
+        // ✅ Moderno: fuerza frame/margin OFF
+        if (isModern()){
+          state.map.posterFrameEnabled = false;
+          state.map.posterMarginEnabled = false;
+        }
+
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
         renderPosterAndMap();
@@ -1275,7 +1398,6 @@
 
     $section.appendChild(groupGap());
 
-    // Color mapa
     $section.appendChild(renderSwatchGrid({
       title: "Color del Mapa estelar",
       items: COLOR_THEMES,
@@ -1300,7 +1422,6 @@
 
     $section.appendChild(groupGap());
 
-    // Fondo
     const isNeon = isNeonThemeId(state.map.colorTheme);
     const bgItems = isNeon ? [{ id:"match", name: getSelectedThemeName() }] : [
       { id:"match", name: getSelectedThemeName() },
@@ -1328,41 +1449,40 @@
 
     $section.appendChild(groupGap());
 
-    // Marco (disponible en todos)
-    $section.appendChild(fieldCard(
-      "Marco del póster",
-      !!state.map.posterFrameEnabled,
-      (val) => {
-        state.map.posterFrameEnabled = val;
-        if (val) state.map.posterMarginEnabled = false;
-        savePrefsForStyle(state.map.styleId);
-        renderPosterAndMap();
-        renderAll();
-      },
-      (body) => {
-        const label = document.createElement("div");
-        label.className = "label";
-        label.textContent = "Tamaño del marco";
-        body.appendChild(label);
-
-        const r = document.createElement("input");
-        r.type = "range";
-        r.min = "0.00";
-        r.max = String(POSTER_FRAME_PCT_MAX);
-        r.step = "0.005";
-        r.value = String(state.map.posterFramePct ?? POSTER_FRAME_PCT_DEFAULT);
-        r.oninput = () => {
-          state.map.posterFramePct = Number(r.value);
-          updatePosterFrameInsetPx();
+    // ✅ Moderno: ya NO hay marco ni margen (solo contorno)
+    if (!isModern()){
+      $section.appendChild(fieldCard(
+        "Marco del póster",
+        !!state.map.posterFrameEnabled,
+        (val) => {
+          state.map.posterFrameEnabled = val;
+          if (val) state.map.posterMarginEnabled = false;
+          savePrefsForStyle(state.map.styleId);
           renderPosterAndMap();
           renderAll();
-        };
-        body.appendChild(r);
-      }
-    ));
+        },
+        (body) => {
+          const label = document.createElement("div");
+          label.className = "label";
+          label.textContent = "Tamaño del marco";
+          body.appendChild(label);
 
-    // Margen: NO para moderno
-    if (!isModern()){
+          const r = document.createElement("input");
+          r.type = "range";
+          r.min = "0.00";
+          r.max = String(POSTER_FRAME_PCT_MAX);
+          r.step = "0.005";
+          r.value = String(state.map.posterFramePct ?? POSTER_FRAME_PCT_DEFAULT);
+          r.oninput = () => {
+            state.map.posterFramePct = Number(r.value);
+            updatePosterFrameInsetPx();
+            renderPosterAndMap();
+            renderAll();
+          };
+          body.appendChild(r);
+        }
+      ));
+
       $section.appendChild(fieldCard(
         "Margen del poster",
         !!state.map.posterMarginEnabled,
@@ -1380,11 +1500,10 @@
           body.appendChild(txt);
         }
       ));
+
+      $section.appendChild(groupGap());
     }
 
-    $section.appendChild(groupGap());
-
-    // Contorno (disponible en todos; default OFF en Moderno/Poster por prefs)
     $section.appendChild(fieldCard(
       "Contorno del mapa",
       !!state.map.mapCircleMarginEnabled,
@@ -1402,7 +1521,6 @@
       }
     ));
 
-    // Constelaciones
     $section.appendChild(fieldCard(
       "Constelaciones",
       !!state.map.showConstellations,
@@ -1428,7 +1546,6 @@
       }
     ));
 
-    // Retícula (solo clásico/moderno)
     if (isGridAllowedForCurrentStyle()){
       $section.appendChild(fieldCard(
         "Retícula",
@@ -1442,7 +1559,6 @@
 
     $section.appendChild(groupGap());
 
-    // Nuevo cielo
     const seedCard = document.createElement("div");
     seedCard.className = "formRow";
     seedCard.innerHTML = `<div class="label">Nuevo cielo</div>`;
@@ -1455,7 +1571,6 @@
     seedCard.appendChild(seedBtn);
     $section.appendChild(seedCard);
 
-    // Zoom
     const zoomCard = document.createElement("div");
     zoomCard.className = "formRow";
     zoomCard.innerHTML = `<div class="label">Zoom de Estrellas</div>`;
@@ -1487,7 +1602,7 @@
   }
 
   // --------------------------
-  // CONTENIDO (con maxlength)
+  // CONTENIDO
   // --------------------------
   function renderSectionContent(){
     $section.innerHTML = "";
@@ -1645,7 +1760,7 @@
   }
 
   // --------------------------
-  // EXPORT (igual que antes, usando canvas del mapa ya renderizado)
+  // EXPORT (sin cambios funcionales respecto a tu versión anterior)
   // --------------------------
   function cmToPx(cm, dpi){
     const inches = cm / 2.54;
@@ -1889,8 +2004,13 @@
   }
 
   function renderAll(){
-    // neon => fuerza match
     if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
+
+    // ✅ Moderno: doble seguro OFF
+    if (isModern()){
+      state.map.posterFrameEnabled = false;
+      state.map.posterMarginEnabled = false;
+    }
 
     renderTabs();
     renderSection();
@@ -1902,7 +2022,6 @@
   updateSeedFromDateTime();
   ensurePosterLayers();
 
-  // ✅ aplica defaults iniciales por estilo (classic)
   loadPrefsForStyle(state.map.styleId);
 
   applyPosterLayoutByStyle();

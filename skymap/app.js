@@ -9,7 +9,7 @@
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
   // ✅ fijo
-  const POSTER_MARGIN_THICKNESS_FIXED = 6;
+  const POSTER_MARGIN_THICKNESS_FIXED = 4; // ✅ pedido: 4
   const OUTLINE_THICKNESS_FIXED = 6;
 
   const TITLE_MAX = 120;
@@ -42,7 +42,7 @@
 
       backgroundMode: "match",
 
-      // ⚠️ Moderno: marco/margen NO se usan (se fuerzan apagados)
+      // ⚠️ Moderno y Poster: marco/margen NO se usan (se fuerzan apagados)
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
@@ -50,7 +50,6 @@
       posterMarginEnabled: true,
       posterMarginThickness: POSTER_MARGIN_THICKNESS_FIXED,
 
-      // ✅ Contorno en todos (moderno sí, poster sí, si el usuario lo prende)
       mapCircleMarginEnabled: true,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: OUTLINE_THICKNESS_FIXED,
@@ -58,10 +57,9 @@
       constellationSize: 2.0,
       seed: 12345,
 
-      // ✅ defaults + remember toggles per-style
       stylePrefs: {
         classic:   { frame: false, margin: true,  outline: true  },
-        moderno:   { frame: false, margin: false, outline: false }, // default moderno sin contorno
+        moderno:   { frame: false, margin: false, outline: false },
         poster:    { frame: false, margin: false, outline: false },
         romantico: { frame: false, margin: false, outline: true  },
       }
@@ -176,13 +174,8 @@
     return (state.map.styleId === "classic" || state.map.styleId === "moderno");
   }
 
-  function isModern(){
-    return state.map.styleId === "moderno";
-  }
-
-  function isPoster(){
-    return state.map.styleId === "poster";
-  }
+  function isModern(){ return state.map.styleId === "moderno"; }
+  function isPoster(){ return state.map.styleId === "poster"; }
 
   function getSelectedThemeName(){
     return (COLOR_THEMES.find(t => t.id === state.map.colorTheme)?.name) || "Mono";
@@ -415,8 +408,8 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    // ✅ Moderno: fuerza OFF marco y margen (ya no existen en UI)
-    if (isModern()){
+    // ✅ Moderno y Poster: fuerza OFF marco/margen
+    if (isModern() || isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
     }
@@ -484,9 +477,7 @@
     const st = getStyleDef();
     if (st.shape !== "circle") return;
 
-    // ✅ Moderno un poco más pequeño para garantizar que jamás “toque” nada
     const base = isModern() ? 740 : 780;
-
     const frame = state.map.posterFrameEnabled ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
     const size = clamp(base - Math.round(frame * 0.6), 600, base);
 
@@ -511,13 +502,9 @@
   }
 
   // ==========================================================
-  // ✅ BACKUP: Retícula ACTUAL (guardada por si quieres volver)
+  // ✅ Retícula con radio fijo + filtro “líneas rectas” (quita las 2 horizontales planas)
   // ==========================================================
-  function drawGlobeGrid_SAVED__current(ctx, w, h, gridLine){
-    const cx = w / 2;
-    const cy = h / 2;
-    const R  = Math.min(w, h) * 0.48;
-
+  function drawGlobeGridWithRadius(ctx, cx, cy, R, gridLine){
     const tiltX = 24 * Math.PI / 180;
     const sinX = Math.sin(tiltX), cosX = Math.cos(tiltX);
 
@@ -539,8 +526,30 @@
       return { sx: cx + x * R, sy: cy - y * R, z };
     }
 
+    function isTooStraight(points){
+      // ✅ si la curva es casi una línea recta (incluye horizontales perfectas) => skip
+      if (!points || points.length < 6) return false;
+
+      const a = points[0];
+      const b = points[points.length - 1];
+      const dx = b.sx - a.sx;
+      const dy = b.sy - a.sy;
+      const denom = Math.hypot(dx, dy) || 1;
+
+      let maxDev = 0;
+      for (let i = 1; i < points.length - 1; i++){
+        const p = points[i];
+        // distancia punto-línea (normalizada)
+        const dev = Math.abs(dy * p.sx - dx * p.sy + b.sx * a.sy - b.sy * a.sx) / denom;
+        if (dev > maxDev) maxDev = dev;
+      }
+      return maxDev < 1.35; // ✅ umbral: elimina esas 2 planas
+    }
+
     function strokePath(points, alpha, lw){
-      if (points.length < 2) return;
+      if (!points || points.length < 2) return;
+      if (isTooStraight(points)) return;
+
       ctx.save();
       ctx.strokeStyle = gridLine;
       ctx.globalAlpha = alpha;
@@ -559,6 +568,7 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
+    // Horizontales (paralelos)
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
     const lonSteps = 240;
 
@@ -579,6 +589,7 @@
       strokePath(frontPts, alphaFront, isPolar ? lwFront + 1.0 : lwFront);
     }
 
+    // Verticales (meridianos)
     const baseLonsDeg = [];
     for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
     baseLonsDeg.push(-90, 90);
@@ -609,132 +620,7 @@
 
     ctx.restore();
 
-    ctx.save();
-    ctx.globalAlpha = 0.14;
-    ctx.lineWidth = 1.1;
-    ctx.strokeStyle = gridLine;
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // ==========================================================
-  // ✅ Retícula NUEVA: elimina 2 líneas superiores planas
-  // ==========================================================
-  function drawGlobeGrid(ctx, w, h, gridLine){
-    const cx = w / 2;
-    const cy = h / 2;
-    const R  = Math.min(w, h) * 0.48;
-
-    const tiltX = 24 * Math.PI / 180;
-    const sinX = Math.sin(tiltX), cosX = Math.cos(tiltX);
-
-    const alphaFront = 0.70;
-    const alphaBack  = 0.18;
-
-    const lwFront = 1.35;
-    const lwBack  = 1.00;
-
-    function project(lat, lon){
-      let x = Math.cos(lat) * Math.cos(lon);
-      let y = Math.sin(lat);
-      let z = Math.cos(lat) * Math.sin(lon);
-
-      const y2 = y * cosX - z * sinX;
-      const z2 = y * sinX + z * cosX;
-      y = y2; z = z2;
-
-      return { sx: cx + x * R, sy: cy - y * R, z };
-    }
-
-    function yRange(points){
-      if (!points || points.length < 2) return 0;
-      let min = Infinity, max = -Infinity;
-      for (const p of points){
-        if (p.sy < min) min = p.sy;
-        if (p.sy > max) max = p.sy;
-      }
-      return max - min;
-    }
-
-    function strokePath(points, alpha, lw){
-      if (points.length < 2) return;
-
-      // ✅ Si la “curva” salió casi horizontal (range Y muy pequeño), NO la dibujamos.
-      // Esto elimina las 2 líneas superiores planas.
-      const yr = yRange(points);
-      if (yr < 2.0) return;
-
-      ctx.save();
-      ctx.strokeStyle = gridLine;
-      ctx.globalAlpha = alpha;
-      ctx.lineWidth = lw;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.beginPath();
-      ctx.moveTo(points[0].sx, points[0].sy);
-      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].sx, points[i].sy);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.clip();
-
-    // (deja las mismas latitudes que te gustaron)
-    const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
-    const lonSteps = 240;
-
-    for (const latDeg of latsDeg){
-      const lat = latDeg * Math.PI / 180;
-      const frontPts = [];
-      const backPts  = [];
-
-      for (let i = 0; i <= lonSteps; i++){
-        const lon = (i / lonSteps) * Math.PI * 2;
-        const p = project(lat, lon);
-        if (p.z >= 0) frontPts.push(p);
-        else backPts.push(p);
-      }
-
-      const isPolar = latDeg === 75;
-      strokePath(backPts,  alphaBack,  isPolar ? lwBack + 0.2 : lwBack);
-      strokePath(frontPts, alphaFront, isPolar ? lwFront + 1.0 : lwFront);
-    }
-
-    const baseLonsDeg = [];
-    for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
-    baseLonsDeg.push(-90, 90);
-
-    const lonsDeg = [];
-    for (const b of baseLonsDeg){
-      lonsDeg.push(b);
-      lonsDeg.push(b + 180);
-    }
-
-    const latSteps = 260;
-
-    for (const lonDeg of lonsDeg){
-      const lon = (lonDeg * Math.PI / 180) % (Math.PI * 2);
-      const frontPts = [];
-      const backPts  = [];
-
-      for (let i = 0; i <= latSteps; i++){
-        const lat = (-90 + (i / latSteps) * 180) * Math.PI / 180;
-        const p = project(lat, lon);
-        if (p.z >= 0) frontPts.push(p);
-        else backPts.push(p);
-      }
-
-      strokePath(backPts,  alphaBack,  lwBack);
-      strokePath(frontPts, alphaFront, lwFront);
-    }
-
-    ctx.restore();
-
+    // borde del globo
     ctx.save();
     ctx.globalAlpha = 0.14;
     ctx.lineWidth = 1.1;
@@ -812,26 +698,34 @@
     ctx.globalAlpha = 1;
   }
 
+  // ✅ Rect: retícula NO se zoom; zoom solo estrellas + constelaciones
   function drawRectMap(ctx, mapW, mapH, tokens, rand, showOutline, outlineW, conLineW, nodeR){
     ctx.save();
 
     ctx.fillStyle = tokens.mapBg;
     ctx.fillRect(0,0,mapW,mapH);
 
+    // ✅ retícula intacta (sin zoom)
+    if (state.map.showGrid && isGridAllowedForCurrentStyle()){
+      const cx = mapW/2, cy = mapH/2;
+      const R = Math.min(mapW, mapH) * 0.48;
+      drawGlobeGridWithRadius(ctx, cx, cy, R, tokens.gridLine);
+    }
+
+    // ✅ zoom SOLO para estrellas + constelaciones
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
+    ctx.save();
     if (z !== 1){
       ctx.translate(mapW/2, mapH/2);
       ctx.scale(z, z);
       ctx.translate(-mapW/2, -mapH/2);
     }
 
-    if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawGlobeGrid(ctx, mapW, mapH, tokens.gridLine);
-
     drawStars(ctx, mapW, mapH, rand, tokens.stars);
-
-    if (state.map.showConstellations) {
+    if (state.map.showConstellations){
       drawConstellations(ctx, mapW, mapH, rand, tokens.constLine, tokens.constNode, conLineW, nodeR);
     }
+    ctx.restore();
 
     ctx.restore();
 
@@ -846,6 +740,8 @@
     }
   }
 
+  // ✅ drawMap: marco/margen también reducen el mapa igual que contorno
+  // ✅ retícula usa el radio real (rInner) y NO se zoom
   function drawMap(){
     syncThickness();
 
@@ -872,9 +768,17 @@
     const outlineEnabled = !!state.map.mapCircleMarginEnabled;
     const outlineW = OUTLINE_THICKNESS_FIXED;
 
+    const frameOn = !!state.map.posterFrameEnabled;
+    const marginOn = !!state.map.posterMarginEnabled && !frameOn;
+
+    // ✅ si contorno OR marco OR margen -> inset
+    const shouldInsetLikeMapControl = outlineEnabled || frameOn || marginOn;
+    const insetPad = shouldInsetLikeMapControl
+      ? Math.round(Math.min(mapW, mapH) * (state.map.mapCircleInsetPct || 0.10))
+      : 0;
+
     ctx.clearRect(0, 0, mapW, mapH);
 
-    const insetPad = outlineEnabled ? Math.round(Math.min(mapW, mapH) * (state.map.mapCircleInsetPct || 0.10)) : 0;
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
 
     if (st.shape === "circle"){
@@ -893,29 +797,36 @@
         ctx.restore();
       }
 
+      // clip al tamaño real
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, rInner, 0, Math.PI*2);
       ctx.clip();
 
+      // fondo
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(0,0,mapW,mapH);
 
+      // ✅ retícula intacta (sin zoom) usando radio real
+      if (state.map.showGrid && isGridAllowedForCurrentStyle()){
+        drawGlobeGridWithRadius(ctx, cx, cy, rInner * 0.96, tokens.gridLine);
+      }
+
+      // ✅ zoom SOLO para estrellas + constelaciones (retícula ya quedó dibujada)
+      ctx.save();
       if (z !== 1){
         ctx.translate(cx, cy);
         ctx.scale(z, z);
         ctx.translate(-cx, -cy);
       }
 
-      if (state.map.showGrid && isGridAllowedForCurrentStyle()) drawGlobeGrid(ctx, mapW, mapH, tokens.gridLine);
-
       drawStars(ctx, mapW, mapH, rand, tokens.stars);
-
       if (state.map.showConstellations){
         drawConstellations(ctx, mapW, mapH, rand, tokens.constLine, tokens.constNode, conLineW, nodeR);
       }
-
       ctx.restore();
+
+      ctx.restore(); // clip
       return;
     }
 
@@ -933,6 +844,8 @@
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(0,0,mapW,mapH);
 
+      // retícula no aplica a corazón
+      ctx.save();
       if (z !== 1){
         ctx.translate(cx, cy);
         ctx.scale(z, z);
@@ -940,10 +853,10 @@
       }
 
       drawStars(ctx, mapW, mapH, rand, tokens.stars);
-
       if (state.map.showConstellations){
         drawConstellations(ctx, mapW, mapH, rand, tokens.constLine, tokens.constNode, conLineW, nodeR);
       }
+      ctx.restore();
 
       ctx.restore();
 
@@ -1122,33 +1035,23 @@
     return card;
   }
 
-  // --------------------------
-  // Defaults por estilo
-  // --------------------------
   function loadPrefsForStyle(styleId){
     const p = state.map.stylePrefs[styleId];
     if (!p) return;
 
-    // ✅ Moderno: fuerza frame/margin OFF siempre
-    state.map.posterFrameEnabled = (styleId === "moderno") ? false : !!p.frame;
-    state.map.posterMarginEnabled = (styleId === "moderno") ? false : !!p.margin;
-
+    state.map.posterFrameEnabled = (styleId === "moderno" || styleId === "poster") ? false : !!p.frame;
+    state.map.posterMarginEnabled = (styleId === "moderno" || styleId === "poster") ? false : !!p.margin;
     state.map.mapCircleMarginEnabled = !!p.outline;
   }
 
   function savePrefsForStyle(styleId){
     const p = state.map.stylePrefs[styleId] || (state.map.stylePrefs[styleId] = { frame:false, margin:false, outline:false });
 
-    // ✅ Moderno: nunca guardar frame/margin encendidos
-    p.frame = (styleId === "moderno") ? false : !!state.map.posterFrameEnabled;
-    p.margin = (styleId === "moderno") ? false : !!state.map.posterMarginEnabled;
-
+    p.frame = (styleId === "moderno" || styleId === "poster") ? false : !!state.map.posterFrameEnabled;
+    p.margin = (styleId === "moderno" || styleId === "poster") ? false : !!state.map.posterMarginEnabled;
     p.outline = !!state.map.mapCircleMarginEnabled;
   }
 
-  // --------------------------
-  // DISEÑO
-  // --------------------------
   function drawStyleTextSkeleton(ctx, w, h, styleId, color){
     ctx.save();
     ctx.fillStyle = color;
@@ -1260,8 +1163,7 @@
 
       loadPrefsForStyle(state.map.styleId);
 
-      // ✅ Moderno: sigue sin marco/margen
-      if (isModern()){
+      if (isModern() || isPoster()){
         state.map.posterFrameEnabled = false;
         state.map.posterMarginEnabled = false;
       }
@@ -1361,7 +1263,6 @@
       }
 
       drawStyleTextSkeleton(ctx, 180, 240, st.id, tokens.posterInk);
-
       poster.appendChild(c);
 
       const name = document.createElement("div");
@@ -1378,8 +1279,7 @@
         state.map.styleId = st.id;
         loadPrefsForStyle(st.id);
 
-        // ✅ Moderno: fuerza frame/margin OFF
-        if (isModern()){
+        if (isModern() || isPoster()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
         }
@@ -1449,8 +1349,8 @@
 
     $section.appendChild(groupGap());
 
-    // ✅ Moderno: ya NO hay marco ni margen (solo contorno)
-    if (!isModern()){
+    // ✅ IMPORTANTE: Marco/Margen NO aparecen en Moderno ni Poster
+    if (!isModern() && !isPoster()){
       $section.appendChild(fieldCard(
         "Marco del póster",
         !!state.map.posterFrameEnabled,
@@ -1601,9 +1501,6 @@
     $section.appendChild(btns);
   }
 
-  // --------------------------
-  // CONTENIDO
-  // --------------------------
   function renderSectionContent(){
     $section.innerHTML = "";
 
@@ -1759,9 +1656,6 @@
     $section.appendChild(btns);
   }
 
-  // --------------------------
-  // EXPORT (sin cambios funcionales respecto a tu versión anterior)
-  // --------------------------
   function cmToPx(cm, dpi){
     const inches = cm / 2.54;
     return Math.round(inches * dpi);
@@ -1795,8 +1689,9 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    const frameOn = !!state.map.posterFrameEnabled;
-    const marginOn = !isModern() && !!state.map.posterMarginEnabled && !frameOn;
+    // ✅ Moderno y Poster: no marco/margen
+    const frameOn = (!isModern() && !isPoster()) && !!state.map.posterFrameEnabled;
+    const marginOn = (!isModern() && !isPoster()) && !!state.map.posterMarginEnabled && !frameOn;
 
     const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
     const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
@@ -2006,8 +1901,8 @@
   function renderAll(){
     if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
 
-    // ✅ Moderno: doble seguro OFF
-    if (isModern()){
+    // ✅ Moderno y Poster: doble seguro OFF
+    if (isModern() || isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
     }

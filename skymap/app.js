@@ -9,7 +9,7 @@
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
   // ✅ fijo
-  const POSTER_MARGIN_THICKNESS_FIXED = 4; // ✅ pedido: 4
+  const POSTER_MARGIN_THICKNESS_FIXED = 4;
   const OUTLINE_THICKNESS_FIXED = 6;
 
   const TITLE_MAX = 120;
@@ -42,7 +42,7 @@
 
       backgroundMode: "match",
 
-      // ⚠️ Moderno y Poster: marco/margen NO se usan (se fuerzan apagados)
+      // ✅ Moderno: YA SÍ usa marco/margen
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
@@ -51,8 +51,7 @@
       posterMarginThickness: POSTER_MARGIN_THICKNESS_FIXED,
 
       mapCircleMarginEnabled: true,
-      mapCircleInsetPct: 0.10,
-      mapCircleMarginThickness: OUTLINE_THICKNESS_FIXED,
+      mapCircleInsetPct: 0.10, // se usa solo para encoger mapa cuando hay marco/margen
 
       constellationSize: 2.0,
       seed: 12345,
@@ -100,7 +99,7 @@
     { id: "ice",       name: "Hielo" },
     { id: "warm",      name: "Cálido" },
     { id: "forest",    name: "Bosque" },
-    { id: "rose",      name: "Rosa" },
+    { id: "rose",      name: "Caramelo" }, // ✅ Rosa -> Caramelo
     { id: "neonBlue",  name: "Neón Azul" },
     { id: "neonGreen", name: "Neón Verde" },
     { id: "neonRose",  name: "Neón Rosa" },
@@ -268,7 +267,6 @@
 
   function syncThickness(){
     state.map.posterMarginThickness = POSTER_MARGIN_THICKNESS_FIXED;
-    state.map.mapCircleMarginThickness = OUTLINE_THICKNESS_FIXED;
   }
 
   function updatePreviewZoom(){
@@ -349,13 +347,15 @@
   let $posterMarginLine = null;
 
   function ensurePosterLayers(){
+    const R = "26px";
+
     if (!$posterFrameArea){
       $posterFrameArea = document.createElement("div");
       $posterFrameArea.id = "posterFrameArea";
       Object.assign($posterFrameArea.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: "0px",
+        borderRadius: R,
         zIndex: "0",
         pointerEvents: "none",
         background: "transparent",
@@ -370,7 +370,7 @@
       Object.assign($posterPaper.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: "0px",
+        borderRadius: R,
         zIndex: "1",
         pointerEvents: "none",
         background: "transparent",
@@ -384,7 +384,7 @@
       Object.assign($posterMarginLine.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: "0px",
+        borderRadius: R,
         zIndex: "2",
         pointerEvents: "none",
         border: "0px solid transparent",
@@ -408,8 +408,8 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    // ✅ Moderno y Poster: fuerza OFF marco/margen
-    if (isModern() || isPoster()){
+    // ✅ Poster: fuerza OFF (Moderno ya NO)
+    if (isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
     }
@@ -419,6 +419,9 @@
 
     const frameOn = !!state.map.posterFrameEnabled;
     const marginOn = !!state.map.posterMarginEnabled && !frameOn;
+
+    $poster.classList.toggle("frameOn", frameOn);
+    $poster.classList.toggle("marginOn", marginOn);
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
@@ -454,7 +457,11 @@
   function applyPosterLayoutByStyle(){
     const st = getStyleDef();
 
-    $poster.classList.toggle("classic", st.layout === "classic");
+    $poster.classList.toggle("classic",   st.id === "classic");
+    $poster.classList.toggle("modern",    st.id === "moderno");
+    $poster.classList.toggle("romantico", st.id === "romantico");
+    $poster.classList.toggle("posterStyle", st.id === "poster");
+
     $poster.classList.toggle("rectStyle", st.shape === "rect");
 
     if (st.shape === "rect") {
@@ -502,7 +509,7 @@
   }
 
   // ==========================================================
-  // ✅ Retícula con radio fijo + filtro “líneas rectas” (quita las 2 horizontales planas)
+  // Retícula con radio fijo + filtro líneas rectas
   // ==========================================================
   function drawGlobeGridWithRadius(ctx, cx, cy, R, gridLine){
     const tiltX = 24 * Math.PI / 180;
@@ -527,7 +534,6 @@
     }
 
     function isTooStraight(points){
-      // ✅ si la curva es casi una línea recta (incluye horizontales perfectas) => skip
       if (!points || points.length < 6) return false;
 
       const a = points[0];
@@ -539,11 +545,10 @@
       let maxDev = 0;
       for (let i = 1; i < points.length - 1; i++){
         const p = points[i];
-        // distancia punto-línea (normalizada)
         const dev = Math.abs(dy * p.sx - dx * p.sy + b.sx * a.sy - b.sy * a.sx) / denom;
         if (dev > maxDev) maxDev = dev;
       }
-      return maxDev < 1.35; // ✅ umbral: elimina esas 2 planas
+      return maxDev < 1.35;
     }
 
     function strokePath(points, alpha, lw){
@@ -568,7 +573,6 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
-    // Horizontales (paralelos)
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
     const lonSteps = 240;
 
@@ -589,7 +593,6 @@
       strokePath(frontPts, alphaFront, isPolar ? lwFront + 1.0 : lwFront);
     }
 
-    // Verticales (meridianos)
     const baseLonsDeg = [];
     for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
     baseLonsDeg.push(-90, 90);
@@ -620,7 +623,6 @@
 
     ctx.restore();
 
-    // borde del globo
     ctx.save();
     ctx.globalAlpha = 0.14;
     ctx.lineWidth = 1.1;
@@ -705,14 +707,12 @@
     ctx.fillStyle = tokens.mapBg;
     ctx.fillRect(0,0,mapW,mapH);
 
-    // ✅ retícula intacta (sin zoom)
     if (state.map.showGrid && isGridAllowedForCurrentStyle()){
       const cx = mapW/2, cy = mapH/2;
       const R = Math.min(mapW, mapH) * 0.48;
       drawGlobeGridWithRadius(ctx, cx, cy, R, tokens.gridLine);
     }
 
-    // ✅ zoom SOLO para estrellas + constelaciones
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
     ctx.save();
     if (z !== 1){
@@ -740,8 +740,10 @@
     }
   }
 
-  // ✅ drawMap: marco/margen también reducen el mapa igual que contorno
-  // ✅ retícula usa el radio real (rInner) y NO se zoom
+  // ✅ drawMap:
+  // - Contorno NO encoge mapa (ni clip ni radio de contenido)
+  // - El mapa solo se hace chico cuando hay marco o margen
+  // - Retícula NO se zoom (solo estrellas/constelaciones)
   function drawMap(){
     syncThickness();
 
@@ -771,8 +773,8 @@
     const frameOn = !!state.map.posterFrameEnabled;
     const marginOn = !!state.map.posterMarginEnabled && !frameOn;
 
-    // ✅ si contorno OR marco OR margen -> inset
-    const shouldInsetLikeMapControl = outlineEnabled || frameOn || marginOn;
+    // ✅ SOLO marco/margen encogen el mapa (NO contorno)
+    const shouldInsetLikeMapControl = frameOn || marginOn;
     const insetPad = shouldInsetLikeMapControl
       ? Math.round(Math.min(mapW, mapH) * (state.map.mapCircleInsetPct || 0.10))
       : 0;
@@ -784,23 +786,26 @@
     if (st.shape === "circle"){
       const cx = mapW/2, cy = mapH/2;
       const rOuter = Math.min(mapW,mapH)/2;
-      const rInner = rOuter - insetPad;
 
+      // ✅ radio del contenido (solo afecta marco/margen)
+      const rContent = rOuter - insetPad;
+
+      // ✅ contorno se dibuja “hacia adentro” sin tocar rContent del clip
       if (outlineEnabled){
         ctx.save();
         ctx.strokeStyle = tokens.outline;
         ctx.lineWidth = outlineW;
         ctx.globalAlpha = 1;
         ctx.beginPath();
-        ctx.arc(cx, cy, rInner, 0, Math.PI*2);
+        ctx.arc(cx, cy, Math.max(0, rContent - outlineW/2), 0, Math.PI*2);
         ctx.stroke();
         ctx.restore();
       }
 
-      // clip al tamaño real
+      // ✅ clip del contenido al radio real (NO se reduce por contorno)
       ctx.save();
       ctx.beginPath();
-      ctx.arc(cx, cy, rInner, 0, Math.PI*2);
+      ctx.arc(cx, cy, rContent, 0, Math.PI*2);
       ctx.clip();
 
       // fondo
@@ -809,10 +814,10 @@
 
       // ✅ retícula intacta (sin zoom) usando radio real
       if (state.map.showGrid && isGridAllowedForCurrentStyle()){
-        drawGlobeGridWithRadius(ctx, cx, cy, rInner * 0.96, tokens.gridLine);
+        drawGlobeGridWithRadius(ctx, cx, cy, rContent * 0.96, tokens.gridLine);
       }
 
-      // ✅ zoom SOLO para estrellas + constelaciones (retícula ya quedó dibujada)
+      // ✅ zoom SOLO para estrellas + constelaciones
       ctx.save();
       if (z !== 1){
         ctx.translate(cx, cy);
@@ -844,7 +849,6 @@
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(0,0,mapW,mapH);
 
-      // retícula no aplica a corazón
       ctx.save();
       if (z !== 1){
         ctx.translate(cx, cy);
@@ -1039,16 +1043,17 @@
     const p = state.map.stylePrefs[styleId];
     if (!p) return;
 
-    state.map.posterFrameEnabled = (styleId === "moderno" || styleId === "poster") ? false : !!p.frame;
-    state.map.posterMarginEnabled = (styleId === "moderno" || styleId === "poster") ? false : !!p.margin;
+    // ✅ Poster: fuerza OFF (Moderno sí carga prefs)
+    state.map.posterFrameEnabled = (styleId === "poster") ? false : !!p.frame;
+    state.map.posterMarginEnabled = (styleId === "poster") ? false : !!p.margin;
     state.map.mapCircleMarginEnabled = !!p.outline;
   }
 
   function savePrefsForStyle(styleId){
     const p = state.map.stylePrefs[styleId] || (state.map.stylePrefs[styleId] = { frame:false, margin:false, outline:false });
 
-    p.frame = (styleId === "moderno" || styleId === "poster") ? false : !!state.map.posterFrameEnabled;
-    p.margin = (styleId === "moderno" || styleId === "poster") ? false : !!state.map.posterMarginEnabled;
+    p.frame = (styleId === "poster") ? false : !!state.map.posterFrameEnabled;
+    p.margin = (styleId === "poster") ? false : !!state.map.posterMarginEnabled;
     p.outline = !!state.map.mapCircleMarginEnabled;
   }
 
@@ -1163,7 +1168,7 @@
 
       loadPrefsForStyle(state.map.styleId);
 
-      if (isModern() || isPoster()){
+      if (isPoster()){
         state.map.posterFrameEnabled = false;
         state.map.posterMarginEnabled = false;
       }
@@ -1279,7 +1284,7 @@
         state.map.styleId = st.id;
         loadPrefsForStyle(st.id);
 
-        if (isModern() || isPoster()){
+        if (isPoster()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
         }
@@ -1349,8 +1354,8 @@
 
     $section.appendChild(groupGap());
 
-    // ✅ IMPORTANTE: Marco/Margen NO aparecen en Moderno ni Poster
-    if (!isModern() && !isPoster()){
+    // ✅ Marco/Margen NO aparecen SOLO en Poster (Moderno sí)
+    if (!isPoster()){
       $section.appendChild(fieldCard(
         "Marco del póster",
         !!state.map.posterFrameEnabled,
@@ -1363,8 +1368,8 @@
         },
         (body) => {
           const label = document.createElement("div");
-          label.className = "label";
-          label.textContent = "Tamaño del marco";
+          label.className = "label sliderLabel";
+          label.textContent = "Tamaño"; // ✅ antes decía "Tamaño del marco"
           body.appendChild(label);
 
           const r = document.createElement("input");
@@ -1431,8 +1436,8 @@
       },
       (body) => {
         const label = document.createElement("div");
-        label.className = "label";
-        label.textContent = "Tamaño de constelaciones";
+        label.className = "label sliderLabel";
+        label.textContent = "Tamaño"; // ✅ antes decía "Tamaño de constelaciones"
         body.appendChild(label);
 
         const r = document.createElement("input");
@@ -1473,7 +1478,7 @@
 
     const zoomCard = document.createElement("div");
     zoomCard.className = "formRow";
-    zoomCard.innerHTML = `<div class="label">Zoom de Estrellas</div>`;
+    zoomCard.innerHTML = `<div class="label sliderLabel">Zoom de Estrellas</div>`;
     const mapZoomRange = document.createElement("input");
     mapZoomRange.type = "range";
     mapZoomRange.min = "1.00";
@@ -1689,9 +1694,9 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    // ✅ Moderno y Poster: no marco/margen
-    const frameOn = (!isModern() && !isPoster()) && !!state.map.posterFrameEnabled;
-    const marginOn = (!isModern() && !isPoster()) && !!state.map.posterMarginEnabled && !frameOn;
+    // ✅ Poster: no marco/margen. Moderno sí.
+    const frameOn = (!isPoster()) && !!state.map.posterFrameEnabled;
+    const marginOn = (!isPoster()) && !!state.map.posterMarginEnabled && !frameOn;
 
     const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
     const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
@@ -1901,8 +1906,8 @@
   function renderAll(){
     if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
 
-    // ✅ Moderno y Poster: doble seguro OFF
-    if (isModern() || isPoster()){
+    // ✅ Poster: doble seguro OFF (Moderno NO)
+    if (isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
     }

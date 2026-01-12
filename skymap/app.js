@@ -9,8 +9,8 @@
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
   // ✅ fijos
-  const POSTER_MARGIN_THICKNESS_FIXED = 4; // ✅ pedido: 4
-  const OUTLINE_THICKNESS_FIXED = 4;       // ✅ pedido: 6
+  const POSTER_MARGIN_THICKNESS_FIXED = 4; // margen fijo
+  const OUTLINE_THICKNESS_FIXED = 4;       // ✅ contorno fijo = 4
 
   const TITLE_MAX = 120;
   const SUB_MAX = 240;
@@ -42,7 +42,7 @@
 
       backgroundMode: "match",
 
-      // ✅ ahora: Moderno SÍ permite marco y margen (solo Poster los fuerza OFF)
+      // ✅ Moderno: SÍ permite marco y margen (solo Poster los fuerza OFF)
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
@@ -100,7 +100,7 @@
     { id: "ice",       name: "Hielo" },
     { id: "warm",      name: "Cálido" },
     { id: "forest",    name: "Bosque" },
-    { id: "rose",      name: "Caramelo" }, // ✅ antes "Rosa"
+    { id: "rose",      name: "Caramelo" }, // ✅ antes “Rosa”
     { id: "neonBlue",  name: "Neón Azul" },
     { id: "neonGreen", name: "Neón Verde" },
     { id: "neonRose",  name: "Neón Rosa" },
@@ -408,7 +408,7 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    // ✅ Poster: fuerza OFF marco/margen (Moderno ya NO)
+    // ✅ Poster: fuerza OFF marco/margen
     if (isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
@@ -505,7 +505,8 @@
   }
 
   // ==========================================================
-  // Retícula con radio fijo + filtro “líneas rectas”
+  // ✅ Retícula: elimina horizontales perfectas (las de tu screenshot)
+  // ✅ y protege la meridiana vertical central para que NO se filtre
   // ==========================================================
   function drawGlobeGridWithRadius(ctx, cx, cy, R, gridLine){
     const tiltX = 24 * Math.PI / 180;
@@ -529,27 +530,49 @@
       return { sx: cx + x * R, sy: cy - y * R, z };
     }
 
-    function isTooStraight(points){
+    function shouldSkipLine(points){
       if (!points || points.length < 6) return false;
+
+      let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+      for (const p of points){
+        if (p.sx < xMin) xMin = p.sx;
+        if (p.sx > xMax) xMax = p.sx;
+        if (p.sy < yMin) yMin = p.sy;
+        if (p.sy > yMax) yMax = p.sy;
+      }
+      const xRange = xMax - xMin;
+      const yRange = yMax - yMin;
 
       const a = points[0];
       const b = points[points.length - 1];
       const dx = b.sx - a.sx;
       const dy = b.sy - a.sy;
-      const denom = Math.hypot(dx, dy) || 1;
 
-      let maxDev = 0;
-      for (let i = 1; i < points.length - 1; i++){
-        const p = points[i];
-        const dev = Math.abs(dy * p.sx - dx * p.sy + b.sx * a.sy - b.sy * a.sx) / denom;
-        if (dev > maxDev) maxDev = dev;
+      // ✅ PROTEGE líneas verticales “fuertes” (incluye la central)
+      if (Math.abs(dx) < 1.0 && Math.abs(dy) > 22) return false;
+
+      // ✅ mata segmentos “perfectamente horizontales” (los que marcaste)
+      // suelen tener yRange casi 0 (línea plana) y xRange notable.
+      if (yRange < 1.6 && xRange > 18) return true;
+
+      // extra: si es muy horizontal + muy recta, también fuera
+      if (Math.abs(dy) < 1.0 && Math.abs(dx) > 30){
+        const denom = Math.hypot(dx, dy) || 1;
+        let maxDev = 0;
+        for (let i = 1; i < points.length - 1; i++){
+          const p = points[i];
+          const dev = Math.abs(dy * p.sx - dx * p.sy + b.sx * a.sy - b.sy * a.sx) / denom;
+          if (dev > maxDev) maxDev = dev;
+        }
+        if (maxDev < 1.2) return true;
       }
-      return maxDev < 1.35;
+
+      return false;
     }
 
     function strokePath(points, alpha, lw){
       if (!points || points.length < 2) return;
-      if (isTooStraight(points)) return;
+      if (shouldSkipLine(points)) return;
 
       ctx.save();
       ctx.strokeStyle = gridLine;
@@ -569,6 +592,7 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
+    // Horizontales (paralelos)
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
     const lonSteps = 240;
 
@@ -589,6 +613,7 @@
       strokePath(frontPts, alphaFront, isPolar ? lwFront + 1.0 : lwFront);
     }
 
+    // Verticales (meridianos)
     const baseLonsDeg = [];
     for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
     baseLonsDeg.push(-90, 90);
@@ -619,6 +644,7 @@
 
     ctx.restore();
 
+    // borde del globo
     ctx.save();
     ctx.globalAlpha = 0.14;
     ctx.lineWidth = 1.1;
@@ -737,9 +763,9 @@
   }
 
   // ✅ drawMap:
-  // - el contorno YA NO hace el mapa más chico
-  // - el contorno se dibuja AL FINAL (para que no se “coma” la mitad y se vea delgado)
-  // - el mapa solo se hace chico con marco o margen
+  // - contorno NO hace el mapa más chico
+  // - mapa solo se hace chico con marco o margen
+  // - contorno se dibuja al final (para que se vea con grosor real)
   function drawMap(){
     syncThickness();
 
@@ -784,7 +810,6 @@
       const rOuter = Math.min(mapW,mapH)/2;
       const rContent = rOuter - insetPad;
 
-      // clip al tamaño real (solo cambia por marco/margen)
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, rContent, 0, Math.PI*2);
@@ -812,7 +837,7 @@
 
       ctx.restore(); // clip
 
-      // ✅ contorno al FINAL (ya no se “adelgaza”)
+      // ✅ contorno al FINAL
       if (outlineEnabled){
         ctx.save();
         ctx.strokeStyle = tokens.outline;
@@ -1037,7 +1062,6 @@
     const p = state.map.stylePrefs[styleId];
     if (!p) return;
 
-    // ✅ Poster forzado OFF; Moderno ya NO
     state.map.posterFrameEnabled = (styleId === "poster") ? false : !!p.frame;
     state.map.posterMarginEnabled = (styleId === "poster") ? false : !!p.margin;
     state.map.mapCircleMarginEnabled = !!p.outline;
@@ -1348,7 +1372,7 @@
 
     $section.appendChild(groupGap());
 
-    // ✅ Marco/Margen aparecen en Moderno también (solo se ocultan en Poster)
+    // ✅ Marco/Margen aparecen también en Moderno (solo se ocultan en Poster)
     if (!isPoster()){
       $section.appendChild(fieldCard(
         "Marco del póster",
@@ -1363,7 +1387,7 @@
         (body) => {
           const label = document.createElement("div");
           label.className = "label";
-          label.textContent = "Tamaño"; // ✅ antes "Tamaño del marco"
+          label.textContent = "Tamaño";
           body.appendChild(label);
 
           const r = document.createElement("input");
@@ -1382,6 +1406,7 @@
         }
       ));
 
+      // ✅ margen fijo: NO mostrar body (no hay slider)
       $section.appendChild(fieldCard(
         "Margen del poster",
         !!state.map.posterMarginEnabled,
@@ -1392,17 +1417,13 @@
           renderPosterAndMap();
           renderAll();
         },
-        (body) => {
-          const txt = document.createElement("div");
-          txt.className = "label";
-          txt.textContent = `Grosor fijo: ${POSTER_MARGIN_THICKNESS_FIXED}px`;
-          body.appendChild(txt);
-        }
+        null
       ));
 
       $section.appendChild(groupGap());
     }
 
+    // ✅ contorno fijo: NO mostrar body (no hay slider)
     $section.appendChild(fieldCard(
       "Contorno del mapa",
       !!state.map.mapCircleMarginEnabled,
@@ -1412,12 +1433,7 @@
         drawMap();
         renderAll();
       },
-      (body) => {
-        const txt = document.createElement("div");
-        txt.className = "label";
-        txt.textContent = `Grosor: ${OUTLINE_THICKNESS_FIXED}px`; // ✅ 6
-        body.appendChild(txt);
-      }
+      null
     ));
 
     $section.appendChild(fieldCard(
@@ -1431,7 +1447,7 @@
       (body) => {
         const label = document.createElement("div");
         label.className = "label";
-        label.textContent = "Tamaño"; // ✅ antes "Tamaño de constelaciones"
+        label.textContent = "Tamaño";
         body.appendChild(label);
 
         const r = document.createElement("input");
@@ -1688,7 +1704,6 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    // ✅ Poster: no marco/margen
     const frameOn = (!isPoster()) && !!state.map.posterFrameEnabled;
     const marginOn = (!isPoster()) && !!state.map.posterMarginEnabled && !frameOn;
 
@@ -1900,7 +1915,6 @@
   function renderAll(){
     if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
 
-    // ✅ Poster: doble seguro OFF (Moderno ya NO)
     if (isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;

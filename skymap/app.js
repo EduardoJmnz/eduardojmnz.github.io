@@ -8,11 +8,12 @@
   const POSTER_FRAME_PCT_MAX = 0.06;
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
-  const POSTER_LINE_THICK_MAX = 12;
-
-  // ✅ fijo (sin slider) — como pediste
+  // ✅ fijo
   const POSTER_MARGIN_THICKNESS_FIXED = 6;
-  const OUTLINE_THICKNESS_FIXED = POSTER_MARGIN_THICKNESS_FIXED;
+  const OUTLINE_THICKNESS_FIXED = 6;
+
+  const TITLE_MAX = 120;
+  const SUB_MAX = 240;
 
   const state = {
     step: 0,
@@ -24,7 +25,6 @@
       subtitle: "A moment to remember",
       place: "Mexico City, MX",
       coords: "19.4326, -99.1332",
-      // default: 25.12.1995 (interno en input date será YYYY-MM-DD)
       date: "1995-12-25",
       time: "19:30",
       fontKey: "system",
@@ -40,7 +40,6 @@
       colorTheme: "mono",
       mapZoom: 1.0,
 
-      // default: mismo color que mapa
       backgroundMode: "match",
 
       posterFrameEnabled: false,
@@ -49,15 +48,21 @@
 
       posterMarginEnabled: true,
       posterMarginThickness: POSTER_MARGIN_THICKNESS_FIXED,
-      posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
-      // ✅ contorno ON por default, pero el usuario lo puede apagar en cualquier estilo
       mapCircleMarginEnabled: true,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: OUTLINE_THICKNESS_FIXED,
 
       constellationSize: 2.0,
       seed: 12345,
+
+      // ✅ settings por estilo (para defaults y recordar toggles)
+      stylePrefs: {
+        classic:   { frame: false, margin: true,  outline: true  },
+        moderno:   { frame: false, margin: false, outline: false },
+        poster:    { frame: false, margin: false, outline: false },
+        romantico: { frame: false, margin: false, outline: true  },
+      }
     },
 
     export: {
@@ -89,7 +94,6 @@
     { key: "rounded", name: "Rounded (Friendly)", css: "'Trebuchet MS', 'Verdana', system-ui, Arial" },
   ];
 
-  // ✅ sin Carbon, sin Blanco en mapa
   const COLOR_THEMES = [
     { id: "mono",      name: "Mono" },
     { id: "marino",    name: "Marino" },
@@ -100,11 +104,6 @@
     { id: "neonBlue",  name: "Neón Azul" },
     { id: "neonGreen", name: "Neón Verde" },
     { id: "neonRose",  name: "Neón Rosa" },
-  ];
-
-  const BG_SWATCHES = [
-    { id: "match", name: "Mono" },  // el texto se actualiza dinámico con el nombre del mapa
-    { id: "white", name: "Blanco" },
   ];
 
   const EXPORT_SIZES = [
@@ -129,21 +128,6 @@
 
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
-  // ✅ Desktop: zoom adaptativo para que NO haya scroll
-  function updatePreviewZoom(){
-    const isMobile = window.matchMedia("(max-width: 980px)").matches;
-    if (isMobile) return;
-    if (!$previewArea) return;
-
-    const w = $previewArea.clientWidth - 32;
-    const h = $previewArea.clientHeight - 32;
-    if (w <= 0 || h <= 0) return;
-
-    const z = Math.min(w / POSTER_W, h / POSTER_H);
-    const finalZ = clamp(z * 0.98, 0.35, 0.95);
-    document.documentElement.style.setProperty("--previewZoom", finalZ.toFixed(4));
-  }
-
   function mulberry32(seed){
     let t = seed >>> 0;
     return function() {
@@ -167,6 +151,21 @@
     return String(id || "").startsWith("neon");
   }
 
+  function colorsFor(theme){
+    const THEMES = {
+      mono:      { bg: "#0A0B0D", star: "#FFFFFF" },
+      marino:    { bg: "#0B0D12", star: "#FFFFFF" },
+      ice:       { bg: "#071016", star: "#E9F6FF" },
+      warm:      { bg: "#140E0A", star: "#F6E7C9" },
+      forest:    { bg: "#06130E", star: "#EAF7F1" },
+      rose:      { bg: "#16080C", star: "#FFE9EF" },
+      neonBlue:  { bg: "#05050A", star: "#4EA7FF" },
+      neonGreen: { bg: "#05050A", star: "#3CFF9B" },
+      neonRose:  { bg: "#05050A", star: "#FF4FD8" },
+    };
+    return THEMES[theme] || THEMES.mono;
+  }
+
   function getStyleDef(){
     return MAP_STYLES.find(s => s.id === state.map.styleId) || MAP_STYLES[0];
   }
@@ -175,16 +174,34 @@
     return (state.map.styleId === "classic" || state.map.styleId === "moderno");
   }
 
+  function isModern(){
+    return state.map.styleId === "moderno";
+  }
+
+  function isPoster(){
+    return state.map.styleId === "poster";
+  }
+
   function getSelectedThemeName(){
     return (COLOR_THEMES.find(t => t.id === state.map.colorTheme)?.name) || "Mono";
+  }
+
+  function formatDateDDMMYYYY(iso){
+    const s = String(iso || "").trim();
+    if (!s) return "";
+    // iso expected yyyy-mm-dd
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return s;
+    return `${m[3]}.${m[2]}.${m[1]}`;
   }
 
   function getDateTimeString(){
     const d = (state.text.date || "").trim();
     const t = (state.text.time || "").trim();
-    if (!d && !t) return "";
-    if (d && t) return `${d} ${t}`;
-    return d || t;
+    const dd = d ? formatDateDDMMYYYY(d) : "";
+    if (!dd && !t) return "";
+    if (dd && t) return `${dd} ${t}`;
+    return dd || t;
   }
 
   function updateSeedFromDateTime(){
@@ -207,26 +224,10 @@
     return `rgba(${r},${g},${b},${a})`;
   }
 
-  function colorsFor(theme){
-    const THEMES = {
-      mono:      { bg: "#0A0B0D", star: "#FFFFFF" },
-      marino:    { bg: "#0B0D12", star: "#FFFFFF" },
-      ice:       { bg: "#071016", star: "#E9F6FF" },
-      warm:      { bg: "#140E0A", star: "#F6E7C9" },
-      forest:    { bg: "#06130E", star: "#EAF7F1" },
-      rose:      { bg: "#16080C", star: "#FFE9EF" },
-      neonBlue:  { bg: "#05050A", star: "#4EA7FF" },
-      neonGreen: { bg: "#05050A", star: "#3CFF9B" },
-      neonRose:  { bg: "#05050A", star: "#FF4FD8" },
-    };
-    return THEMES[theme] || THEMES.mono;
-  }
-
   function computeRenderTokens(){
     const th = colorsFor(state.map.colorTheme);
     const neon = isNeonThemeId(state.map.colorTheme);
 
-    // ✅ Neon: fondo negro + TODO en color neon
     if (neon){
       return {
         posterBg: "#000000",
@@ -243,7 +244,6 @@
     }
 
     if (state.map.backgroundMode === "white"){
-      // fondo blanco: poster blanco, tinta = bg del tema
       return {
         posterBg: "#FFFFFF",
         posterInk: th.bg,
@@ -258,7 +258,6 @@
       };
     }
 
-    // match (default)
     return {
       posterBg: th.bg,
       posterInk: "#FFFFFF",
@@ -278,8 +277,83 @@
     state.map.mapCircleMarginThickness = OUTLINE_THICKNESS_FIXED;
   }
 
+  // ✅ preview zoom adaptativo desktop
+  function updatePreviewZoom(){
+    const isMobile = window.matchMedia("(max-width: 980px)").matches;
+    if (isMobile) return;
+    if (!$previewArea) return;
+
+    const w = $previewArea.clientWidth - 32;
+    const h = $previewArea.clientHeight - 32;
+    if (w <= 0 || h <= 0) return;
+
+    const z = Math.min(w / POSTER_W, h / POSTER_H);
+    const finalZ = clamp(z * 0.98, 0.35, 0.95);
+    document.documentElement.style.setProperty("--previewZoom", finalZ.toFixed(4));
+  }
+
   // --------------------------
-  // CAPAS: marco(área) + papel + margen(línea)
+  // ✅ Autosize texto para que quepa
+  // --------------------------
+  const measureCanvas = document.createElement("canvas");
+  const mctx = measureCanvas.getContext("2d");
+
+  function fitFontToWidth({ text, family, weight, maxWidth, start, min }){
+    let size = start;
+    while (size > min){
+      mctx.font = `${weight} ${Math.round(size)}px ${family}`;
+      const w = mctx.measureText(text).width;
+      if (w <= maxWidth) break;
+      size -= 1;
+    }
+    return Math.max(min, size);
+  }
+
+  function applyAutoTextSizing(){
+    const family = state.text.fontFamily || "system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    const bottom = document.getElementById("bottomText");
+    if (!bottom) return;
+
+    const maxW = bottom.clientWidth;
+    if (!maxW) return;
+
+    const frameOn = !!state.map.posterFrameEnabled;
+    const modernFrameTight = isModern() && frameOn;
+
+    // bases
+    const baseTitle = modernFrameTight ? 44 : (isPoster() ? 46 : 54);
+    const baseSub   = modernFrameTight ? 14 : (isPoster() ? 16 : 18);
+
+    const titleText = ($pTitle.textContent || "").trim();
+    const subText = ($pSubtitle.textContent || "").trim();
+
+    if (titleText){
+      const size = fitFontToWidth({
+        text: titleText,
+        family,
+        weight: 900,
+        maxWidth: maxW,
+        start: baseTitle,
+        min: 22,
+      });
+      $pTitle.style.fontSize = `${size}px`;
+    }
+
+    if (subText){
+      const size = fitFontToWidth({
+        text: subText,
+        family,
+        weight: 650,
+        maxWidth: maxW,
+        start: baseSub,
+        min: 12,
+      });
+      $pSubtitle.style.fontSize = `${size}px`;
+    }
+  }
+
+  // --------------------------
+  // CAPAS: marco + papel + margen
   // --------------------------
   let $posterFrameArea = null;
   let $posterPaper = null;
@@ -340,18 +414,15 @@
     state.map.posterFrameInsetPx = Math.round(POSTER_W * pct);
   }
 
-  function enforceDecorRules(){
-    // Poster (rect) puede ocultar decor si tú quieres; aquí lo dejamos permitido
-    // Si quisieras bloquear marco/margen en poster, aquí sería:
-    // if (state.map.styleId === "poster"){ state.map.posterFrameEnabled = false; state.map.posterMarginEnabled = false; }
-    if (state.map.posterFrameEnabled) state.map.posterMarginEnabled = false;
-  }
-
   function applyPosterFrameAndMargin(tokens){
     ensurePosterLayers();
     updatePosterFrameInsetPx();
-    enforceDecorRules();
     syncThickness();
+
+    // ✅ Moderno: NO margen disponible (si acaso quedó prendido, lo apagamos)
+    if (isModern()){
+      state.map.posterMarginEnabled = false;
+    }
 
     const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
     const marginEdge = POSTER_MARGIN_EDGE_GAP_PX;
@@ -360,6 +431,10 @@
     const marginOn = !!state.map.posterMarginEnabled && !frameOn;
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
+
+    // clases para CSS
+    $poster.classList.toggle("modern", isModern());
+    $poster.classList.toggle("frameOn", frameOn);
 
     $poster.style.background = tokens.posterBg;
     $poster.style.color = tokens.posterInk;
@@ -384,18 +459,21 @@
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(tokens.posterInk, 1) : "transparent";
 
-    const baseBottom = (state.map.styleId === "poster") ? 60 : 100;
+    // spacing bottom (seguro)
+    const baseBottom = isPoster() ? 60 : 100;
     const safeBottomWhenMarginOn = marginEdge + thickness + 18;
     const finalBottom = marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom;
     $poster.style.setProperty("--bottomTextBottom", `${finalBottom}px`);
+
+    // ✅ Moderno con marco: reduce top para ganar aire
+    const innerTop = (isModern() && frameOn) ? 54 : 70;
+    $poster.style.setProperty("--innerTop", `${innerTop}px`);
   }
 
   function applyPosterLayoutByStyle(){
     const st = getStyleDef();
 
-    if (st.layout === "classic") $poster.classList.add("classic");
-    else $poster.classList.remove("classic");
-
+    $poster.classList.toggle("classic", st.layout === "classic");
     $poster.classList.toggle("rectStyle", st.shape === "rect");
 
     if (st.shape === "rect") {
@@ -420,7 +498,11 @@
 
     const base = 780;
     const frame = state.map.posterFrameEnabled ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
-    const size = clamp(base - Math.round(frame * 0.6), 640, 780);
+
+    // ✅ Moderno con marco: reducción más agresiva para que NO se salga
+    const factor = (isModern() && state.map.posterFrameEnabled) ? 1.05 : 0.60;
+    const size = clamp(base - Math.round(frame * factor), 600, 780);
+
     $poster.style.setProperty("--mapW", `${size}px`);
     $poster.style.setProperty("--mapH", `${size}px`);
   }
@@ -441,7 +523,6 @@
     ctx.closePath();
   }
 
-  // ✅ retícula globo (como tu referencia), con 70% en frente
   function drawGlobeGrid(ctx, w, h, gridLine){
     const cx = w / 2;
     const cy = h / 2;
@@ -488,7 +569,6 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
-    // Paralelos
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
     const lonSteps = 240;
 
@@ -509,7 +589,6 @@
       strokePath(frontPts, alphaFront, isPolar ? lwFront + 1.0 : lwFront);
     }
 
-    // Meridianos (izq + der)
     const baseLonsDeg = [];
     for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
     baseLonsDeg.push(-90, 90);
@@ -540,7 +619,6 @@
 
     ctx.restore();
 
-    // aro exterior suave
     ctx.save();
     ctx.globalAlpha = 0.14;
     ctx.lineWidth = 1.1;
@@ -556,6 +634,7 @@
     for (let i = 0; i < N; i++){
       const x = rand() * w;
       const y = rand() * h;
+
       const big = rand() > 0.92;
       const r = big ? (1.5 + rand() * 1.8) : (rand() * 1.2);
       const a = big ? (0.75 + rand() * 0.25) : (0.35 + rand() * 0.55);
@@ -674,7 +753,6 @@
     const conLineW = 0.9 + cs * 0.55;
     const nodeR = 1.6 + cs * 0.35;
 
-    // ✅ contorno: siempre puede prender/apagar el usuario (si quieres bloquearlo en poster, cambia a: && st.shape !== "rect")
     const outlineEnabled = !!state.map.mapCircleMarginEnabled;
     const outlineW = OUTLINE_THICKNESS_FIXED;
 
@@ -782,11 +860,21 @@
     $pCoords.style.display = state.visible.coords ? "block" : "none";
     $pDatetime.style.display = state.visible.datetime ? "block" : "none";
 
-    $pTitle.textContent = state.text.title || "";
-    $pSubtitle.textContent = state.text.subtitle || "";
+    // ✅ hard limits
+    const title = String(state.text.title || "").slice(0, TITLE_MAX);
+    const sub = String(state.text.subtitle || "").slice(0, SUB_MAX);
+
+    state.text.title = title;
+    state.text.subtitle = sub;
+
+    $pTitle.textContent = title;
+    $pSubtitle.textContent = sub;
     $pPlace.textContent = state.text.place || "";
     $pCoords.textContent = state.text.coords || "";
     $pDatetime.textContent = getDateTimeString();
+
+    // ✅ autosize
+    applyAutoTextSizing();
   }
 
   function renderPosterAndMap(){
@@ -798,6 +886,8 @@
     setMapSizeFromPosterPad();
 
     drawMap();
+    renderPosterText();
+
     updatePreviewZoom();
   }
 
@@ -918,6 +1008,31 @@
     return card;
   }
 
+  // --------------------------
+  // ✅ Defaults por estilo
+  // --------------------------
+  function loadPrefsForStyle(styleId){
+    const p = state.map.stylePrefs[styleId];
+    if (!p) return;
+
+    state.map.posterFrameEnabled = !!p.frame;
+
+    // Moderno: margin no aplica
+    state.map.posterMarginEnabled = (styleId === "moderno") ? false : !!p.margin;
+
+    state.map.mapCircleMarginEnabled = !!p.outline;
+  }
+
+  function savePrefsForStyle(styleId){
+    const p = state.map.stylePrefs[styleId] || (state.map.stylePrefs[styleId] = { frame:false, margin:false, outline:false });
+    p.frame = !!state.map.posterFrameEnabled;
+    p.margin = !!state.map.posterMarginEnabled;
+    p.outline = !!state.map.mapCircleMarginEnabled;
+  }
+
+  // --------------------------
+  // ✅ DISEÑO
+  // --------------------------
   function drawStyleTextSkeleton(ctx, w, h, styleId, color){
     ctx.save();
     ctx.fillStyle = color;
@@ -996,9 +1111,6 @@
     ctx.restore();
   }
 
-  // --------------------------
-  // ✅ DISEÑO (RESTAURADO)
-  // --------------------------
   function renderSectionDesign(){
     $section.innerHTML = "";
 
@@ -1013,7 +1125,6 @@
     $section.appendChild(t);
     $section.appendChild(s);
 
-    // 1) Aleatorio
     const randomBtn = document.createElement("button");
     randomBtn.type = "button";
     randomBtn.className = "btn primary";
@@ -1025,22 +1136,21 @@
       const pickBool = () => r() > 0.5;
       const pickRange = (min, max) => min + r() * (max - min);
 
+      const prevStyle = state.map.styleId;
+      savePrefsForStyle(prevStyle);
+
       state.map.styleId = pick(MAP_STYLES).id;
       state.map.colorTheme = pick(COLOR_THEMES).id;
+
+      // defaults por estilo
+      loadPrefsForStyle(state.map.styleId);
 
       state.map.showGrid = isGridAllowedForCurrentStyle() ? pickBool() : false;
       state.map.showConstellations = pickBool();
       state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
       state.map.mapZoom = Math.round(pickRange(1.0, 1.6) * 20) / 20;
 
-      // Neón => fuerza match
       if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
-
-      state.map.posterFrameEnabled = pickBool();
-      state.map.posterMarginEnabled = !state.map.posterFrameEnabled ? pickBool() : false;
-
-      // contorno random (pero permitido en todos)
-      state.map.mapCircleMarginEnabled = pickBool();
 
       state.map.seed = (Math.random() * 1e9) | 0;
 
@@ -1051,7 +1161,6 @@
 
     $section.appendChild(groupGap());
 
-    // 2) Estilos (previews)
     const styleRow = document.createElement("div");
     styleRow.className = "formRow";
     styleRow.innerHTML = `<div class="label">Estilos</div>`;
@@ -1078,7 +1187,6 @@
       ctx.save();
       const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
 
-      // shape clip
       if (st.shape === "circle"){
         ctx.beginPath();
         ctx.arc(mx+mw/2, my+mw/2, mw/2, 0, Math.PI*2);
@@ -1095,16 +1203,10 @@
         ctx.clip();
       }
 
-      // map bg
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(mx,my,mw,mh);
 
-      // stars
-      const r = mulberry32(
-        st.id === "romantico" ? 202603 :
-        st.id === "poster" ? 202604 :
-        st.id === "moderno" ? 202605 : 202602
-      );
+      const r = mulberry32(202600 + st.id.length * 17);
       for (let i=0;i<160;i++){
         const x = mx + r()*mw;
         const y = my + r()*mh;
@@ -1117,13 +1219,13 @@
       ctx.globalAlpha = 1;
       ctx.restore();
 
-      // ✅ en preview: clásico y romántico muestran contorno, moderno y poster no
+      // preview: clásico/romántico con contorno, moderno/poster no
       const showOutlinePreview = (st.id === "classic" || st.id === "romantico");
-      if (showOutlinePreview){
+      if (showOutlinePreview && st.shape !== "rect"){
         ctx.save();
         ctx.strokeStyle = tokens.outline;
         ctx.globalAlpha = 0.9;
-        ctx.lineWidth = 2; // ✅ más delgado en mini preview
+        ctx.lineWidth = 2;
         if (st.shape === "circle"){
           ctx.beginPath();
           ctx.arc(mx+mw/2, my+mw/2, mw/2 - 2, 0, Math.PI*2);
@@ -1150,9 +1252,17 @@
       tile.appendChild(name);
 
       tile.onclick = () => {
+        const prevStyle = state.map.styleId;
+        savePrefsForStyle(prevStyle);
+
         state.map.styleId = st.id;
-        // ✅ ya NO cambiamos contorno ni forzamos nada aquí (para evitar bugs)
-        // el usuario manda con el toggle de contorno
+
+        // ✅ aplica defaults/recuerdo de toggles del estilo
+        loadPrefsForStyle(st.id);
+
+        // grid no permitido
+        if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
+
         renderPosterAndMap();
         renderAll();
       };
@@ -1165,7 +1275,7 @@
 
     $section.appendChild(groupGap());
 
-    // 3) Color mapa (swatches)
+    // Color mapa
     $section.appendChild(renderSwatchGrid({
       title: "Color del Mapa estelar",
       items: COLOR_THEMES,
@@ -1190,7 +1300,7 @@
 
     $section.appendChild(groupGap());
 
-    // 4) Color fondo (swatches) — neón: solo match
+    // Fondo
     const isNeon = isNeonThemeId(state.map.colorTheme);
     const bgItems = isNeon ? [{ id:"match", name: getSelectedThemeName() }] : [
       { id:"match", name: getSelectedThemeName() },
@@ -1208,24 +1318,24 @@
       },
       dotBg: (it) => {
         if (it.id === "white") return "#FFFFFF";
-        // match: usa bg del tema
         return colorsFor(state.map.colorTheme).bg;
       },
       starColor: (it) => {
-        if (it.id === "white") return "#000000"; // ✅ estrella negra en fondo blanco
+        if (it.id === "white") return "#000000";
         return "#FFFFFF";
       }
     }));
 
     $section.appendChild(groupGap());
 
-    // 5) Marco del poster (toggle + slider cuando ON)
+    // Marco (disponible en todos)
     $section.appendChild(fieldCard(
       "Marco del póster",
       !!state.map.posterFrameEnabled,
       (val) => {
         state.map.posterFrameEnabled = val;
         if (val) state.map.posterMarginEnabled = false;
+        savePrefsForStyle(state.map.styleId);
         renderPosterAndMap();
         renderAll();
       },
@@ -1251,32 +1361,36 @@
       }
     ));
 
-    // 6) Margen del poster (toggle, sin slider)
-    $section.appendChild(fieldCard(
-      "Margen del poster",
-      !!state.map.posterMarginEnabled,
-      (val) => {
-        state.map.posterMarginEnabled = val;
-        if (val) state.map.posterFrameEnabled = false;
-        renderPosterAndMap();
-        renderAll();
-      },
-      (body) => {
-        const txt = document.createElement("div");
-        txt.className = "label";
-        txt.textContent = `Grosor fijo: ${POSTER_MARGIN_THICKNESS_FIXED}px`;
-        body.appendChild(txt);
-      }
-    ));
+    // Margen: NO para moderno
+    if (!isModern()){
+      $section.appendChild(fieldCard(
+        "Margen del poster",
+        !!state.map.posterMarginEnabled,
+        (val) => {
+          state.map.posterMarginEnabled = val;
+          if (val) state.map.posterFrameEnabled = false;
+          savePrefsForStyle(state.map.styleId);
+          renderPosterAndMap();
+          renderAll();
+        },
+        (body) => {
+          const txt = document.createElement("div");
+          txt.className = "label";
+          txt.textContent = `Grosor fijo: ${POSTER_MARGIN_THICKNESS_FIXED}px`;
+          body.appendChild(txt);
+        }
+      ));
+    }
 
     $section.appendChild(groupGap());
 
-    // 7) Contorno del mapa (toggle — ya NO cambia estilo)
+    // Contorno (disponible en todos; default OFF en Moderno/Poster por prefs)
     $section.appendChild(fieldCard(
       "Contorno del mapa",
       !!state.map.mapCircleMarginEnabled,
       (val) => {
         state.map.mapCircleMarginEnabled = val;
+        savePrefsForStyle(state.map.styleId);
         drawMap();
         renderAll();
       },
@@ -1288,7 +1402,7 @@
       }
     ));
 
-    // 8) Constelaciones (toggle + slider tamaño)
+    // Constelaciones
     $section.appendChild(fieldCard(
       "Constelaciones",
       !!state.map.showConstellations,
@@ -1314,26 +1428,21 @@
       }
     ));
 
-    // 9) Retícula (toggle) — solo clásico y moderno
+    // Retícula (solo clásico/moderno)
     if (isGridAllowedForCurrentStyle()){
       $section.appendChild(fieldCard(
         "Retícula",
         !!state.map.showGrid,
-        (val) => {
-          state.map.showGrid = val;
-          drawMap();
-          renderAll();
-        },
+        (val) => { state.map.showGrid = val; drawMap(); renderAll(); },
         () => {}
       ));
     } else {
-      // si no aplica, apágala sin mostrar
       state.map.showGrid = false;
     }
 
     $section.appendChild(groupGap());
 
-    // 10) Nuevo cielo
+    // Nuevo cielo
     const seedCard = document.createElement("div");
     seedCard.className = "formRow";
     seedCard.innerHTML = `<div class="label">Nuevo cielo</div>`;
@@ -1346,7 +1455,7 @@
     seedCard.appendChild(seedBtn);
     $section.appendChild(seedCard);
 
-    // 11) Zoom de Estrellas
+    // Zoom
     const zoomCard = document.createElement("div");
     zoomCard.className = "formRow";
     zoomCard.innerHTML = `<div class="label">Zoom de Estrellas</div>`;
@@ -1356,10 +1465,7 @@
     mapZoomRange.max = "1.60";
     mapZoomRange.step = "0.05";
     mapZoomRange.value = String(state.map.mapZoom);
-    mapZoomRange.oninput = () => {
-      state.map.mapZoom = Number(mapZoomRange.value);
-      drawMap();
-    };
+    mapZoomRange.oninput = () => { state.map.mapZoom = Number(mapZoomRange.value); drawMap(); };
     zoomCard.appendChild(mapZoomRange);
     $section.appendChild(zoomCard);
 
@@ -1381,7 +1487,7 @@
   }
 
   // --------------------------
-  // CONTENIDO (cards como tu screenshot)
+  // CONTENIDO (con maxlength)
   // --------------------------
   function renderSectionContent(){
     $section.innerHTML = "";
@@ -1412,6 +1518,7 @@
       const found = FONT_PRESETS.find(f => f.key === key) || FONT_PRESETS[0];
       state.text.fontFamily = found.css;
       renderPosterFont();
+      renderPosterText();
     };
     fontRow.appendChild(fontSel);
 
@@ -1427,6 +1534,7 @@
         const inp = document.createElement("input");
         inp.className = "fieldInput";
         inp.value = state.text.title || "";
+        inp.maxLength = TITLE_MAX;
         inp.oninput = () => { state.text.title = inp.value; renderPosterText(); };
         body.appendChild(inp);
       }
@@ -1440,6 +1548,7 @@
         const inp = document.createElement("input");
         inp.className = "fieldInput";
         inp.value = state.text.subtitle || "";
+        inp.maxLength = SUB_MAX;
         inp.oninput = () => { state.text.subtitle = inp.value; renderPosterText(); };
         body.appendChild(inp);
       }
@@ -1536,7 +1645,7 @@
   }
 
   // --------------------------
-  // EXPORT
+  // EXPORT (igual que antes, usando canvas del mapa ya renderizado)
   // --------------------------
   function cmToPx(cm, dpi){
     const inches = cm / 2.54;
@@ -1572,7 +1681,7 @@
     syncThickness();
 
     const frameOn = !!state.map.posterFrameEnabled;
-    const marginOn = !!state.map.posterMarginEnabled && !frameOn;
+    const marginOn = !isModern() && !!state.map.posterMarginEnabled && !frameOn;
 
     const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
     const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
@@ -1617,22 +1726,33 @@
     const sx = W / POSTER_W;
     const sy = H / POSTER_H;
 
-    const mapW = Math.round(780 * sx);
-    const mapH = mapW;
+    const mapW = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) * sx);
+    const mapH = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) * sy);
 
     const mapX = Math.round((W - mapW) / 2);
     const mapY = Math.round(innerY + (70 * sy));
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
-    const fontFamily = state.text.fontFamily;
+    const family = state.text.fontFamily || "system-ui, -apple-system, Segoe UI, Roboto, Arial";
     ctx.fillStyle = tokens.posterInk;
 
-    function drawText(text, x, y, sizePx, weight=800, align="left", alpha=1){
+    function fitCanvasFont(text, startPx, minPx, weight, maxWidth){
+      let size = startPx;
+      while (size > minPx){
+        ctx.font = `${weight} ${Math.round(size)}px ${family}`;
+        if (ctx.measureText(text).width <= maxWidth) break;
+        size -= 1;
+      }
+      return Math.max(minPx, size);
+    }
+
+    function drawTextFit(text, x, y, startPx, minPx, weight, align, alpha, maxWidth){
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.textAlign = align;
       ctx.textBaseline = "alphabetic";
-      ctx.font = `${weight} ${Math.round(sizePx)}px ${fontFamily}`;
+      const size = fitCanvasFont(text, startPx, minPx, weight, maxWidth);
+      ctx.font = `${weight} ${Math.round(size)}px ${family}`;
       ctx.fillText(text, Math.round(x), Math.round(y));
       ctx.restore();
     }
@@ -1640,17 +1760,24 @@
     const show = state.visible;
     const centerX = W / 2;
 
+    const padX = Math.round(110 * sx);
+    const maxWText = W - padX*2;
+
     const yTitle    = Math.round(1085 * sy);
     const ySubtitle = Math.round(1122 * sy);
     const yPlace    = Math.round(1162 * sy);
     const yCoords   = Math.round(1180 * sy);
     const yDT       = Math.round(1196 * sy);
 
-    if (show.title)    drawText(state.text.title, centerX, yTitle, 54 * sy, 900, "center", 1);
-    if (show.subtitle) drawText(state.text.subtitle, centerX, ySubtitle, 18 * sy, 650, "center", 0.85);
-    if (show.place)    drawText(state.text.place, centerX, yPlace, 14 * sy, 650, "center", 0.82);
-    if (show.coords)   drawText(state.text.coords, centerX, yCoords, 14 * sy, 650, "center", 0.82);
-    if (show.datetime) drawText(getDateTimeString(), centerX, yDT, 14 * sy, 650, "center", 0.82);
+    const title = String(state.text.title || "").slice(0, TITLE_MAX);
+    const sub = String(state.text.subtitle || "").slice(0, SUB_MAX);
+
+    if (show.title)    drawTextFit(title, centerX, yTitle, 54 * sy, 22 * sy, 900, "center", 1, maxWText);
+    if (show.subtitle) drawTextFit(sub, centerX, ySubtitle, 18 * sy, 12 * sy, 650, "center", 0.85, maxWText);
+
+    if (show.place)    drawTextFit(state.text.place || "", centerX, yPlace, 14 * sy, 11 * sy, 650, "center", 0.82, maxWText);
+    if (show.coords)   drawTextFit(state.text.coords || "", centerX, yCoords, 14 * sy, 11 * sy, 650, "center", 0.82, maxWText);
+    if (show.datetime) drawTextFit(getDateTimeString(), centerX, yDT, 14 * sy, 11 * sy, 650, "center", 0.82, maxWText);
 
     if (format === "png" || format === "jpg"){
       const mime = format === "png" ? "image/png" : "image/jpeg";
@@ -1762,19 +1889,22 @@
   }
 
   function renderAll(){
-    // neón: fuerza match
+    // neon => fuerza match
     if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
 
     renderTabs();
     renderSection();
     renderPosterFont();
-    renderPosterText();
     renderPosterAndMap();
   }
 
   // Init
   updateSeedFromDateTime();
   ensurePosterLayers();
+
+  // ✅ aplica defaults iniciales por estilo (classic)
+  loadPrefsForStyle(state.map.styleId);
+
   applyPosterLayoutByStyle();
   applyPosterPaddingLayout();
   setMapSizeFromPosterPad();
@@ -1785,5 +1915,6 @@
   window.addEventListener("resize", () => {
     updatePreviewZoom();
     drawMap();
+    applyAutoTextSizing();
   });
 })();

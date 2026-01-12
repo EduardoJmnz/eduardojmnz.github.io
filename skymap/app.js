@@ -8,9 +8,12 @@
   const POSTER_FRAME_PCT_MAX = 0.06;
   const POSTER_FRAME_PCT_DEFAULT = POSTER_FRAME_PCT_MAX;
 
-  // ✅ fijo
+  // ✅ fijos
   const POSTER_MARGIN_THICKNESS_FIXED = 4;
-  const OUTLINE_THICKNESS_FIXED = 6;
+  const OUTLINE_THICKNESS_FIXED = 6; // ✅ contorno = 6
+
+  // ✅ color “beige” para labels (sliders)
+  const UI_BEIGE = "#E7D8B5";
 
   const TITLE_MAX = 120;
   const SUB_MAX = 240;
@@ -42,7 +45,7 @@
 
       backgroundMode: "match",
 
-      // ✅ Moderno: YA SÍ usa marco/margen
+      // ✅ Moderno: YA SÍ permite marco/margen
       posterFrameEnabled: false,
       posterFramePct: POSTER_FRAME_PCT_DEFAULT,
       posterFrameInsetPx: Math.round(POSTER_W * POSTER_FRAME_PCT_DEFAULT),
@@ -347,7 +350,7 @@
   let $posterMarginLine = null;
 
   function ensurePosterLayers(){
-    const R = "26px";
+    const POSTER_RADIUS = "26px";
 
     if (!$posterFrameArea){
       $posterFrameArea = document.createElement("div");
@@ -355,7 +358,7 @@
       Object.assign($posterFrameArea.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: R,
+        borderRadius: "0px", // ✅ MARCO SIN REDONDEO
         zIndex: "0",
         pointerEvents: "none",
         background: "transparent",
@@ -370,7 +373,7 @@
       Object.assign($posterPaper.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: R,
+        borderRadius: POSTER_RADIUS, // ✅ PAPEL (Y POSTER) SÍ REDONDEADO
         zIndex: "1",
         pointerEvents: "none",
         background: "transparent",
@@ -384,7 +387,7 @@
       Object.assign($posterMarginLine.style, {
         position: "absolute",
         inset: "0px",
-        borderRadius: R,
+        borderRadius: "0px", // ✅ MARGEN SIN REDONDEO
         zIndex: "2",
         pointerEvents: "none",
         border: "0px solid transparent",
@@ -408,7 +411,7 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    // ✅ Poster: fuerza OFF (Moderno ya NO)
+    // ✅ Poster: fuerza OFF (Moderno sí)
     if (isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
@@ -741,7 +744,7 @@
   }
 
   // ✅ drawMap:
-  // - Contorno NO encoge mapa (ni clip ni radio de contenido)
+  // - Contorno NO encoge mapa
   // - El mapa solo se hace chico cuando hay marco o margen
   // - Retícula NO se zoom (solo estrellas/constelaciones)
   function drawMap(){
@@ -787,10 +790,9 @@
       const cx = mapW/2, cy = mapH/2;
       const rOuter = Math.min(mapW,mapH)/2;
 
-      // ✅ radio del contenido (solo afecta marco/margen)
       const rContent = rOuter - insetPad;
 
-      // ✅ contorno se dibuja “hacia adentro” sin tocar rContent del clip
+      // ✅ contorno “hacia adentro” sin afectar el tamaño percibido del mapa
       if (outlineEnabled){
         ctx.save();
         ctx.strokeStyle = tokens.outline;
@@ -802,22 +804,20 @@
         ctx.restore();
       }
 
-      // ✅ clip del contenido al radio real (NO se reduce por contorno)
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, rContent, 0, Math.PI*2);
       ctx.clip();
 
-      // fondo
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(0,0,mapW,mapH);
 
-      // ✅ retícula intacta (sin zoom) usando radio real
+      // ✅ retícula sin zoom
       if (state.map.showGrid && isGridAllowedForCurrentStyle()){
         drawGlobeGridWithRadius(ctx, cx, cy, rContent * 0.96, tokens.gridLine);
       }
 
-      // ✅ zoom SOLO para estrellas + constelaciones
+      // ✅ zoom SOLO estrellas + constelaciones
       ctx.save();
       if (z !== 1){
         ctx.translate(cx, cy);
@@ -831,7 +831,7 @@
       }
       ctx.restore();
 
-      ctx.restore(); // clip
+      ctx.restore();
       return;
     }
 
@@ -1043,7 +1043,7 @@
     const p = state.map.stylePrefs[styleId];
     if (!p) return;
 
-    // ✅ Poster: fuerza OFF (Moderno sí carga prefs)
+    // ✅ Poster: fuerza OFF (Moderno sí)
     state.map.posterFrameEnabled = (styleId === "poster") ? false : !!p.frame;
     state.map.posterMarginEnabled = (styleId === "poster") ? false : !!p.margin;
     state.map.mapCircleMarginEnabled = !!p.outline;
@@ -1368,8 +1368,9 @@
         },
         (body) => {
           const label = document.createElement("div");
-          label.className = "label sliderLabel";
-          label.textContent = "Tamaño"; // ✅ antes decía "Tamaño del marco"
+          label.className = "label";
+          label.textContent = "Tamaño"; // ✅ solo “Tamaño”
+          label.style.color = UI_BEIGE; // ✅ beige
           body.appendChild(label);
 
           const r = document.createElement("input");
@@ -1402,6 +1403,7 @@
           const txt = document.createElement("div");
           txt.className = "label";
           txt.textContent = `Grosor fijo: ${POSTER_MARGIN_THICKNESS_FIXED}px`;
+          txt.style.color = UI_BEIGE; // ✅ beige
           body.appendChild(txt);
         }
       ));
@@ -1422,6 +1424,7 @@
         const txt = document.createElement("div");
         txt.className = "label";
         txt.textContent = `Grosor: ${OUTLINE_THICKNESS_FIXED}px`;
+        txt.style.color = UI_BEIGE; // ✅ beige
         body.appendChild(txt);
       }
     ));
@@ -1436,8 +1439,9 @@
       },
       (body) => {
         const label = document.createElement("div");
-        label.className = "label sliderLabel";
-        label.textContent = "Tamaño"; // ✅ antes decía "Tamaño de constelaciones"
+        label.className = "label";
+        label.textContent = "Tamaño"; // ✅ solo “Tamaño”
+        label.style.color = UI_BEIGE; // ✅ beige
         body.appendChild(label);
 
         const r = document.createElement("input");
@@ -1467,6 +1471,7 @@
     const seedCard = document.createElement("div");
     seedCard.className = "formRow";
     seedCard.innerHTML = `<div class="label">Nuevo cielo</div>`;
+    seedCard.querySelector(".label").style.color = UI_BEIGE; // ✅ beige
     const seedBtn = document.createElement("button");
     seedBtn.type = "button";
     seedBtn.className = "btn ghost";
@@ -1478,7 +1483,8 @@
 
     const zoomCard = document.createElement("div");
     zoomCard.className = "formRow";
-    zoomCard.innerHTML = `<div class="label sliderLabel">Zoom de Estrellas</div>`;
+    zoomCard.innerHTML = `<div class="label">Zoom de Estrellas</div>`;
+    zoomCard.querySelector(".label").style.color = UI_BEIGE; // ✅ beige
     const mapZoomRange = document.createElement("input");
     mapZoomRange.type = "range";
     mapZoomRange.min = "1.00";
@@ -1520,6 +1526,7 @@
     const fontRow = document.createElement("div");
     fontRow.className = "formRow";
     fontRow.innerHTML = `<div class="label">Fuente</div>`;
+    fontRow.querySelector(".label").style.color = UI_BEIGE; // ✅ beige
     const fontSel = document.createElement("select");
     fontSel.className = "select";
     FONT_PRESETS.forEach(f => {
@@ -1835,6 +1842,7 @@
     const sizeRow = document.createElement("div");
     sizeRow.className = "formRow";
     sizeRow.innerHTML = `<div class="label">Medidas</div>`;
+    sizeRow.querySelector(".label").style.color = UI_BEIGE;
 
     const sizeSel = document.createElement("select");
     sizeSel.className = "select";
@@ -1851,6 +1859,7 @@
     const formatRow = document.createElement("div");
     formatRow.className = "formRow";
     formatRow.innerHTML = `<div class="label">Formato</div>`;
+    formatRow.querySelector(".label").style.color = UI_BEIGE;
 
     const formatSel = document.createElement("select");
     formatSel.className = "select";
@@ -1906,7 +1915,7 @@
   function renderAll(){
     if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
 
-    // ✅ Poster: doble seguro OFF (Moderno NO)
+    // ✅ Poster: doble seguro OFF
     if (isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;

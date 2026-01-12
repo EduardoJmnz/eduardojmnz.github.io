@@ -24,11 +24,9 @@
       subtitle: "A moment to remember",
       place: "Mexico City, MX",
       coords: "19.4326, -99.1332",
-
       // ✅ para input[type="date"] debe ser ISO
       date: "1995-12-25",
       time: "19:30",
-
       fontKey: "system",
       fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
     },
@@ -42,7 +40,7 @@
       colorTheme: "mono",
       mapZoom: 1.0,
 
-      // ✅ por default: mismo color que el mapa
+      // ✅ default: mismo color que el mapa
       backgroundMode: "match",
 
       posterFrameEnabled: false,
@@ -54,7 +52,7 @@
       posterMarginThickness: POSTER_MARGIN_THICKNESS_FIXED,
       posterMarginThicknessMax: POSTER_LINE_THICK_MAX,
 
-      // contorno mapa
+      // ✅ contorno mapa
       mapCircleMarginEnabled: true,
       mapCircleInsetPct: 0.10,
       mapCircleMarginThickness: OUTLINE_THICKNESS_FIXED,
@@ -92,7 +90,7 @@
     { key: "rounded", name: "Rounded (Friendly)", css: "'Trebuchet MS', 'Verdana', system-ui, Arial" },
   ];
 
-  // ✅ sin Carbon y ✅ SIN Blanco en el mapa
+  // ✅ sin Carbon y ✅ sin Blanco en mapa
   const COLOR_THEMES = [
     { id: "mono",      name: "Mono" },
     { id: "marino",    name: "Marino" },
@@ -216,8 +214,9 @@
     return !isWhiteBackgroundMode() && !isPosterStyle();
   }
 
-  function isOutlineToggleAllowedByStyle(){
-    return (state.map.styleId === "romantico");
+  // ✅ solo romántico puede toggle
+  function outlineToggleAllowedByStyle(){
+    return state.map.styleId === "romantico";
   }
 
   function computeRenderTokens(){
@@ -228,15 +227,12 @@
       return {
         posterBg: "#000000",
         posterInk: th.star,
-
         mapBg: "#000000",
         stars: th.star,
-
         gridLine: th.star,
         constLine: th.star,
         constNode: th.star,
         outline: th.star,
-
         theme: th,
         neon: true,
       };
@@ -246,15 +242,12 @@
       return {
         posterBg: "#FFFFFF",
         posterInk: th.bg,
-
         mapBg: th.bg,
         stars: th.star,
-
         gridLine: "#FFFFFF",
         constLine: "#FFFFFF",
         constNode: "#FFFFFF",
         outline: "#FFFFFF",
-
         theme: th,
         neon: false,
       };
@@ -263,21 +256,18 @@
     return {
       posterBg: th.bg,
       posterInk: "#FFFFFF",
-
       mapBg: th.bg,
       stars: "#FFFFFF",
-
       gridLine: "#FFFFFF",
       constLine: "#FFFFFF",
       constNode: "#FFFFFF",
       outline: "#FFFFFF",
-
       theme: th,
       neon: false,
     };
   }
 
-  function syncOutlineThickness(){
+  function syncThickness(){
     state.map.posterMarginThickness = POSTER_MARGIN_THICKNESS_FIXED;
     state.map.mapCircleMarginThickness = OUTLINE_THICKNESS_FIXED;
   }
@@ -359,13 +349,7 @@
     ensurePosterLayers();
     updatePosterFrameInsetPx();
     enforceDecorRules();
-    syncOutlineThickness();
-
-    if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
-
-    const st = getStyleDef();
-    if (st.id === "classic") state.map.mapCircleMarginEnabled = true;
-    if (st.id === "poster") state.map.mapCircleMarginEnabled = false;
+    syncThickness();
 
     const frameEdge = POSTER_FRAME_EDGE_GAP_PX;
     const marginEdge = POSTER_MARGIN_EDGE_GAP_PX;
@@ -376,9 +360,11 @@
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
 
+    // Fondo general + tinta
     $poster.style.background = tokens.posterBg;
     $poster.style.color = tokens.posterInk;
 
+    // Marco (área)
     if (frameOn){
       $posterFrameArea.style.opacity = "1";
       $posterFrameArea.style.background = tokens.posterInk;
@@ -389,16 +375,19 @@
       $posterFrameArea.style.inset = `${frameEdge}px`;
     }
 
+    // Papel interior
     const innerInset = frameEdge + framePx;
     $posterPaper.style.background = tokens.posterBg;
     $posterPaper.style.inset = `${innerInset}px`;
 
+    // Margen (línea) fijo
     const thickness = POSTER_MARGIN_THICKNESS_FIXED;
     $posterMarginLine.style.inset = `${marginEdge}px`;
     $posterMarginLine.style.borderWidth = marginOn ? `${thickness}px` : "0px";
     $posterMarginLine.style.borderStyle = "solid";
     $posterMarginLine.style.borderColor = marginOn ? rgbaFromHex(tokens.posterInk, 1) : "transparent";
 
+    // Bottom spacing
     const baseBottom = isPosterStyle() ? 60 : 100;
     const safeBottomWhenMarginOn = marginEdge + thickness + 18;
     const finalBottom = marginOn ? Math.max(baseBottom, safeBottomWhenMarginOn) : baseBottom;
@@ -462,7 +451,7 @@
     ctx.closePath();
   }
 
-  // ✅ Retícula globo (ya corregida izq+der)
+  // ✅ Retícula globo “como ejemplo” (70% opacidad al frente)
   function drawGlobeGrid(ctx, w, h, gridLine){
     const cx = w / 2;
     const cy = h / 2;
@@ -472,7 +461,7 @@
     const rotY  = 0  * Math.PI / 180;
 
     const alphaFront = 0.70;
-    const alphaBack  = 0.22;
+    const alphaBack  = 0.18;
 
     const lwFront = 1.35;
     const lwBack  = 1.00;
@@ -520,7 +509,7 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
-    // ---------- PARALELOS ----------
+    // Paralelos
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60, 75];
     const lonSteps = 240;
 
@@ -541,7 +530,7 @@
       strokePath(frontPts, isPolarRing ? alphaFront : alphaFront,       isPolarRing ? lwFront + 1.0 : lwFront);
     }
 
-    // ---------- MERIDIANOS ----------
+    // Meridianos (derecha + izquierda)
     const baseLonsDeg = [];
     for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
     baseLonsDeg.push(-90, 90);
@@ -549,7 +538,7 @@
     const lonsDeg = [];
     for (const b of baseLonsDeg){
       lonsDeg.push(b);
-      lonsDeg.push(b + 180); // ✅ lado izquierdo
+      lonsDeg.push(b + 180);
     }
 
     const latSteps = 260;
@@ -571,16 +560,16 @@
       strokePath(frontPts, alphaFront, lwFront);
     }
 
-    // círculo exterior tenue
+    ctx.restore();
+
+    // aro exterior muy suave
     ctx.save();
-    ctx.globalAlpha = 0.18;
+    ctx.globalAlpha = 0.14;
     ctx.lineWidth = 1.1;
     ctx.strokeStyle = gridLine;
     ctx.beginPath();
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.restore();
-
     ctx.restore();
   }
 
@@ -684,8 +673,26 @@
     }
   }
 
+  function enforceOutlineRulesByStyle(){
+    if (state.map.styleId === "poster"){
+      state.map.mapCircleMarginEnabled = false;
+      return;
+    }
+    if (state.map.styleId === "classic"){
+      state.map.mapCircleMarginEnabled = true;
+      return;
+    }
+    if (state.map.styleId === "moderno"){
+      state.map.mapCircleMarginEnabled = false;
+      return;
+    }
+    // romantico: se respeta toggle
+    if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
+  }
+
   function drawMap(){
-    syncOutlineThickness();
+    syncThickness();
+    enforceOutlineRulesByStyle();
 
     const mapW = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) || 780);
     const mapH = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) || 780);
@@ -713,15 +720,7 @@
 
     ctx.clearRect(0, 0, mapW, mapH);
 
-    const shouldInsetLikeMapControl =
-      outlineEnabled ||
-      (isPosterDecorAllowed() && !!state.map.posterFrameEnabled) ||
-      (isPosterDecorAllowed() && !!state.map.posterMarginEnabled);
-
-    const insetPad = shouldInsetLikeMapControl
-      ? Math.round(Math.min(mapW, mapH) * (state.map.mapCircleInsetPct || 0.10))
-      : 0;
-
+    const insetPad = outlineEnabled ? Math.round(Math.min(mapW, mapH) * (state.map.mapCircleInsetPct || 0.10)) : 0;
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
 
     if (st.shape === "circle"){
@@ -809,16 +808,7 @@
     }
 
     if (st.shape === "rect"){
-      if (insetPad > 0){
-        ctx.save();
-        ctx.translate(insetPad, insetPad);
-        const w = Math.max(1, mapW - insetPad * 2);
-        const h = Math.max(1, mapH - insetPad * 2);
-        drawRectMap(ctx, w, h, tokens, rand, showOutline, outlineW, conLineW, nodeR);
-        ctx.restore();
-      } else {
-        drawRectMap(ctx, mapW, mapH, tokens, rand, showOutline, outlineW, conLineW, nodeR);
-      }
+      drawRectMap(ctx, mapW, mapH, tokens, rand, showOutline, outlineW, conLineW, nodeR);
       return;
     }
   }
@@ -942,14 +932,13 @@
     ctx.restore();
   }
 
-  // ✅ estrella SVG con color configurable
   function makeFourPointStarSvg(colorHexOrCss){
     const svgNS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("width", "14");
     svg.setAttribute("height", "14");
     svg.setAttribute("viewBox", "0 0 14 14");
-    svg.style.opacity = "0.92";
+    svg.style.opacity = "0.95";
 
     const p = document.createElementNS(svgNS, "path");
     p.setAttribute("d", "M7 0 L8.8 5.2 L14 7 L8.8 8.8 L7 14 L5.2 8.8 L0 7 L5.2 5.2 Z");
@@ -974,7 +963,6 @@
       dot.className = "swatchDot";
       dot.style.background = dotColorFn(it);
 
-      // ✅ estrella con color por swatch
       dot.appendChild(makeFourPointStarSvg(starColorFn(it)));
 
       const name = document.createElement("div");
@@ -1004,7 +992,7 @@
     s.className = "sub";
     s.textContent = "Selecciona un estilo de poster, los colores y las opcines de personalizacion para tu mapa o genera un aleatorio. ¡Cada mapa es unico y diferente!";
 
-    // 1) Botón aleatorio
+    // 1) Aleatorio
     const randomRow = document.createElement("div");
     randomRow.className = "formRow";
     const randomBtn = document.createElement("button");
@@ -1020,6 +1008,7 @@
       state.map.styleId = pick(MAP_STYLES).id;
       state.map.colorTheme = pick(COLOR_THEMES).id;
 
+      // neon => fondo match forzado
       if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
 
       const allowG = isGridAllowedForCurrentStyle();
@@ -1039,16 +1028,13 @@
         updatePosterFrameInsetPx();
 
         state.map.posterMarginEnabled = !marco ? true : false;
-        state.map.posterMarginThickness = POSTER_MARGIN_THICKNESS_FIXED;
+        syncThickness();
       }
 
-      if (state.map.styleId === "poster") {
-        state.map.mapCircleMarginEnabled = false;
-      } else if (state.map.styleId === "moderno"){
-        state.map.mapCircleMarginEnabled = false;
-      } else {
-        state.map.mapCircleMarginEnabled = true;
-      }
+      // contorno por estilo
+      if (state.map.styleId === "poster") state.map.mapCircleMarginEnabled = false;
+      else if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
+      else state.map.mapCircleMarginEnabled = true;
 
       state.map.seed = (Math.random() * 1e9) | 0;
 
@@ -1067,10 +1053,8 @@
     const grid = document.createElement("div");
     grid.className = "styleGrid";
 
-    function previewOutlineByStyle(stId){
-      if (stId === "classic") return true;
-      if (stId === "romantico") return true;
-      return false;
+    function previewOutlineByStyle(styleId){
+      return (styleId === "classic" || styleId === "romantico");
     }
 
     MAP_STYLES.forEach(st => {
@@ -1128,11 +1112,12 @@
       }
       ctx.globalAlpha = 1;
 
+      // ✅ contorno preview más delgado
       if (previewOutlineByStyle(st.id)){
         ctx.save();
         ctx.strokeStyle = tokens.outline;
         ctx.globalAlpha = 1;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1.5;
         if (st.shape === "circle"){
           ctx.beginPath();
           ctx.arc(mx+mw/2, my+mw/2, (mw/2) - 4, 0, Math.PI*2);
@@ -1163,6 +1148,7 @@
       tile.onclick = () => {
         state.map.styleId = st.id;
 
+        // decor
         if (!isPosterDecorAllowed()){
           state.map.posterFrameEnabled = false;
           state.map.posterMarginEnabled = false;
@@ -1170,19 +1156,17 @@
           if (st.id === "classic"){
             state.map.posterFrameEnabled = false;
             state.map.posterMarginEnabled = true;
-            state.map.posterMarginThickness = POSTER_MARGIN_THICKNESS_FIXED;
+            syncThickness();
           } else {
             state.map.posterMarginEnabled = false;
           }
         }
 
-        if (st.id === "poster"){
-          state.map.mapCircleMarginEnabled = false;
-        } else if (st.id === "moderno"){
-          state.map.mapCircleMarginEnabled = false;
-        } else {
-          state.map.mapCircleMarginEnabled = true;
-        }
+        // contorno reglas
+        if (st.id === "poster") state.map.mapCircleMarginEnabled = false;
+        else if (st.id === "moderno") state.map.mapCircleMarginEnabled = false;
+        else if (st.id === "classic") state.map.mapCircleMarginEnabled = true;
+        // romantico: se mantiene el valor actual (toggle)
 
         if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
 
@@ -1204,16 +1188,17 @@
       activeId: state.map.colorTheme,
       onPick: (id) => {
         state.map.colorTheme = id;
+
+        // neon => fondo match
         if (isNeonThemeId(id)) state.map.backgroundMode = "match";
+
         renderPosterAndMap();
         renderAll();
       },
-      // ✅ neon: swatch NEGRO
       dotColorFn: (it) => {
         if (isNeonThemeId(it.id)) return "#000000";
         return colorsFor(it.id).bg;
       },
-      // ✅ neon: estrella del color neon, normal: blanca
       starColorFn: (it) => {
         if (isNeonThemeId(it.id)) return colorsFor(it.id).star;
         return "rgba(255,255,255,0.92)";
@@ -1222,7 +1207,7 @@
 
     const gap3 = document.createElement("div"); gap3.className = "groupGap";
 
-    // 4) Color de fondo (swatches)
+    // 4) Color de fondo (swatches) — neon sin blanco
     const bgItems = (() => {
       const mapThemeName = (COLOR_THEMES.find(x => x.id === state.map.colorTheme)?.name) || "Mapa";
       const base = [{ id: "match", name: mapThemeName }];
@@ -1238,29 +1223,17 @@
       onPick: (id) => {
         if (isNeonThemeId(state.map.colorTheme) && id === "white") return;
         state.map.backgroundMode = id;
-        if (!mapOutlineAllowed()) state.map.mapCircleMarginEnabled = false;
         renderPosterAndMap();
         renderAll();
       },
       dotColorFn: (it) => {
-        // white: swatch blanco
         if (it.id === "white") return "#FFFFFF";
-
-        // match:
-        // - si neon => negro
         if (isNeonThemeId(state.map.colorTheme)) return "#000000";
-
-        // - si normal => bg del tema
         return colorsFor(state.map.colorTheme).bg;
       },
       starColorFn: (it) => {
-        // ✅ white: estrella NEGRA
-        if (it.id === "white") return "#000000";
-
-        // match: si neon => estrella neon
+        if (it.id === "white") return "#000000"; // ✅ estrella negra
         if (isNeonThemeId(state.map.colorTheme)) return colorsFor(state.map.colorTheme).star;
-
-        // match normal: estrella blanca
         return "rgba(255,255,255,0.92)";
       }
     });
@@ -1278,6 +1251,8 @@
       renderAll();
     }));
 
+    const gap4b = document.createElement("div"); gap4b.className = "groupGap";
+
     // 6) Margen del póster (sin slider)
     const marginRow = document.createElement("div");
     marginRow.className = "rowToggle";
@@ -1290,31 +1265,27 @@
 
     const gap5 = document.createElement("div"); gap5.className = "groupGap";
 
-    // 7) Contorno del mapa (solo toggle en romántico)
+    // 7) Contorno del mapa (solo romantico toggle)
     const outlineRow = document.createElement("div");
     outlineRow.className = "rowToggle";
     outlineRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Contorno del mapa" }));
 
-    const outlineToggleDisabled = (!mapOutlineAllowed() || !isOutlineToggleAllowedByStyle());
     const outlineToggle = toggleSwitch(!!state.map.mapCircleMarginEnabled, (val) => {
-      if (state.map.styleId === "classic") {
-        state.map.mapCircleMarginEnabled = true;
-      } else if (state.map.styleId === "moderno") {
-        state.map.mapCircleMarginEnabled = false;
-      } else if (!mapOutlineAllowed()) {
-        state.map.mapCircleMarginEnabled = false;
-      } else {
-        state.map.mapCircleMarginEnabled = val;
-      }
+      if (!outlineToggleAllowedByStyle()) return; // solo romantico
+      state.map.mapCircleMarginEnabled = val;
       drawMap();
       renderAll();
     });
 
-    if (outlineToggleDisabled){
+    // disable si no aplica
+    const disabled = (!mapOutlineAllowed() || !outlineToggleAllowedByStyle());
+    if (disabled){
       outlineToggle.style.opacity = "0.55";
       outlineToggle.style.pointerEvents = "none";
     }
     outlineRow.appendChild(outlineToggle);
+
+    const gap6 = document.createElement("div"); gap6.className = "groupGap";
 
     // 8) Constelaciones
     const conRow = document.createElement("div");
@@ -1326,13 +1297,18 @@
       renderAll();
     }));
 
+    const gap7 = document.createElement("div"); gap7.className = "groupGap";
+
     // 9) Retícula
     const gridRow = document.createElement("div");
     gridRow.className = "rowToggle";
     gridRow.appendChild(Object.assign(document.createElement("span"), { textContent: "Retícula" }));
+
     const allowGrid = isGridAllowedForCurrentStyle();
     if (!allowGrid) state.map.showGrid = false;
+
     const gridToggle = toggleSwitch(!!state.map.showGrid, (val) => {
+      if (!allowGrid) return;
       state.map.showGrid = val;
       drawMap();
       renderAll();
@@ -1343,7 +1319,7 @@
     }
     gridRow.appendChild(gridToggle);
 
-    const gap6 = document.createElement("div"); gap6.className = "groupGap";
+    const gap8 = document.createElement("div"); gap8.className = "groupGap";
 
     // 10) Nuevo cielo
     const seedRow = document.createElement("div");
@@ -1355,6 +1331,8 @@
     seedBtn.textContent = "Generar nuevo cielo";
     seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
     seedRow.appendChild(seedBtn);
+
+    const gap9 = document.createElement("div"); gap9.className = "groupGap";
 
     // 11) Zoom de Estrellas
     const mapZoomRow = document.createElement("div");
@@ -1389,7 +1367,7 @@
 
     if (isPosterDecorAllowed()){
       $section.appendChild(frameRow);
-      $section.appendChild(document.createElement("div")).className = "groupGap";
+      $section.appendChild(gap4b);
       $section.appendChild(marginRow);
       $section.appendChild(gap5);
     } else {
@@ -1400,17 +1378,18 @@
 
     if (mapOutlineAllowed()){
       $section.appendChild(outlineRow);
-      $section.appendChild(document.createElement("div")).className = "groupGap";
+      $section.appendChild(gap6);
     }
 
     $section.appendChild(conRow);
-    $section.appendChild(document.createElement("div")).className = "groupGap";
+    $section.appendChild(gap7);
 
     $section.appendChild(gridRow);
-    $section.appendChild(gap6);
+    $section.appendChild(gap8);
 
     $section.appendChild(seedRow);
-    $section.appendChild(document.createElement("div")).className = "groupGap";
+    $section.appendChild(gap9);
+
     $section.appendChild(mapZoomRow);
 
     const btns = document.createElement("div");
@@ -1461,72 +1440,57 @@
     };
     fontRow.appendChild(fontSel);
 
+    // ✅ Inputs regresados al estilo original: .input
     function fieldCard(key, label, getter, setter, placeholder=""){
       const card = document.createElement("div");
-      card.className = "fieldCard";
+      card.className = "formRow"; // ✅ simple como antes
 
-      const header = document.createElement("div");
-      header.className = "fieldHeader";
-
-      const lab = document.createElement("div");
-      lab.className = "fieldLabel";
-      lab.textContent = label;
-
-      const toggle = toggleSwitch(!!state.visible[key], (val) => {
+      const row = document.createElement("div");
+      row.className = "rowToggle";
+      row.appendChild(Object.assign(document.createElement("span"), { textContent: label }));
+      row.appendChild(toggleSwitch(!!state.visible[key], (val) => {
         state.visible[key] = val;
         renderPosterText();
         renderAll();
-      });
+      }));
 
-      header.appendChild(lab);
-      header.appendChild(toggle);
-      card.appendChild(header);
+      card.appendChild(row);
 
       if (state.visible[key]) {
-        const body = document.createElement("div");
-        body.className = "fieldBody";
-
         const inp = document.createElement("input");
-        inp.className = "fieldInput";
+        inp.className = "input";
         inp.value = getter() ?? "";
         inp.placeholder = placeholder;
         inp.oninput = () => { setter(inp.value); renderPosterText(); };
-
-        body.appendChild(inp);
-        card.appendChild(body);
+        const gap = document.createElement("div"); gap.style.height = "8px";
+        card.appendChild(gap);
+        card.appendChild(inp);
       }
 
       return card;
     }
 
-    // ✅ regresado a como estaba antes (date/time nativo)
     function dateTimeCard(){
       const card = document.createElement("div");
-      card.className = "fieldCard";
+      card.className = "formRow";
 
-      const header = document.createElement("div");
-      header.className = "fieldHeader";
-
-      const lab = document.createElement("div");
-      lab.className = "fieldLabel";
-      lab.textContent = "Fecha / hora";
-
-      const toggle = toggleSwitch(!!state.visible.datetime, (val) => {
+      const row = document.createElement("div");
+      row.className = "rowToggle";
+      row.appendChild(Object.assign(document.createElement("span"), { textContent: "Fecha / hora" }));
+      row.appendChild(toggleSwitch(!!state.visible.datetime, (val) => {
         state.visible.datetime = val;
         renderPosterText();
         renderAll();
-      });
+      }));
 
-      header.appendChild(lab);
-      header.appendChild(toggle);
-      card.appendChild(header);
+      card.appendChild(row);
 
       if (state.visible.datetime){
-        const body = document.createElement("div");
-        body.className = "fieldBody";
+        const gap = document.createElement("div"); gap.style.height = "8px";
+        card.appendChild(gap);
 
         const dateInp = document.createElement("input");
-        dateInp.className = "fieldInput";
+        dateInp.className = "input";
         dateInp.type = "date";
         dateInp.value = state.text.date || "";
         dateInp.oninput = () => {
@@ -1535,14 +1499,14 @@
           renderPosterText();
           drawMap();
         };
-        body.appendChild(dateInp);
+        card.appendChild(dateInp);
 
         const spacer = document.createElement("div");
         spacer.style.height = "10px";
-        body.appendChild(spacer);
+        card.appendChild(spacer);
 
         const timeInp = document.createElement("input");
-        timeInp.className = "fieldInput";
+        timeInp.className = "input";
         timeInp.type = "time";
         timeInp.value = state.text.time || "";
         timeInp.oninput = () => {
@@ -1551,9 +1515,7 @@
           renderPosterText();
           drawMap();
         };
-        body.appendChild(timeInp);
-
-        card.appendChild(body);
+        card.appendChild(timeInp);
       }
 
       return card;
@@ -1564,13 +1526,21 @@
     $section.appendChild(fontRow);
 
     $section.appendChild(fieldCard("title", "Título", () => state.text.title, (v) => { state.text.title = v; }));
+    $section.appendChild(document.createElement("div")).className = "groupGap";
+
     $section.appendChild(fieldCard("subtitle", "Mensaje", () => state.text.subtitle, (v) => { state.text.subtitle = v; }));
+    $section.appendChild(document.createElement("div")).className = "groupGap";
+
     $section.appendChild(fieldCard("place", "Lugar", () => state.text.place, (v) => { state.text.place = v; }));
+    $section.appendChild(document.createElement("div")).className = "groupGap";
+
     $section.appendChild(fieldCard("coords", "Coordenadas", () => state.text.coords, (v) => {
       state.text.coords = v;
       updateSeedFromDateTime();
       drawMap();
     }));
+    $section.appendChild(document.createElement("div")).className = "groupGap";
+
     $section.appendChild(dateTimeCard());
 
     const btns = document.createElement("div");
@@ -1631,13 +1601,11 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     const tokens = computeRenderTokens();
-
     updatePosterFrameInsetPx();
-    syncOutlineThickness();
+    syncThickness();
 
     const st = getStyleDef();
     const decorAllowed = (st.id !== "poster");
-
     const frameOn = decorAllowed && !!state.map.posterFrameEnabled;
     const marginOn = decorAllowed && !!state.map.posterMarginEnabled && !frameOn;
 
@@ -1829,6 +1797,9 @@
   }
 
   function renderAll(){
+    // enforce neon background option
+    if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
+
     renderTabs();
     renderSection();
     renderPosterFont();
@@ -1843,10 +1814,10 @@
   applyPosterPaddingLayout();
   setMapSizeFromPosterPad();
 
+  // defaults por estilo
   if (state.map.styleId === "moderno") state.map.mapCircleMarginEnabled = false;
   if (state.map.styleId === "poster") state.map.mapCircleMarginEnabled = false;
-
-  if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
+  if (state.map.styleId === "classic") state.map.mapCircleMarginEnabled = true;
 
   renderAll();
   window.addEventListener("resize", () => drawMap());

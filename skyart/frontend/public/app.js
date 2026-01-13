@@ -556,7 +556,6 @@
       if (Math.abs(dx) < 1.0 && Math.abs(dy) > 22) return false;
 
       // ✅ mata segmentos “perfectamente horizontales” (los que marcaste)
-      // suelen tener yRange casi 0 (línea plana) y xRange notable.
       if (yRange < 1.6 && xRange > 18) return true;
 
       // extra: si es muy horizontal + muy recta, también fuera
@@ -766,104 +765,102 @@
     }
   }
 
-  // ✅ drawMap:
-  // - contorno NO hace el mapa más chico
-  // - mapa solo se hace chico con marco o margen
-  // - contorno se dibuja al final (para que se vea con grosor real)
-  
-// ✅ drawMap ahora renderiza en backend (para no exponer el algoritmo en el frontend)
-// Devuelve SVG y lo dibuja en el canvas como imagen.
-let __drawSeq = 0;
-let __drawAbort = null;
+  // ✅ drawMap ahora renderiza en backend (para no exponer el algoritmo en el frontend)
+  // Devuelve SVG y lo dibuja en el canvas como imagen.
+  let __drawSeq = 0;
+  let __drawAbort = null;
 
-function drawMap(){
-  syncThickness();
+  function drawMap(){
+    syncThickness();
 
-  const mapW = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) || 780);
-  const mapH = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) || 780);
+    const mapW = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) || 780);
+    const mapH = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) || 780);
 
-  const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
-  $canvas.width = mapW * dpr;
-  $canvas.height = mapH * dpr;
-  $canvas.style.width = mapW + "px";
-  $canvas.style.height = mapH + "px";
+    const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    $canvas.width = mapW * dpr;
+    $canvas.height = mapH * dpr;
+    $canvas.style.width = mapW + "px";
+    $canvas.style.height = mapH + "px";
 
-  const ctx = $canvas.getContext("2d");
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, mapW, mapH);
+    const ctx = $canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, mapW, mapH);
 
-  const st = getStyleDef();
+    const st = getStyleDef();
 
-  // Cancelar request anterior (si existe)
-  if (__drawAbort) __drawAbort.abort();
-  __drawAbort = new AbortController();
-  const mySeq = ++__drawSeq;
+    // Cancelar request anterior (si existe)
+    if (__drawAbort) __drawAbort.abort();
+    __drawAbort = new AbortController();
+    const mySeq = ++__drawSeq;
 
-  const payload = {
-    w: mapW,
-    h: mapH,
-    styleId: state.map.styleId,
-    shape: st.shape,
-    showGrid: !!state.map.showGrid && isGridAllowedForCurrentStyle(),
-    showConstellations: !!state.map.showConstellations,
-    colorTheme: state.map.colorTheme,
-    mapZoom: Number(state.map.mapZoom || 1),
-    seed: Number(state.map.seed || 0),
+    const payload = {
+      w: mapW,
+      h: mapH,
+      styleId: state.map.styleId,
+      shape: st.shape,
+      showGrid: !!state.map.showGrid && isGridAllowedForCurrentStyle(),
+      showConstellations: !!state.map.showConstellations,
+      colorTheme: state.map.colorTheme,
+      mapZoom: Number(state.map.mapZoom || 1),
+      seed: Number(state.map.seed || 0),
 
-    // Mismo comportamiento visual que antes
-    mapCircleInsetPct: Number(state.map.mapCircleInsetPct || 0.10),
-    mapCircleMarginEnabled: !!state.map.mapCircleMarginEnabled,
-    outlineThickness: 4,
+      // Mismo comportamiento visual que antes
+      mapCircleInsetPct: Number(state.map.mapCircleInsetPct || 0.10),
+      mapCircleMarginEnabled: !!state.map.mapCircleMarginEnabled,
+      outlineThickness: 4,
 
-    posterFrameEnabled: (!isPoster()) && !!state.map.posterFrameEnabled,
-    posterMarginEnabled: (!isPoster()) && !!state.map.posterMarginEnabled,
-  };
+      posterFrameEnabled: (!isPoster()) && !!state.map.posterFrameEnabled,
+      posterMarginEnabled: (!isPoster()) && !!state.map.posterMarginEnabled,
+    };
 
-  const url = (API_BASE ? API_BASE : "") + "/api/maps/render-svg";
+    // ✅✅✅ FIX CLAVE: manda los tokens al backend para que el poster y el mapa coincidan en color
+    payload.renderTokens = computeRenderTokens();
 
-  fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    signal: __drawAbort.signal
-  })
-    .then(async (r) => {
-      if (!r.ok) throw new Error(await r.text());
-      return r.text();
+    const url = (API_BASE ? API_BASE : "") + "/api/maps/render-svg";
+
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: __drawAbort.signal
     })
-    .then((svgText) => {
-      if (mySeq !== __drawSeq) return; // respuesta vieja
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text());
+        return r.text();
+      })
+      .then((svgText) => {
+        if (mySeq !== __drawSeq) return; // respuesta vieja
 
-      const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
-      const blobUrl = URL.createObjectURL(blob);
+        const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+        const blobUrl = URL.createObjectURL(blob);
 
-      const img = new Image();
-      img.onload = () => {
-        if (mySeq !== __drawSeq) { URL.revokeObjectURL(blobUrl); return; }
-        ctx.clearRect(0,0,mapW,mapH);
-        ctx.drawImage(img, 0, 0, mapW, mapH);
-        URL.revokeObjectURL(blobUrl);
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(blobUrl);
-        console.error("No pude cargar SVG del backend");
-      };
-      img.src = blobUrl;
-    })
-    .catch((e) => {
-      if (e?.name === "AbortError") return;
-      console.error("Render backend error:", e);
-      // Fallback visual simple
-      ctx.fillStyle = "#0A0B0D";
-      ctx.fillRect(0,0,mapW,mapH);
-      ctx.fillStyle = "rgba(255,255,255,.65)";
-      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-      ctx.fillText("Error al generar mapa (backend)", 16, 28);
-    });
-}
+        const img = new Image();
+        img.onload = () => {
+          if (mySeq !== __drawSeq) { URL.revokeObjectURL(blobUrl); return; }
+          ctx.clearRect(0,0,mapW,mapH);
+          ctx.drawImage(img, 0, 0, mapW, mapH);
+          URL.revokeObjectURL(blobUrl);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(blobUrl);
+          console.error("No pude cargar SVG del backend");
+        };
+        img.src = blobUrl;
+      })
+      .catch((e) => {
+        if (e?.name === "AbortError") return;
+        console.error("Render backend error:", e);
+        // Fallback visual simple
+        ctx.fillStyle = "#0A0B0D";
+        ctx.fillRect(0,0,mapW,mapH);
+        ctx.fillStyle = "rgba(255,255,255,.65)";
+        ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.fillText("Error al generar mapa (backend)", 16, 28);
+      });
+  }
 
-function renderPosterFont(
-){
+  function renderPosterFont(
+  ){
     $poster.style.fontFamily = state.text.fontFamily || "system-ui, -apple-system, Segoe UI, Roboto, Arial";
   }
 

@@ -1,9 +1,9 @@
 // backend/src/renderMapSvg.js
-// FIXES:
-// - Contorno sólido (sin opacidad) y grosor configurable (default 4) + stroke-linecap round
-// - Constelaciones con forma (Orion y Ursa Major) usando catálogo real (no líneas random)
-// - clipPath con ID único por render (evita “cuadrados”/recortes raros)
-// - Permite que el FRONT mande renderTokens para que el fondo del poster y el mapa coincidan
+// Generador de mapa en SVG (server-side) sin exponer la lógica en frontend.
+// - Fondo TRANSPARENTE fuera de la forma (para que no salga "cuadrado" cuando el poster es blanco)
+// - Constellations tipo "figura" con nodos
+// - Grid tipo globo (lat/lon con frente/atrás) parecido al original
+// - Contorno sin opacidad y grosor configurable (default 4)
 
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
@@ -17,321 +17,392 @@ function mulberry32(seed) {
   };
 }
 
-function hash32(str) {
-  str = String(str ?? "");
-  let h = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-}
-
-function svgEscape(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-/**
- * Catálogo mínimo (mismo set del front original, índices 0..33)
- * name, raDeg, decDeg, mag
- */
-const STARS = [
-  ["Sirius", 101.2875, -16.7161, -1.46],
-  ["Canopus", 95.9879, -52.6957, -0.74],
-  ["Arcturus", 213.9154, 19.1825, -0.05],
-  ["Vega", 279.2347, 38.7837, 0.03],
-  ["Capella", 79.1723, 45.9979, 0.08],
-  ["Rigel", 78.6345, -8.2016, 0.12],
-  ["Procyon", 114.8255, 5.2250, 0.38],
-  ["Betelgeuse", 88.7929, 7.4071, 0.50],
-  ["Achernar", 24.4286, -57.2368, 0.46],
-  ["Hadar", 210.9558, -60.3730, 0.61],
-  ["Altair", 297.6958, 8.8683, 0.76],
-  ["Acrux", 186.6496, -63.0991, 0.77],
-  ["Aldebaran", 68.9800, 16.5093, 0.85],
-  ["Spica", 201.2983, -11.1614, 0.98],
-  ["Antares", 247.3519, -26.4320, 1.06],
-  ["Pollux", 116.3297, 28.0262, 1.14],
-  ["Fomalhaut", 344.4128, -29.6222, 1.16],
-  ["Deneb", 310.3579, 45.2803, 1.25],
-  ["Mimosa", 191.9303, -59.6888, 1.25],
-  ["Regulus", 152.0929, 11.9672, 1.35],
-  ["Castor", 113.6494, 31.8883, 1.58],
-  ["Bellatrix", 81.2828, 6.3497, 1.64],
-  ["Elnath", 81.5729, 28.6074, 1.65],
-  ["Miaplacidus", 138.3000, -69.7172, 1.67],
-  ["Alnilam", 84.0534, -1.2019, 1.69],
-  ["Alnair", 332.0583, -46.9611, 1.74],
-  ["Alioth", 193.5073, 55.9598, 1.76],
-  ["Dubhe", 165.9320, 61.7510, 1.79],
-  ["Mirfak", 51.0807, 49.8612, 1.79],
-  ["Wezen", 104.6564, -26.3932, 1.83],
-  ["Sadr", 305.5571, 40.2567, 2.23],
-  ["Alpheratz", 2.0969, 29.0904, 2.06],
-  ["Almach", 30.9748, 42.3297, 2.10],
-  ["Mizar", 200.9814, 54.9254, 2.23],
-  ["Polaris", 37.9546, 89.2641, 1.98],
-];
-
-/**
- * Constellations (mismo estilo del front original)
- */
-const CONSTELLATIONS = {
-  Orion: [
-    [7, 20], [20, 24], [24, 5],
-    [7, 24],
-  ],
-  "Ursa Major": [
-    [27, 33], [33, 26],
-  ],
-};
-
-// Proyección simple (ortográfica) para que caigan dentro del círculo
-function projectRaDec(raDeg, decDeg) {
-  const lon = (raDeg * Math.PI) / 180;
-  const lat = (decDeg * Math.PI) / 180;
-
-  // ortographic-ish on unit disc
-  const x = Math.cos(lat) * Math.sin(lon);
-  const y = Math.sin(lat);
-
-  return { x, y };
-}
-
-function gridElements({ cx, cy, r, stroke }) {
-  const els = [];
-  // Círculos concéntricos
-  for (let i = 1; i <= 4; i++) {
-    const rr = (r * i) / 4;
-    els.push(`<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${stroke}" stroke-width="1" opacity="0.65"/>`);
-  }
-  // Meridianos (radiales)
-  for (let a = 0; a < 360; a += 30) {
-    const rad = (a * Math.PI) / 180;
-    const x2 = cx + Math.cos(rad) * r;
-    const y2 = cy + Math.sin(rad) * r;
-    els.push(`<line x1="${cx}" y1="${cy}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${stroke}" stroke-width="1" opacity="0.45"/>`);
-  }
-  return els.join("\n");
-}
-
-// Clip paths
-function circleClipD(cx, cy, r) {
-  return `M ${cx} ${cy} m -${r}, 0 a ${r},${r} 0 1,0 ${2 * r},0 a ${r},${r} 0 1,0 -${2 * r},0`;
-}
-function heartPath(cx, cy, size) {
-  const s = size / 16;
-  const x0 = cx, y0 = cy + size * 0.10;
-  return `
-    M ${x0} ${y0}
-    C ${x0 - 10 * s} ${y0 - 10 * s}, ${x0 - 22 * s} ${y0 + 4 * s}, ${x0} ${y0 + 20 * s}
-    C ${x0 + 22 * s} ${y0 + 4 * s}, ${x0 + 10 * s} ${y0 - 10 * s}, ${x0} ${y0}
-    Z
-  `.trim().replace(/\s+/g, " ");
-}
-function rectClipD(w, h, inset) {
-  const x = inset, y = inset;
-  const ww = w - inset * 2;
-  const hh = h - inset * 2;
-  const rx = Math.round(Math.min(w, h) * 0.03);
-  return `M ${x + rx} ${y}
-          H ${x + ww - rx}
-          Q ${x + ww} ${y} ${x + ww} ${y + rx}
-          V ${y + hh - rx}
-          Q ${x + ww} ${y + hh} ${x + ww - rx} ${y + hh}
-          H ${x + rx}
-          Q ${x} ${y + hh} ${x} ${y + hh - rx}
-          V ${y + rx}
-          Q ${x} ${y} ${x + rx} ${y}
-          Z`.replace(/\s+/g, " ");
+function isNeonThemeId(id) {
+  return String(id || "").startsWith("neon");
 }
 
 function colorsFor(theme) {
-  // fallback si no llega renderTokens
   const THEMES = {
-    mono: { bg: "#0A0B0D", star: "#FFFFFF", faint: "rgba(255,255,255,.18)", faint2: "rgba(255,255,255,.10)" },
-    marino: { bg: "#0B0D12", star: "#FFFFFF", faint: "rgba(255,255,255,.18)", faint2: "rgba(255,255,255,.10)" },
-    ice: { bg: "#071016", star: "#E9F6FF", faint: "rgba(233,246,255,.18)", faint2: "rgba(233,246,255,.10)" },
-    warm: { bg: "#140E0A", star: "#F6E7C9", faint: "rgba(246,231,201,.18)", faint2: "rgba(246,231,201,.10)" },
-    neonblue: { bg: "#000000", star: "#00E5FF", faint: "rgba(0,229,255,.25)", faint2: "rgba(0,229,255,.14)" },
-    neonpink: { bg: "#000000", star: "#FF2BD6", faint: "rgba(255,43,214,.25)", faint2: "rgba(255,43,214,.14)" },
-    neongreen: { bg: "#000000", star: "#32FF6A", faint: "rgba(50,255,106,.25)", faint2: "rgba(50,255,106,.14)" },
+    mono:      { bg: "#0A0B0D", star: "#FFFFFF" },
+    marino:    { bg: "#0B0D12", star: "#FFFFFF" },
+    ice:       { bg: "#071016", star: "#E9F6FF" },
+    warm:      { bg: "#140E0A", star: "#F6E7C9" },
+    forest:    { bg: "#06130E", star: "#EAF7F1" },
+    rose:      { bg: "#16080C", star: "#FFE9EF" },
+    neonBlue:  { bg: "#05050A", star: "#4EA7FF" },
+    neonGreen: { bg: "#05050A", star: "#3CFF9B" },
+    neonRose:  { bg: "#05050A", star: "#FF4FD8" },
   };
-  return THEMES[String(theme || "mono")] || THEMES.mono;
+  return THEMES[String(theme || "")] || THEMES.mono;
 }
 
-function renderMapSvg(opts) {
+// Tokens equivalentes a computeRenderTokens() del frontend
+function computeTokens({ colorTheme, backgroundMode }) {
+  const th = colorsFor(colorTheme);
+  const neon = isNeonThemeId(colorTheme);
+
+  if (neon) {
+    return {
+      // Importante: el SVG fuera del clip será TRANSPARENTE siempre.
+      mapBg: "#000000",
+      stars: th.star,
+      gridLine: th.star,
+      constLine: th.star,
+      constNode: th.star,
+      outline: th.star,
+      neon: true,
+    };
+  }
+
+  if (String(backgroundMode || "match") === "white") {
+    return {
+      // mapa oscuro dentro del clip, poster es blanco (lo maneja el DOM/canvas)
+      mapBg: th.bg,
+      stars: th.star,
+      gridLine: "#FFFFFF",
+      constLine: "#FFFFFF",
+      constNode: "#FFFFFF",
+      outline: "#FFFFFF",
+      neon: false,
+    };
+  }
+
+  // match
+  return {
+    mapBg: th.bg,
+    stars: "#FFFFFF",
+    gridLine: "#FFFFFF",
+    constLine: "#FFFFFF",
+    constNode: "#FFFFFF",
+    outline: "#FFFFFF",
+    neon: false,
+  };
+}
+
+function circlePathD(cx, cy, r) {
+  return `M ${cx} ${cy} m -${r}, 0 a ${r},${r} 0 1,0 ${2 * r},0 a ${r},${r} 0 1,0 -${2 * r},0`;
+}
+
+// Corazón similar al canvas (lo suficientemente cercano visualmente)
+function heartPathD(cx, cy, size) {
+  const s = size;
+  const x = cx, y = cy;
+  const top = y - s * 0.15;
+  const left = x - s * 0.5;
+  const right = x + s * 0.5;
+  const bottom = y + s * 0.55;
+
+  return [
+    `M ${x} ${bottom}`,
+    `C ${x - s * 0.55} ${y + s * 0.25}, ${left} ${y - s * 0.05}, ${x - s * 0.25} ${top}`,
+    `C ${x - s * 0.05} ${y - s * 0.28}, ${x - s * 0.02} ${y - s * 0.28}, ${x} ${top}`,
+    `C ${x + s * 0.02} ${y - s * 0.28}, ${x + s * 0.05} ${y - s * 0.28}, ${x + s * 0.25} ${top}`,
+    `C ${right} ${y - s * 0.05}, ${x + s * 0.55} ${y + s * 0.25}, ${x} ${bottom}`,
+    "Z"
+  ].join(" ");
+}
+
+// --------------------- GRID tipo globo (lat/lon) ---------------------
+function globeGridSvg({ cx, cy, R, stroke }) {
+  const tiltX = 24 * Math.PI / 180;
+  const sinX = Math.sin(tiltX), cosX = Math.cos(tiltX);
+
+  const alphaFront = 0.70;
+  const alphaBack = 0.18;
+
+  const lwFront = 1.35;
+  const lwBack = 1.0;
+
+  function project(lat, lon) {
+    let x = Math.cos(lat) * Math.cos(lon);
+    let y = Math.sin(lat);
+    let z = Math.cos(lat) * Math.sin(lon);
+
+    const y2 = y * cosX - z * sinX;
+    const z2 = y * sinX + z * cosX;
+    y = y2; z = z2;
+
+    return { sx: cx + x * R, sy: cy - y * R, z };
+  }
+
+  function shouldSkipLine(points) {
+    if (!points || points.length < 6) return false;
+
+    let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+    for (const p of points) {
+      if (p.sx < xMin) xMin = p.sx;
+      if (p.sx > xMax) xMax = p.sx;
+      if (p.sy < yMin) yMin = p.sy;
+      if (p.sy > yMax) yMax = p.sy;
+    }
+    const xRange = xMax - xMin;
+    const yRange = yMax - yMin;
+
+    const a = points[0];
+    const b = points[points.length - 1];
+    const dx = b.sx - a.sx;
+    const dy = b.sy - a.sy;
+
+    // Protege verticales fuertes
+    if (Math.abs(dx) < 1.0 && Math.abs(dy) > 22) return false;
+
+    // Mata segmentos casi perfectamente horizontales
+    if (yRange < 1.6 && xRange > 18) return true;
+
+    // Extra: muy horizontal y muy recta
+    if (Math.abs(dy) < 1.0 && Math.abs(dx) > 30) {
+      const denom = Math.hypot(dx, dy) || 1;
+      let maxDev = 0;
+      for (let i = 1; i < points.length - 1; i++) {
+        const p = points[i];
+        const dev = Math.abs(dy * p.sx - dx * p.sy + b.sx * a.sy - b.sy * a.sx) / denom;
+        if (dev > maxDev) maxDev = dev;
+      }
+      if (maxDev < 1.2) return true;
+    }
+
+    return false;
+  }
+
+  function polyline(points, alpha, lw) {
+    if (!points || points.length < 2) return "";
+    if (shouldSkipLine(points)) return "";
+    const pts = points.map(p => `${p.sx.toFixed(2)},${p.sy.toFixed(2)}`).join(" ");
+    return `<polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="${lw}" opacity="${alpha}" stroke-linecap="round" stroke-linejoin="round" />`;
+  }
+
+  const els = [];
+
+  // Paralelos
+  const latsDeg = [-60, -40, -20, 0, 20, 40, 60];
+  const lonSteps = 240;
+
+  for (const latDeg of latsDeg) {
+    const lat = latDeg * Math.PI / 180;
+    const frontPts = [];
+    const backPts = [];
+
+    for (let i = 0; i <= lonSteps; i++) {
+      const lon = (i / lonSteps) * Math.PI * 2;
+      const p = project(lat, lon);
+      if (p.z >= 0) frontPts.push(p);
+      else backPts.push(p);
+    }
+
+    els.push(polyline(backPts, alphaBack, lwBack));
+    els.push(polyline(frontPts, alphaFront, lwFront));
+  }
+
+  // Meridianos
+  const baseLonsDeg = [];
+  for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
+  baseLonsDeg.push(-90, 90);
+
+  const lonsDeg = [];
+  for (const b of baseLonsDeg) {
+    lonsDeg.push(b);
+    lonsDeg.push(b + 180);
+  }
+
+  const latSteps = 260;
+
+  for (const lonDeg of lonsDeg) {
+    const lon = ((lonDeg * Math.PI / 180) % (Math.PI * 2));
+    const frontPts = [];
+    const backPts = [];
+
+    for (let i = 0; i <= latSteps; i++) {
+      const lat = (-90 + (i / latSteps) * 180) * Math.PI / 180;
+      const p = project(lat, lon);
+      if (p.z >= 0) frontPts.push(p);
+      else backPts.push(p);
+    }
+
+    els.push(polyline(backPts, alphaBack, lwBack));
+    els.push(polyline(frontPts, alphaFront, lwFront));
+  }
+
+  // Borde del globo
+  els.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${stroke}" stroke-width="1.1" opacity="0.14"/>`);
+
+  return els.filter(Boolean).join("\n");
+}
+
+// --------------------- CONSTELLATIONS (figuras con nodos) ---------------------
+function constellationsSvg({ w, h, rand, lineColor, nodeColor, size }) {
+  const count = 6;
+
+  // parecido a frontend
+  const lineW = 1.25 * size;
+  const nodeR = 1.8 * size;
+
+  const safeMinX = 36, safeMaxX = w - 36;
+  const safeMinY = 36, safeMaxY = h - 36;
+
+  const els = [];
+
+  for (let c = 0; c < count; c++) {
+    const cx = safeMinX + rand() * (safeMaxX - safeMinX);
+    const cy = safeMinY + rand() * (safeMaxY - safeMinY);
+
+    const points = 4 + Math.floor(rand() * 4); // 4..7
+    const pts = [];
+    const rx = 40 + rand() * 110;
+    const ry = 40 + rand() * 110;
+
+    for (let i = 0; i < points; i++) {
+      const a = rand() * Math.PI * 2;
+      const r1 = 0.35 + rand() * 0.75;
+      const x = clamp(cx + Math.cos(a) * rx * r1, safeMinX, safeMaxX);
+      const y = clamp(cy + Math.sin(a) * ry * r1, safeMinY, safeMaxY);
+      pts.push({ x, y });
+    }
+
+    // ordenar por ángulo alrededor del centro (para formar figura)
+    const mx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+    const my = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+    pts.sort((p1, p2) => Math.atan2(p1.y - my, p1.x - mx) - Math.atan2(p2.y - my, p2.x - mx));
+
+    // líneas
+    const polyPts = pts.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+    els.push(
+      `<polyline points="${polyPts}" fill="none" stroke="${lineColor}" stroke-width="${lineW.toFixed(2)}" opacity="0.60" stroke-linecap="round" stroke-linejoin="round" />`
+    );
+
+    // nodos
+    for (const p of pts) {
+      els.push(
+        `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${nodeR.toFixed(2)}" fill="${nodeColor}" opacity="0.90" />`
+      );
+    }
+  }
+
+  return els.join("\n");
+}
+
+// --------------------- STARS ---------------------
+function starsSvg({ w, h, rand, color }) {
+  const N = Math.round(680 + rand() * 80);
+  const els = [];
+
+  for (let i = 0; i < N; i++) {
+    const x = rand() * w;
+    const y = rand() * h;
+
+    const big = rand() > 0.92;
+    const r = big ? (1.5 + rand() * 1.8) : (rand() * 1.2);
+    const a = big ? (0.75 + rand() * 0.25) : (0.35 + rand() * 0.55);
+
+    els.push(`<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${r.toFixed(2)}" fill="${color}" opacity="${a.toFixed(3)}" />`);
+  }
+
+  return els.join("\n");
+}
+
+export function renderMapSvg(opts) {
   const w = clamp(Number(opts.w || 780), 200, 2000);
   const h = clamp(Number(opts.h || 780), 200, 2000);
 
-  const shape = String(opts.shape || "circle"); // circle | rect | heart
-  const seed = hash32(opts.seed || "seed");
-  const rand = mulberry32(seed);
+  const shape = String(opts.shape || "circle");
+  const seed = (Number(opts.seed || 0) >>> 0);
 
-  // tokens desde el FRONT (para que el poster y el mapa coincidan)
-  const rt = opts.renderTokens || null;
-  const fallbackTheme = colorsFor(opts.colorTheme);
+  const z = clamp(Number(opts.mapZoom || 1), 1.0, 1.6);
 
-  const posterBg = (rt && rt.posterBg) ? rt.posterBg : fallbackTheme.bg;
-  const mapBg = (rt && rt.mapBg) ? rt.mapBg : fallbackTheme.bg;
+  const colorTheme = String(opts.colorTheme || "mono");
+  const backgroundMode = String(opts.backgroundMode || "match"); // << IMPORTANTE
 
-  const starsColor = (rt && rt.stars) ? rt.stars : fallbackTheme.star;
-  const gridLine = (rt && rt.gridLine) ? rt.gridLine : fallbackTheme.faint2;
-  const constLine = (rt && rt.constLine) ? rt.constLine : fallbackTheme.faint;
-  const constNode = (rt && rt.constNode) ? rt.constNode : fallbackTheme.star;
+  const tokens = computeTokens({ colorTheme, backgroundMode });
 
-  // ✅ contorno sólido (sin opacidad)
-  const outline = (rt && rt.outline) ? rt.outline : fallbackTheme.star;
-  const outlineW = clamp(Number(opts.outlineThickness || 4), 0, 20);
+  const showGrid = !!opts.showGrid;
+  const showConst = !!opts.showConstellations;
+
+  const constellationSize = clamp(Number(opts.constellationSize || 2.0), 1.0, 4.0);
+
+  // Si hay marco/margen del poster, el frontend hacía inset; aquí lo conservamos por compat
+  const frameOn = !!opts.posterFrameEnabled;
+  const marginOn = !!opts.posterMarginEnabled && !frameOn;
+  const shouldInset = frameOn || marginOn;
+  const insetPct = clamp(Number(opts.mapCircleInsetPct || 0.10), 0.02, 0.25);
+  const insetPad = shouldInset ? Math.round(Math.min(w, h) * insetPct) : 0;
+
+  // Contorno
   const outlineEnabled = !!opts.mapCircleMarginEnabled;
+  const outlineW = clamp(Number(opts.outlineThickness ?? 4), 0, 24);
 
-  // zoom
-  const z = clamp(Number(opts.mapZoom || 1), 0.7, 1.6);
-
-  // geometría base
+  // Geometría
   const cx = w / 2;
+
   const cyCircle = h / 2;
-
-  // inset para círculo (para “margin” interior)
-  const insetPad = (shape === "circle")
-    ? Math.round(Math.min(w, h) * clamp(Number(opts.mapCircleInsetPct || 0.10), 0.02, 0.25))
-    : 0;
-
   const rOuter = Math.min(w, h) / 2;
-  const rContent = rOuter - insetPad;
+  const rContent = Math.max(0, rOuter - insetPad);
 
   const cyHeart = (h / 2) - Math.round(h * 0.06);
   const baseSize = Math.min(w, h) * (0.5227 * 0.95);
   const heartSize = clamp(baseSize - insetPad * 0.95, baseSize * 0.70, baseSize);
 
-  // ✅ clipPath único
-  const clipId = `clipShape_${seed}`;
-
+  // Clip path (forma real)
   let clipD = "";
   let outlineEl = "";
 
   if (shape === "circle") {
-    clipD = circleClipD(cx, cyCircle, rContent);
+    clipD = circlePathD(cx, cyCircle, rContent);
 
     if (outlineEnabled && outlineW > 0) {
-      // contorno a radio exacto (sin quitar grosor)
-      outlineEl = `<path d="${circleClipD(cx, cyCircle, rContent)}" fill="none" stroke="${outline}" stroke-width="${outlineW}" stroke-linecap="round" opacity="1"/>`;
+      // contorno de grosor real, sin opacidad
+      outlineEl = `<path d="${circlePathD(cx, cyCircle, Math.max(0, rContent - outlineW / 2))}" fill="none" stroke="${tokens.outline}" stroke-width="${outlineW}" opacity="1" />`;
     }
   } else if (shape === "heart") {
-    clipD = heartPath(cx, cyHeart, heartSize);
+    clipD = heartPathD(cx, cyHeart, heartSize);
 
     if (outlineEnabled && outlineW > 0) {
-      outlineEl = `<path d="${clipD}" fill="none" stroke="${outline}" stroke-width="${outlineW}" stroke-linecap="round" opacity="1"/>`;
+      outlineEl = `<path d="${clipD}" fill="none" stroke="${tokens.outline}" stroke-width="${outlineW}" opacity="1" />`;
     }
   } else {
     // rect
-    clipD = rectClipD(w, h, insetPad);
-
+    clipD = `M 0 0 H ${w} V ${h} H 0 Z`;
     if (outlineEnabled && outlineW > 0) {
       const half = outlineW / 2;
-      outlineEl = `<rect x="${half}" y="${half}" width="${w - outlineW}" height="${h - outlineW}" rx="${Math.round(Math.min(w, h) * 0.03)}" ry="${Math.round(Math.min(w, h) * 0.03)}" fill="none" stroke="${outline}" stroke-width="${outlineW}" stroke-linecap="round" opacity="1"/>`;
+      outlineEl = `<rect x="${half}" y="${half}" width="${w - outlineW}" height="${h - outlineW}" fill="none" stroke="${tokens.outline}" stroke-width="${outlineW}" opacity="1" />`;
     }
   }
 
-  const showGrid = !!opts.showGrid;
-  const showConst = !!opts.showConstellations;
+  const rand = mulberry32(seed);
 
-  // Transform (zoom)
-  const tx = cx, ty = (shape === "heart") ? cyHeart : cyCircle;
-  const transform = (z !== 1) ? `translate(${tx} ${ty}) scale(${z}) translate(${-tx} ${-ty})` : "";
+  // Zoom: SOLO sobre capas internas (grid/stars/const) alrededor del centro visual
+  const ty = (shape === "heart") ? cyHeart : cyCircle;
+  const transform = (z !== 1) ? `translate(${cx} ${ty}) scale(${z}) translate(${-cx} ${-ty})` : "";
 
-  // Grid
-  const mapR = (shape === "circle") ? rContent : Math.min(w, h) * 0.48;
-  const grid = showGrid ? gridElements({ cx: tx, cy: ty, r: mapR, stroke: gridLine }) : "";
+  // Capas
+  const gridR = (shape === "circle")
+    ? Math.max(0, rContent)
+    : Math.min(w, h) * 0.48;
 
-  // Stars:
-  // - base estrellas “reales” (34) proyectadas
-  // - + estrellas random para densidad (igual que antes)
-  const stars = [];
-
-  for (let i = 0; i < STARS.length; i++) {
-    const [, ra, dec, mag] = STARS[i];
-    const p = projectRaDec(ra, dec);
-
-    // escala para que no pegue en el borde
-    const scale = mapR * 0.92;
-    const x = tx + p.x * scale;
-    const y = ty - p.y * scale;
-
-    // radio según magnitud (brillantes más grandes)
-    const r = clamp(2.8 - (Number(mag) * 0.55), 0.9, 2.8);
-    const a = clamp(0.85 - (Number(mag) * 0.08), 0.35, 0.92);
-
-    stars.push({ x, y, r, a, catalogIndex: i });
-  }
-
-  // estrellas random extra
-  const Nextra = Math.round(520 + (Math.min(w, h) / 780) * 380);
-  for (let i = 0; i < Nextra; i++) {
-    const x = rand() * w;
-    const y = rand() * h;
-    const r = Math.max(0.55, Math.pow(rand(), 3) * 2.35);
-    const a = clamp(0.18 + rand() * 0.65, 0.12, 0.85);
-    stars.push({ x, y, r, a, catalogIndex: null });
-  }
-
-  // Constellation lines (✅ sin “rayas random”)
-  const lines = [];
-  if (showConst) {
-    for (const key of Object.keys(CONSTELLATIONS)) {
-      for (const [ia, ib] of CONSTELLATIONS[key]) {
-        const A = stars.find(s => s.catalogIndex === ia);
-        const B = stars.find(s => s.catalogIndex === ib);
-        if (!A || !B) continue;
-        lines.push({ x1: A.x, y1: A.y, x2: B.x, y2: B.y });
-      }
-    }
-  }
-
-  const lineEls = lines.map(l =>
-    `<line x1="${l.x1.toFixed(2)}" y1="${l.y1.toFixed(2)}" x2="${l.x2.toFixed(2)}" y2="${l.y2.toFixed(2)}" stroke="${constLine}" stroke-width="1.5" stroke-linecap="round" opacity="1"/>`
-  ).join("\n");
-
-  // Nodos en extremos (se ven “como constelación”, no solo líneas)
-  const nodeIdx = new Set();
-  for (const l of lines) {
-    // no tenemos id, así que pintamos nodos sobre las estrellas del catálogo
-  }
-  // Simple: nodos para todas las estrellas “de catálogo” cuando hay constelaciones
-  const nodeEls = showConst
-    ? stars
-        .filter(s => s.catalogIndex !== null)
-        .map(s => `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="2.1" fill="${constNode}" opacity="0.9"/>`)
-        .join("\n")
+  const gridEls = (showGrid)
+    ? globeGridSvg({ cx, cy: ty, R: gridR, stroke: tokens.gridLine })
     : "";
 
-  const starEls = stars.map(s =>
-    `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${s.r.toFixed(2)}" fill="${starsColor}" opacity="${s.a.toFixed(3)}"/>`
-  ).join("\n");
+  const constEls = (showConst)
+    ? constellationsSvg({ w, h, rand, lineColor: tokens.constLine, nodeColor: tokens.constNode, size: constellationSize })
+    : "";
 
+  const starEls = starsSvg({ w, h, rand, color: tokens.stars });
+
+  // IMPORTANTE:
+  // - NO ponemos rect de fondo a todo el SVG (eso causaba el cuadrado en fondo blanco).
+  // - Solo pintamos el rect DENTRO del clip.
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
   <defs>
-    <clipPath id="${clipId}">
+    <clipPath id="clipShape">
       <path d="${clipD}"/>
     </clipPath>
   </defs>
 
-  <!-- Poster background -->
-  <rect x="0" y="0" width="${w}" height="${h}" fill="${posterBg}"/>
-
-  <!-- Map clipped area -->
-  <g clip-path="url(#${clipId})">
-    <rect x="0" y="0" width="${w}" height="${h}" fill="${mapBg}"/>
+  <g clip-path="url(#clipShape)">
+    <rect x="0" y="0" width="${w}" height="${h}" fill="${tokens.mapBg}"/>
     <g ${transform ? `transform="${transform}"` : ""}>
-      ${grid}
-      ${lineEls}
-      ${nodeEls}
+      ${gridEls}
+      ${constEls}
       ${starEls}
     </g>
   </g>
@@ -341,5 +412,3 @@ function renderMapSvg(opts) {
 
   return svg;
 }
-
-module.exports = { renderMapSvg };

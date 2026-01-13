@@ -793,25 +793,31 @@
     __drawAbort = new AbortController();
     const mySeq = ++__drawSeq;
 
-    const payload = {
-      w: mapW,
-      h: mapH,
-      styleId: state.map.styleId,
-      shape: st.shape,
-      showGrid: !!state.map.showGrid && isGridAllowedForCurrentStyle(),
-      showConstellations: !!state.map.showConstellations,
-      colorTheme: state.map.colorTheme,
-      mapZoom: Number(state.map.mapZoom || 1),
-      seed: Number(state.map.seed || 0),
+      const payload = {
+    w: mapW,
+    h: mapH,
+    styleId: state.map.styleId,
+    shape: st.shape,
 
-      // Mismo comportamiento visual que antes
-      mapCircleInsetPct: Number(state.map.mapCircleInsetPct || 0.10),
-      mapCircleMarginEnabled: !!state.map.mapCircleMarginEnabled,
-      outlineThickness: 4,
+    showGrid: !!state.map.showGrid && isGridAllowedForCurrentStyle(),
+    showConstellations: !!state.map.showConstellations,
 
-      posterFrameEnabled: (!isPoster()) && !!state.map.posterFrameEnabled,
-      posterMarginEnabled: (!isPoster()) && !!state.map.posterMarginEnabled,
-    };
+    colorTheme: state.map.colorTheme,
+    backgroundMode: state.map.backgroundMode,        // ✅ NUEVO
+    constellationSize: Number(state.map.constellationSize || 2.0), // ✅ NUEVO
+
+    mapZoom: Number(state.map.mapZoom || 1),
+    seed: Number(state.map.seed || 0),
+
+    mapCircleInsetPct: Number(state.map.mapCircleInsetPct || 0.10),
+    mapCircleMarginEnabled: !!state.map.mapCircleMarginEnabled,
+
+    outlineThickness: 4, // ✅ fuerza grosor 4
+
+    posterFrameEnabled: (!isPoster()) && !!state.map.posterFrameEnabled,
+    posterMarginEnabled: (!isPoster()) && !!state.map.posterMarginEnabled,
+  };
+
 
     // ✅✅✅ FIX CLAVE: manda los tokens al backend para que el poster y el mapa coincidan en color
     payload.renderTokens = computeRenderTokens();

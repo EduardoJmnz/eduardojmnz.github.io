@@ -35,6 +35,9 @@
       styleId: "classic",
 
       showGrid: false,
+      // ✅ slider de opacidad para retícula (default “actual” 60%)
+      gridOpacity: 0.60,
+
       showConstellations: true,
 
       colorTheme: "mono",
@@ -63,12 +66,6 @@
         poster:    { frame: false, margin: false, outline: false },
         romantico: { frame: false, margin: false, outline: true  },
       }
-    },
-
-    // ✅ watermark solo en preview (NO export)
-    preview: {
-      watermarkEnabled: true,
-      watermarkOpacity: 0.60, // ✅ default y máximo = 60%
     },
 
     export: {
@@ -293,7 +290,7 @@
   }
 
   // --------------------------
-  // ✅ Watermark (preview only)
+  // ✅ Watermark (preview only, SIEMPRE ON)
   // --------------------------
   let $watermark = null;
 
@@ -325,10 +322,10 @@
 
   function makeWatermarkDataUri({
     text = "skyartcreator",
-    fontSize = 18,     // ✅ más pequeño
-    opacity = 0.12,
+    fontSize = 18,
+    opacity = 0.05,   // ✅ fijo 5%
     angle = -45,
-    gap = 120,         // ✅ más repetido
+    gap = 120,
     color = "#FFFFFF"
   } = {}){
     const safeText = String(text)
@@ -366,22 +363,14 @@
     ensurePreviewWatermarkLayer();
     if (!$watermark) return;
 
-    if (!state.preview?.watermarkEnabled){
-      $watermark.style.backgroundImage = "none";
-      return;
-    }
-
     const isNeon = isNeonThemeId(state.map.colorTheme);
     const isWhiteBg = (!isNeon && state.map.backgroundMode === "white");
     const color = isWhiteBg ? (tokens.posterInk || "#111111") : "#FFFFFF";
 
-    // ✅ el valor predeterminado y máximo es el actual (60%)
-    const opacity = clamp(Number(state.preview?.watermarkOpacity ?? 0.60), 0, 0.60);
-
     const uri = makeWatermarkDataUri({
       text: "skyartcreator",
       fontSize: 18,
-      opacity,
+      opacity: 0.05,  // ✅ fijo 5%
       angle: -45,
       gap: 120,
       color
@@ -513,7 +502,6 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
-    // ✅ Poster: fuerza OFF marco/margen
     if (isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
@@ -525,7 +513,6 @@
     const frameOn = !!state.map.posterFrameEnabled && !isPoster();
     const marginOn = !!state.map.posterMarginEnabled && !frameOn && !isPoster();
 
-    // ✅ sin puntas redondeadas cuando hay marco o margen
     $poster.style.borderRadius = (frameOn || marginOn) ? "0px" : "26px";
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
@@ -610,14 +597,17 @@
   }
 
   // ==========================================================
-  // Retícula
+  // ✅ Retícula con opacidad controlable
   // ==========================================================
-  function drawGlobeGridWithRadius(ctx, cx, cy, R, gridLine){
+  function drawGlobeGridWithRadius(ctx, cx, cy, R, gridLine, opacityMul = 1){
     const tiltX = 24 * Math.PI / 180;
     const sinX = Math.sin(tiltX), cosX = Math.cos(tiltX);
 
-    const alphaFront = 0.70;
-    const alphaBack  = 0.18;
+    const baseAlphaFront = 0.70;
+    const baseAlphaBack  = 0.18;
+
+    const alphaFront = clamp(baseAlphaFront * opacityMul, 0, 1);
+    const alphaBack  = clamp(baseAlphaBack  * opacityMul, 0, 1);
 
     const lwFront = 1.35;
     const lwBack  = 1.00;
@@ -740,8 +730,9 @@
 
     ctx.restore();
 
+    // borde del globo (también se escala)
     ctx.save();
-    ctx.globalAlpha = 0.14;
+    ctx.globalAlpha = clamp(0.14 * opacityMul, 0, 1);
     ctx.lineWidth = 1.1;
     ctx.strokeStyle = gridLine;
     ctx.beginPath();
@@ -826,7 +817,8 @@
     if (state.map.showGrid && isGridAllowedForCurrentStyle()){
       const cx = mapW/2, cy = mapH/2;
       const R = Math.min(mapW, mapH) * 0.48;
-      drawGlobeGridWithRadius(ctx, cx, cy, R, tokens.gridLine);
+      const mul = clamp(Number(state.map.gridOpacity ?? 0.60), 0.05, 0.60);
+      drawGlobeGridWithRadius(ctx, cx, cy, R, tokens.gridLine, mul);
     }
 
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
@@ -894,6 +886,8 @@
 
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
 
+    const gridMul = clamp(Number(state.map.gridOpacity ?? 0.60), 0.05, 0.60);
+
     if (st.shape === "circle"){
       const cx = mapW/2, cy = mapH/2;
       const rOuter = Math.min(mapW,mapH)/2;
@@ -908,7 +902,7 @@
       ctx.fillRect(0,0,mapW,mapH);
 
       if (state.map.showGrid && isGridAllowedForCurrentStyle()){
-        drawGlobeGridWithRadius(ctx, cx, cy, rContent, tokens.gridLine);
+        drawGlobeGridWithRadius(ctx, cx, cy, rContent, tokens.gridLine, gridMul);
       }
 
       ctx.save();
@@ -952,6 +946,11 @@
 
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(0,0,mapW,mapH);
+
+      if (state.map.showGrid && isGridAllowedForCurrentStyle()){
+        // retícula en “heart”: se dibuja con un radio aproximado al shape
+        drawGlobeGridWithRadius(ctx, cx, cy, size * 0.60, tokens.gridLine, gridMul);
+      }
 
       ctx.save();
       if (z !== 1){
@@ -1023,7 +1022,7 @@
     drawMap();
     renderPosterText();
 
-    // ✅ watermark sobre el preview
+    // ✅ watermark SIEMPRE encima del preview
     applyPreviewWatermark(tokens);
 
     updatePreviewZoom();
@@ -1282,6 +1281,8 @@
       }
 
       state.map.showGrid = isGridAllowedForCurrentStyle() ? pickBool() : false;
+      state.map.gridOpacity = 0.60;
+
       state.map.showConstellations = pickBool();
       state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
       state.map.mapZoom = Math.round(pickRange(1.0, 1.6) * 20) / 20;
@@ -1462,40 +1463,6 @@
 
     $section.appendChild(groupGap());
 
-    // ✅ Marca de agua (preview) + slider de transparencia
-    $section.appendChild(fieldCard(
-      "Marca de agua (preview)",
-      !!state.preview.watermarkEnabled,
-      (val) => {
-        state.preview.watermarkEnabled = val;
-        applyPreviewWatermark(computeRenderTokens());
-        renderAll();
-      },
-      (body) => {
-        const label = document.createElement("div");
-        label.className = "label sliderLabel";
-        const pct = Math.round((state.preview.watermarkOpacity ?? 0.60) * 100);
-        label.textContent = `Transparencia (${pct}%)`;
-        body.appendChild(label);
-
-        const r = document.createElement("input");
-        r.type = "range";
-        r.min = "0.05";
-        r.max = "0.60";   // ✅ máximo 60%
-        r.step = "0.01";
-        r.value = String(state.preview.watermarkOpacity ?? 0.60);
-        r.oninput = () => {
-          state.preview.watermarkOpacity = Number(r.value);
-          label.textContent = `Transparencia (${Math.round(state.preview.watermarkOpacity * 100)}%)`;
-          applyPreviewWatermark(computeRenderTokens());
-        };
-        body.appendChild(r);
-      }
-    ));
-
-    $section.appendChild(groupGap());
-
-    // ✅ Marco/Margen aparecen también en Moderno (solo se ocultan en Poster)
     if (!isPoster()){
       $section.appendChild(fieldCard(
         "Marco del póster",
@@ -1583,11 +1550,30 @@
     ));
 
     if (isGridAllowedForCurrentStyle()){
+      // ✅ Retícula con slider de opacidad
       $section.appendChild(fieldCard(
         "Retícula",
         !!state.map.showGrid,
         (val) => { state.map.showGrid = val; drawMap(); renderAll(); },
-        () => {}
+        (body) => {
+          const label = document.createElement("div");
+          label.className = "label sliderLabel";
+          label.textContent = `Opacidad (${Math.round((state.map.gridOpacity ?? 0.60) * 100)}%)`;
+          body.appendChild(label);
+
+          const r = document.createElement("input");
+          r.type = "range";
+          r.min = "0.05";
+          r.max = "0.60";
+          r.step = "0.01";
+          r.value = String(state.map.gridOpacity ?? 0.60);
+          r.oninput = () => {
+            state.map.gridOpacity = Number(r.value);
+            label.textContent = `Opacidad (${Math.round(state.map.gridOpacity * 100)}%)`;
+            drawMap();
+          };
+          body.appendChild(r);
+        }
       ));
     } else {
       state.map.showGrid = false;

@@ -133,62 +133,67 @@
   // ✅ Watermark (preview only)
   // =========================
   function makeWatermarkDataUri({
-    text = "skyartcreator",
-    fontSize = 26,
-    opacity = 0.14,
-    angle = -45,
-    gap = 220,
-    color = "#FFFFFF"
-  } = {}){
-    const safeText = String(text)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+  text = "skyartcreator",
+  fontSize = 18,      // ⬅️ más pequeño
+  opacity = 0.13,
+  angle = -45,
+  gap = 120,          // ⬅️ mucho más cerrado (más repeticiones)
+  color = "#FFFFFF"
+} = {}){
+  const safeText = String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 
-    const svg = `
+  const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${gap}" height="${gap}">
   <defs>
     <style>
       .wm{
         font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-        font-weight: 800;
+        font-weight: 700;
         font-size: ${fontSize}px;
-        letter-spacing: 1px;
+        letter-spacing: 1.4px;
       }
     </style>
   </defs>
   <g opacity="${opacity}">
     <g transform="translate(${gap/2} ${gap/2}) rotate(${angle}) translate(${-gap/2} ${-gap/2})">
-      <text x="${gap*0.06}" y="${gap*0.55}" fill="${color}" class="wm">${safeText}</text>
+      <text x="0" y="${gap/2}" fill="${color}" class="wm">${safeText}</text>
     </g>
   </g>
 </svg>`.trim();
 
-    const encoded = encodeURIComponent(svg)
-      .replace(/%0A/g, "")
-      .replace(/%20/g, " ");
+  const encoded = encodeURIComponent(svg)
+    .replace(/%0A/g, "")
+    .replace(/%20/g, " ");
 
-    return `data:image/svg+xml;charset=utf-8,${encoded}`;
-  }
+  return `data:image/svg+xml;charset=utf-8,${encoded}`;
+}
+
 
   function applyPreviewWatermark(tokens){
-    if (!$watermark) return;
+  if (!$watermark) return;
 
-    const isNeon = isNeonThemeId(state.map.colorTheme);
-    const isWhiteBg = (!isNeon && state.map.backgroundMode === "white");
+  const isNeon = isNeonThemeId(state.map.colorTheme);
+  const isWhiteBg = (!isNeon && state.map.backgroundMode === "white");
 
-    const color = isWhiteBg ? (tokens.posterInk || "#111111") : "#FFFFFF";
-    const uri = makeWatermarkDataUri({
-      text: "skyartcreator",
-      fontSize: 26,
-      opacity: isWhiteBg ? 0.16 : 0.14,
-      angle: -45,
-      gap: 220,
-      color
-    });
+  const color = isWhiteBg
+    ? (tokens.posterInk || "#111111")
+    : "#FFFFFF";
 
-    $watermark.style.backgroundImage = `url("${uri}")`;
-  }
+  const uri = makeWatermarkDataUri({
+    text: "skyartcreator",
+    fontSize: 18,              // ⬅️ pequeño
+    opacity: isWhiteBg ? 0.14 : 0.12,
+    angle: -45,
+    gap: 120,                  // ⬅️ muy repetido
+    color
+  });
+
+  $watermark.style.backgroundImage = `url("${uri}")`;
+}
+
 
   function mulberry32(seed){
     let t = seed >>> 0;

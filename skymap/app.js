@@ -1868,16 +1868,62 @@
       alert("Bloqueaste popups. Permite ventanas emergentes para exportar PDF.");
       return;
     }
+    
     w.document.write(`
-      <html><head><title>Poster PDF</title>
-      <style>html,body{margin:0;padding:0;} img{width:100%;height:auto;display:block;}</style>
-      </head><body>
-        <img src="${url}" />
-        <script>
-          window.onload = () => { window.focus(); window.print(); };
-        </script>
-      </body></html>
-    `);
+  <html>
+  <head>
+    <title>Poster PDF</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      @page {
+        size: auto;     /* deja que el navegador use el tamaño elegido en print */
+        margin: 0;      /* SUPER importante: sin márgenes */
+      }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+      }
+
+      .sheet {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      img {
+        width: 100vw;
+        height: 100vh;
+        object-fit: contain;   /* ✅ nunca recorta, siempre cabe */
+        display: block;
+        transform: scale(0.98); /* ✅ margen de seguridad anti-corte */
+        transform-origin: center center;
+      }
+
+      /* evita que algunos browsers metan scroll o offsets raros en print */
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <img src="${url}" alt="Poster" />
+    </div>
+    <script>
+      window.onload = () => {
+        window.focus();
+        window.print();
+      };
+    </script>
+  </body>
+  </html>
+`);
+
     w.document.close();
   }
 

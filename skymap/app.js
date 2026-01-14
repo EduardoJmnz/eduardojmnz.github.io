@@ -116,6 +116,7 @@
   const $poster = document.getElementById("poster");
   const $canvas = document.getElementById("mapCanvas");
   const $previewArea = document.getElementById("previewArea");
+  const $watermark = document.getElementById("watermark"); // ✅ NEW
 
   const $pTitle = document.getElementById("pTitle");
   const $pSubtitle = document.getElementById("pSubtitle");
@@ -128,12 +129,73 @@
 
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
+  // =========================
+  // ✅ Watermark (preview only)
+  // =========================
+  function makeWatermarkDataUri({
+    text = "skyartcreator",
+    fontSize = 26,
+    opacity = 0.14,
+    angle = -45,
+    gap = 220,
+    color = "#FFFFFF"
+  } = {}){
+    const safeText = String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${gap}" height="${gap}">
+  <defs>
+    <style>
+      .wm{
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        font-weight: 800;
+        font-size: ${fontSize}px;
+        letter-spacing: 1px;
+      }
+    </style>
+  </defs>
+  <g opacity="${opacity}">
+    <g transform="translate(${gap/2} ${gap/2}) rotate(${angle}) translate(${-gap/2} ${-gap/2})">
+      <text x="${gap*0.06}" y="${gap*0.55}" fill="${color}" class="wm">${safeText}</text>
+    </g>
+  </g>
+</svg>`.trim();
+
+    const encoded = encodeURIComponent(svg)
+      .replace(/%0A/g, "")
+      .replace(/%20/g, " ");
+
+    return `data:image/svg+xml;charset=utf-8,${encoded}`;
+  }
+
+  function applyPreviewWatermark(tokens){
+    if (!$watermark) return;
+
+    const isNeon = isNeonThemeId(state.map.colorTheme);
+    const isWhiteBg = (!isNeon && state.map.backgroundMode === "white");
+
+    const color = isWhiteBg ? (tokens.posterInk || "#111111") : "#FFFFFF";
+    const uri = makeWatermarkDataUri({
+      text: "skyartcreator",
+      fontSize: 26,
+      opacity: isWhiteBg ? 0.16 : 0.14,
+      angle: -45,
+      gap: 220,
+      color
+    });
+
+    $watermark.style.backgroundImage = `url("${uri}")`;
+  }
+
   function mulberry32(seed){
     let t = seed >>> 0;
     return function() {
       t += 0x6D2B79F5;
       let r = Math.imul(t ^ (t >>> 15), 1 | t);
-      r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+      r ^= r + Math.imul(r ^ (t >>> 7), 61 | r);
       return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
     };
   }
@@ -505,8 +567,7 @@
   }
 
   // ==========================================================
-  // ✅ Retícula: elimina horizontales perfectas (las de tu screenshot)
-  // ✅ y protege la meridiana vertical central para que NO se filtre
+  // Retícula
   // ==========================================================
   function drawGlobeGridWithRadius(ctx, cx, cy, R, gridLine){
     const tiltX = 24 * Math.PI / 180;
@@ -548,14 +609,9 @@
       const dx = b.sx - a.sx;
       const dy = b.sy - a.sy;
 
-      // ✅ PROTEGE líneas verticales “fuertes” (incluye la central)
       if (Math.abs(dx) < 1.0 && Math.abs(dy) > 22) return false;
-
-      // ✅ mata segmentos “perfectamente horizontales” (los que marcaste)
-      // suelen tener yRange casi 0 (línea plana) y xRange notable.
       if (yRange < 1.6 && xRange > 18) return true;
 
-      // extra: si es muy horizontal + muy recta, también fuera
       if (Math.abs(dy) < 1.0 && Math.abs(dx) > 30){
         const denom = Math.hypot(dx, dy) || 1;
         let maxDev = 0;
@@ -592,7 +648,6 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
-    // Horizontales (paralelos)
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60];
     const lonSteps = 240;
 
@@ -608,12 +663,10 @@
         else backPts.push(p);
       }
 
-      const isPolar = latDeg === 75;
-      strokePath(backPts,  alphaBack,  isPolar ? lwBack + 0.2 : lwBack);
-      strokePath(frontPts, alphaFront, isPolar ? lwFront + 1.0 : lwFront);
+      strokePath(backPts,  alphaBack,  lwBack);
+      strokePath(frontPts, alphaFront, lwFront);
     }
 
-    // Verticales (meridianos)
     const baseLonsDeg = [];
     for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
     baseLonsDeg.push(-90, 90);
@@ -644,7 +697,6 @@
 
     ctx.restore();
 
-    // borde del globo
     ctx.save();
     ctx.globalAlpha = 0.14;
     ctx.lineWidth = 1.1;
@@ -722,7 +774,6 @@
     ctx.globalAlpha = 1;
   }
 
-  // Rect: retícula NO se zoom; zoom solo estrellas + constelaciones
   function drawRectMap(ctx, mapW, mapH, tokens, rand, showOutline, outlineW, conLineW, nodeR){
     ctx.save();
 
@@ -762,10 +813,6 @@
     }
   }
 
-  // ✅ drawMap:
-  // - contorno NO hace el mapa más chico
-  // - mapa solo se hace chico con marco o margen
-  // - contorno se dibuja al final (para que se vea con grosor real)
   function drawMap(){
     syncThickness();
 
@@ -795,7 +842,6 @@
     const frameOn = (!isPoster()) && !!state.map.posterFrameEnabled;
     const marginOn = (!isPoster()) && !!state.map.posterMarginEnabled && !frameOn;
 
-    // ✅ solo marco/margen reducen el mapa (contorno NO)
     const shouldInset = frameOn || marginOn;
     const insetPad = shouldInset
       ? Math.round(Math.min(mapW, mapH) * (state.map.mapCircleInsetPct || 0.10))
@@ -820,7 +866,6 @@
 
       if (state.map.showGrid && isGridAllowedForCurrentStyle()){
         drawGlobeGridWithRadius(ctx, cx, cy, rContent, tokens.gridLine);
-
       }
 
       ctx.save();
@@ -838,7 +883,6 @@
 
       ctx.restore(); // clip
 
-      // ✅ contorno al FINAL
       if (outlineEnabled){
         ctx.save();
         ctx.strokeStyle = tokens.outline;
@@ -936,6 +980,8 @@
     drawMap();
     renderPosterText();
 
+    applyPreviewWatermark(tokens); // ✅ watermark aquí
+
     updatePreviewZoom();
   }
 
@@ -1012,7 +1058,6 @@
       name.className = "swatchName";
       name.textContent = it.name;
 
-      // ✅ beige SOLO para el texto del color “Cálido”
       if (it.id === "warm") name.style.color = "#F6E7C9";
 
       tile.appendChild(dot);
@@ -1154,6 +1199,9 @@
     ctx.restore();
   }
 
+  // =========================
+  // UI Secciones
+  // =========================
   function renderSectionDesign(){
     $section.innerHTML = "";
 
@@ -1373,7 +1421,6 @@
 
     $section.appendChild(groupGap());
 
-    // ✅ Marco/Margen aparecen también en Moderno (solo se ocultan en Poster)
     if (!isPoster()){
       $section.appendChild(fieldCard(
         "Marco del póster",
@@ -1407,7 +1454,6 @@
         }
       ));
 
-      // ✅ margen fijo: NO mostrar body (no hay slider)
       $section.appendChild(fieldCard(
         "Margen del poster",
         !!state.map.posterMarginEnabled,
@@ -1424,7 +1470,6 @@
       $section.appendChild(groupGap());
     }
 
-    // ✅ contorno fijo: NO mostrar body (no hay slider)
     $section.appendChild(fieldCard(
       "Contorno del mapa",
       !!state.map.mapCircleMarginEnabled,
@@ -1944,5 +1989,7 @@
     updatePreviewZoom();
     drawMap();
     applyAutoTextSizing();
+    // mantener watermark correcto al cambiar size/fondo
+    applyPreviewWatermark(computeRenderTokens());
   });
 })();

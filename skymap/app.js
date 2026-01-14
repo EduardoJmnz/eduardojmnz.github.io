@@ -35,7 +35,7 @@
       styleId: "classic",
 
       showGrid: false,
-      // ✅ slider de opacidad para retícula (default “actual” 60%)
+      // ✅ slider de opacidad para retícula (default y max 60%)
       gridOpacity: 0.60,
 
       showConstellations: true,
@@ -138,7 +138,7 @@
       t += 0x6D2B79F5;
       let r = Math.imul(t ^ (t >>> 15), 1 | t);
       r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
-      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+      return ((r ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
 
@@ -290,7 +290,7 @@
   }
 
   // --------------------------
-  // ✅ Watermark (preview only, SIEMPRE ON)
+  // ✅ Watermark (preview only, SIEMPRE ON, opacidad fija 5%)
   // --------------------------
   let $watermark = null;
 
@@ -323,7 +323,7 @@
   function makeWatermarkDataUri({
     text = "skyartcreator",
     fontSize = 18,
-    opacity = 0.05,   // ✅ fijo 5%
+    opacity = 0.05, // fijo 5%
     angle = -45,
     gap = 120,
     color = "#FFFFFF"
@@ -370,7 +370,7 @@
     const uri = makeWatermarkDataUri({
       text: "skyartcreator",
       fontSize: 18,
-      opacity: 0.05,  // ✅ fijo 5%
+      opacity: 0.05,
       angle: -45,
       gap: 120,
       color
@@ -730,7 +730,6 @@
 
     ctx.restore();
 
-    // borde del globo (también se escala)
     ctx.save();
     ctx.globalAlpha = clamp(0.14 * opacityMul, 0, 1);
     ctx.lineWidth = 1.1;
@@ -787,8 +786,8 @@
         pts.push({ x, y });
       }
 
-      const mx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
-      const my = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+      const mx = pts.reduce((ss,p)=>ss+p.x,0)/pts.length;
+      const my = pts.reduce((ss,p)=>ss+p.y,0)/pts.length;
       pts.sort((p1,p2)=>Math.atan2(p1.y-my,p1.x-mx)-Math.atan2(p2.y-my,p2.x-mx));
 
       ctx.globalAlpha = 1;
@@ -885,7 +884,6 @@
     ctx.clearRect(0, 0, mapW, mapH);
 
     const z = clamp(state.map.mapZoom || 1, 1.0, 1.6);
-
     const gridMul = clamp(Number(state.map.gridOpacity ?? 0.60), 0.05, 0.60);
 
     if (st.shape === "circle"){
@@ -948,7 +946,6 @@
       ctx.fillRect(0,0,mapW,mapH);
 
       if (state.map.showGrid && isGridAllowedForCurrentStyle()){
-        // retícula en “heart”: se dibuja con un radio aproximado al shape
         drawGlobeGridWithRadius(ctx, cx, cy, size * 0.60, tokens.gridLine, gridMul);
       }
 
@@ -1550,7 +1547,6 @@
     ));
 
     if (isGridAllowedForCurrentStyle()){
-      // ✅ Retícula con slider de opacidad
       $section.appendChild(fieldCard(
         "Retícula",
         !!state.map.showGrid,
@@ -1792,6 +1788,44 @@
     a.remove();
   }
 
+  // ✅ PDF real (sin print) con jsPDF
+  function loadJsPDF(){
+    if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+    if (window.__jspdfLoadingPromise) return window.__jspdfLoadingPromise;
+
+    window.__jspdfLoadingPromise = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+      s.async = true;
+      s.onload = () => {
+        if (window.jspdf && window.jspdf.jsPDF) resolve(window.jspdf.jsPDF);
+        else reject(new Error("jsPDF cargó pero no se encontró window.jspdf.jsPDF"));
+      };
+      s.onerror = () => reject(new Error("No se pudo cargar jsPDF (CDN)."));
+      document.head.appendChild(s);
+    });
+
+    return window.__jspdfLoadingPromise;
+  }
+
+  async function downloadPDFfromCanvasPNG(pngDataURL, Wpx, Hpx, dpi, filename){
+    const jsPDF = await loadJsPDF();
+    const safeDpi = Number(dpi) || 300;
+
+    const wPt = (Wpx / safeDpi) * 72;
+    const hPt = (Hpx / safeDpi) * 72;
+
+    const doc = new jsPDF({
+      orientation: wPt >= hPt ? "l" : "p",
+      unit: "pt",
+      format: [wPt, hPt],
+      compress: true,
+    });
+
+    doc.addImage(pngDataURL, "PNG", 0, 0, wPt, hPt, undefined, "FAST");
+    doc.save(filename);
+  }
+
   function exportPoster(format, sizeKey){
     const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
     const dpi = state.export.dpi || 300;
@@ -1924,38 +1958,14 @@
       return;
     }
 
-    // ✅ PDF full-bleed: página EXACTA (sin márgenes) y la imagen llena TODO
-    const url = out.toDataURL("image/png");
-    const w = window.open("", "_blank");
-    if (!w) {
-      alert("Bloqueaste popups. Permite ventanas emergentes para exportar PDF.");
-      return;
-    }
-
-    const wIn = (W / (dpi || 300)).toFixed(4);
-    const hIn = (H / (dpi || 300)).toFixed(4);
-
-    w.document.write(`
-      <html>
-      <head>
-        <title>Poster PDF</title>
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <style>
-          @page { size: ${wIn}in ${hIn}in; margin: 0; }
-          html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #fff; }
-          img { width: 100%; height: 100%; display: block; object-fit: fill; }
-          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        </style>
-      </head>
-      <body>
-        <img src="${url}" alt="Poster" />
-        <script>
-          window.onload = () => { window.focus(); window.print(); };
-        </script>
-      </body>
-      </html>
-    `);
-    w.document.close();
+    // ✅ PDF REAL: descarga directa (sin headers/footers del navegador)
+    const pngURL = out.toDataURL("image/png");
+    downloadPDFfromCanvasPNG(pngURL, W, H, dpi || 300, `poster_${sizeKey}.pdf`)
+      .catch((err) => {
+        console.error(err);
+        alert("No se pudo generar el PDF automáticamente. Revisa tu conexión o bloqueos de scripts.");
+      });
+    return;
   }
 
   function renderSectionExport(){

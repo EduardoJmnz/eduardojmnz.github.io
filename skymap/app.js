@@ -370,7 +370,7 @@
     const uri = makeWatermarkDataUri({
       text: "skyartcreator",
       fontSize: 18,
-      opacity: 0.05,
+      opacity: 0.03,
       angle: -45,
       gap: 120,
       color

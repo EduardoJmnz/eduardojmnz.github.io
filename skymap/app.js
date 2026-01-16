@@ -35,7 +35,7 @@
       styleId: "classic",
 
       showGrid: false,
-      // ✅ slider de opacidad para retícula (default y max 60%)
+      // ✅ slider opacidad retícula (default = 60%, max = 60%)
       gridOpacity: 0.60,
 
       showConstellations: true,
@@ -289,9 +289,9 @@
     document.documentElement.style.setProperty("--previewZoom", finalZ.toFixed(4));
   }
 
-  // --------------------------
-  // ✅ Watermark (preview only, SIEMPRE ON, opacidad fija 5%)
-  // --------------------------
+  // ==========================================================
+  // ✅ Watermark: SIEMPRE ON (sin toggle), opacidad fija 5%
+  // ==========================================================
   let $watermark = null;
 
   function ensurePreviewWatermarkLayer(){
@@ -323,7 +323,7 @@
   function makeWatermarkDataUri({
     text = "skyartcreator",
     fontSize = 18,
-    opacity = 0.05, // fijo 5%
+    opacity = 0.05, // ✅ fijo 5%
     angle = -45,
     gap = 120,
     color = "#FFFFFF"
@@ -502,6 +502,7 @@
     updatePosterFrameInsetPx();
     syncThickness();
 
+    // ✅ Poster: fuerza OFF marco/margen
     if (isPoster()){
       state.map.posterFrameEnabled = false;
       state.map.posterMarginEnabled = false;
@@ -513,6 +514,7 @@
     const frameOn = !!state.map.posterFrameEnabled && !isPoster();
     const marginOn = !!state.map.posterMarginEnabled && !frameOn && !isPoster();
 
+    // ✅ sin puntas redondeadas cuando hay marco o margen
     $poster.style.borderRadius = (frameOn || marginOn) ? "0px" : "26px";
 
     const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
@@ -587,7 +589,8 @@
     for (let i = 0; i <= steps; i++){
       const t = (i / steps) * Math.PI * 2;
       const x = 16 * Math.pow(Math.sin(t), 3);
-      const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(3*t) - Math.cos(4*t);
+      // ✅ fórmula correcta (sin duplicar cos(3t))
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
       const px = cx + x * s * 1.10;
       const py = cy - y * s * 1.15;
       if (i === 0) ctx.moveTo(px, py);
@@ -597,7 +600,7 @@
   }
 
   // ==========================================================
-  // ✅ Retícula con opacidad controlable
+  // ✅ Retícula: con opacidad configurable (0.05..0.60)
   // ==========================================================
   function drawGlobeGridWithRadius(ctx, cx, cy, R, gridLine, opacityMul = 1){
     const tiltX = 24 * Math.PI / 180;
@@ -642,7 +645,10 @@
       const dx = b.sx - a.sx;
       const dy = b.sy - a.sy;
 
+      // ✅ protege líneas verticales fuertes
       if (Math.abs(dx) < 1.0 && Math.abs(dy) > 22) return false;
+
+      // ✅ mata horizontales perfectas
       if (yRange < 1.6 && xRange > 18) return true;
 
       if (Math.abs(dy) < 1.0 && Math.abs(dx) > 30){
@@ -681,6 +687,7 @@
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.clip();
 
+    // Horizontales
     const latsDeg = [-60, -40, -20, 0, 20, 40, 60];
     const lonSteps = 240;
 
@@ -700,6 +707,7 @@
       strokePath(frontPts, alphaFront, lwFront);
     }
 
+    // Verticales
     const baseLonsDeg = [];
     for (let d = -75; d <= 75; d += 15) baseLonsDeg.push(d);
     baseLonsDeg.push(-90, 90);
@@ -730,6 +738,7 @@
 
     ctx.restore();
 
+    // borde globo
     ctx.save();
     ctx.globalAlpha = clamp(0.14 * opacityMul, 0, 1);
     ctx.lineWidth = 1.1;
@@ -786,8 +795,8 @@
         pts.push({ x, y });
       }
 
-      const mx = pts.reduce((ss,p)=>ss+p.x,0)/pts.length;
-      const my = pts.reduce((ss,p)=>ss+p.y,0)/pts.length;
+      const mx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+      const my = pts.reduce((s,p)=>s+p.y,0)/pts.length;
       pts.sort((p1,p2)=>Math.atan2(p1.y-my,p1.x-mx)-Math.atan2(p2.y-my,p2.x-mx));
 
       ctx.globalAlpha = 1;
@@ -807,6 +816,7 @@
     ctx.globalAlpha = 1;
   }
 
+  // Rect: retícula NO se zoom; zoom solo estrellas + constelaciones
   function drawRectMap(ctx, mapW, mapH, tokens, rand, showOutline, outlineW, conLineW, nodeR){
     ctx.save();
 
@@ -945,6 +955,8 @@
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(0,0,mapW,mapH);
 
+      // si quieres retícula dentro del corazón, se puede, pero la mantengo off igual que tu estilo
+      // (solo se activa si showGrid está ON)
       if (state.map.showGrid && isGridAllowedForCurrentStyle()){
         drawGlobeGridWithRadius(ctx, cx, cy, size * 0.60, tokens.gridLine, gridMul);
       }
@@ -1097,6 +1109,7 @@
       name.className = "swatchName";
       name.textContent = it.name;
 
+      // ✅ beige SOLO para el texto del color “Cálido”
       if (it.id === "warm") name.style.color = "#F6E7C9";
 
       tile.appendChild(dot);
@@ -1118,7 +1131,7 @@
 
   function fieldCard(label, enabled, onToggle, renderBody){
     const card = document.createElement("div");
-    card.className = "fieldCard";
+    card.className = 'fieldCard';
 
     const header = document.createElement("div");
     header.className = "fieldHeader";
@@ -1160,15 +1173,624 @@
     p.outline = !!state.map.mapCircleMarginEnabled;
   }
 
+  function drawStyleTextSkeleton(ctx, w, h, styleId, color){
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.28;
+
+    const padX = 22;
+    const bottomPad = 20;
+
+    if (styleId === "classic"){
+      const titleW = Math.round(w * 0.58);
+      const subW   = Math.round(w * 0.38);
+      const x1 = Math.round((w - titleW)/2);
+      const x2 = Math.round((w - subW)/2);
+
+      const yTitle = h - bottomPad - 52;
+      const ySub   = h - bottomPad - 38;
+      const yMeta1 = h - bottomPad - 20;
+      const yMeta2 = h - bottomPad - 10;
+      const yMeta3 = h - bottomPad;
+
+      ctx.fillRect(x1, yTitle, titleW, 6);
+      ctx.globalAlpha = 0.20;
+      ctx.fillRect(x2, ySub, subW, 5);
+
+      ctx.globalAlpha = 0.18;
+      const metaW = Math.round(w * 0.46);
+      const xm = Math.round((w - metaW)/2);
+      ctx.fillRect(xm, yMeta1, metaW, 4);
+      ctx.fillRect(xm, yMeta2, metaW * 0.88, 4);
+      ctx.fillRect(xm, yMeta3, metaW * 0.76, 4);
+    }
+    else if (styleId === "poster"){
+      const titleW = Math.round(w * 0.52);
+      const subW   = Math.round(w * 0.34);
+      const x1 = Math.round((w - titleW)/2);
+      const x2 = Math.round((w - subW)/2);
+
+      const yTitle = h - bottomPad - 56;
+      const ySub   = h - bottomPad - 42;
+      const yMeta1 = h - bottomPad - 24;
+      const yMeta2 = h - bottomPad - 14;
+      const yMeta3 = h - bottomPad - 4;
+
+      ctx.fillRect(x1, yTitle, titleW, 6);
+      ctx.globalAlpha = 0.20;
+      ctx.fillRect(x2, ySub, subW, 5);
+
+      ctx.globalAlpha = 0.18;
+      const metaW = Math.round(w * 0.44);
+      const xm = Math.round((w - metaW)/2);
+      ctx.fillRect(xm, yMeta1, metaW, 4);
+      ctx.fillRect(xm, yMeta2, metaW * 0.88, 4);
+      ctx.fillRect(xm, yMeta3, metaW * 0.76, 4);
+    }
+    else {
+      const x = padX;
+      const titleW = Math.round(w * 0.55);
+      const subW   = Math.round(w * 0.36);
+
+      const yTitle = h - bottomPad - 52;
+      const ySub   = h - bottomPad - 38;
+      const yMeta1 = h - bottomPad - 20;
+      const yMeta2 = h - bottomPad - 10;
+      const yMeta3 = h - bottomPad;
+
+      ctx.fillRect(x, yTitle, titleW, 6);
+      ctx.globalAlpha = 0.20;
+      ctx.fillRect(x, ySub, subW, 5);
+
+      ctx.globalAlpha = 0.18;
+      ctx.fillRect(x, yMeta1, Math.round(w * 0.46), 4);
+      ctx.fillRect(x, yMeta2, Math.round(w * 0.40), 4);
+      ctx.fillRect(x, yMeta3, Math.round(w * 0.32), 4);
+    }
+
+    ctx.restore();
+  }
+
   function renderSectionDesign(){
-    // (sin cambios relevantes para el PDF; omitido por brevedad)
-    // ✅ IMPORTANTE: este archivo es “para pegar” y debe incluir TODO.
-    // Pero aquí tu versión anterior ya traía TODO. Para no duplicar 1000+ líneas,
-    // deja tu renderSectionDesign/renderSectionContent/renderSectionExport tal como estaban.
+    $section.innerHTML = "";
+
+    const t = document.createElement("div");
+    t.className = "title";
+    t.textContent = "Diseño";
+
+    const s = document.createElement("div");
+    s.className = "sub";
+    s.textContent = "Selecciona un estilo de poster, los colores y las opcines de personalizacion para tu mapa o genera un aleatorio. ¡Cada mapa es unico y diferente!";
+
+    $section.appendChild(t);
+    $section.appendChild(s);
+
+    const randomBtn = document.createElement("button");
+    randomBtn.type = "button";
+    randomBtn.className = "btn primary";
+    randomBtn.style.width = "100%";
+    randomBtn.textContent = "Poster Aleatorio";
+    randomBtn.onclick = () => {
+      const r = Math.random;
+      const pick = (arr) => arr[Math.floor(r() * arr.length)];
+      const pickBool = () => r() > 0.5;
+      const pickRange = (min, max) => min + r() * (max - min);
+
+      const prevStyle = state.map.styleId;
+      savePrefsForStyle(prevStyle);
+
+      state.map.styleId = pick(MAP_STYLES).id;
+      state.map.colorTheme = pick(COLOR_THEMES).id;
+
+      loadPrefsForStyle(state.map.styleId);
+
+      if (isPoster()){
+        state.map.posterFrameEnabled = false;
+        state.map.posterMarginEnabled = false;
+      }
+
+      state.map.showGrid = isGridAllowedForCurrentStyle() ? pickBool() : false;
+      state.map.showConstellations = pickBool();
+      state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
+      state.map.mapZoom = Math.round(pickRange(1.0, 1.6) * 20) / 20;
+
+      // ✅ grid opacity se queda dentro de 0.05..0.60
+      state.map.gridOpacity = clamp(state.map.gridOpacity ?? 0.60, 0.05, 0.60);
+
+      if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
+
+      state.map.seed = (Math.random() * 1e9) | 0;
+
+      renderPosterAndMap();
+      renderAll();
+    };
+    $section.appendChild(randomBtn);
+
+    $section.appendChild(groupGap());
+
+    const styleRow = document.createElement("div");
+    styleRow.className = "formRow";
+    styleRow.innerHTML = `<div class="label">Estilos</div>`;
+
+    const grid = document.createElement("div");
+    grid.className = "styleGrid";
+
+    MAP_STYLES.forEach(st => {
+      const tile = document.createElement("div");
+      tile.className = "styleTile" + (state.map.styleId === st.id ? " active" : "");
+
+      const poster = document.createElement("div");
+      poster.className = "stylePoster";
+
+      const c = document.createElement("canvas");
+      c.width = 180; c.height = 240;
+      const ctx = c.getContext("2d");
+
+      const tokens = computeRenderTokens();
+      ctx.clearRect(0,0,180,240);
+      ctx.fillStyle = tokens.posterBg;
+      ctx.fillRect(0,0,180,240);
+
+      ctx.save();
+      const mx = 22, my = 18, mw = 136, mh = (st.shape === "rect") ? 140 : 136;
+
+      if (st.shape === "circle"){
+        ctx.beginPath();
+        ctx.arc(mx+mw/2, my+mw/2, mw/2, 0, Math.PI*2);
+        ctx.clip();
+      } else if (st.shape === "heart"){
+        const cx = mx + mw/2;
+        const cy = my + mw/2 - 6;
+        const size = mw * 0.50;
+        heartPath(ctx, cx, cy, size);
+        ctx.clip();
+      } else {
+        ctx.beginPath();
+        ctx.rect(mx, my, mw, mh);
+        ctx.clip();
+      }
+
+      ctx.fillStyle = tokens.mapBg;
+      ctx.fillRect(mx,my,mw,mh);
+
+      const rr = mulberry32(202600 + st.id.length * 17);
+      for (let i=0;i<160;i++){
+        const x = mx + rr()*mw;
+        const y = my + rr()*mh;
+        ctx.globalAlpha = 0.22 + rr()*0.55;
+        ctx.fillStyle = tokens.stars;
+        ctx.beginPath();
+        ctx.arc(x,y,rr()*0.9,0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+
+      const showOutlinePreview = (st.id === "classic" || st.id === "romantico");
+      if (showOutlinePreview && st.shape !== "rect"){
+        ctx.save();
+        ctx.strokeStyle = tokens.outline;
+        ctx.globalAlpha = 0.9;
+        ctx.lineWidth = 2;
+        if (st.shape === "circle"){
+          ctx.beginPath();
+          ctx.arc(mx+mw/2, my+mw/2, mw/2 - 2, 0, Math.PI*2);
+          ctx.stroke();
+        } else if (st.shape === "heart"){
+          const cx = mx + mw/2;
+          const cy = my + mw/2 - 6;
+          const size = mw * 0.50;
+          heartPath(ctx, cx, cy, size);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      drawStyleTextSkeleton(ctx, 180, 240, st.id, tokens.posterInk);
+      poster.appendChild(c);
+
+      const name = document.createElement("div");
+      name.className = "styleNameLabel";
+      name.textContent = st.name;
+
+      tile.appendChild(poster);
+      tile.appendChild(name);
+
+      tile.onclick = () => {
+        const prevStyle = state.map.styleId;
+        savePrefsForStyle(prevStyle);
+
+        state.map.styleId = st.id;
+        loadPrefsForStyle(st.id);
+
+        if (isPoster()){
+          state.map.posterFrameEnabled = false;
+          state.map.posterMarginEnabled = false;
+        }
+
+        if (!isGridAllowedForCurrentStyle()) state.map.showGrid = false;
+
+        renderPosterAndMap();
+        renderAll();
+      };
+
+      grid.appendChild(tile);
+    });
+
+    styleRow.appendChild(grid);
+    $section.appendChild(styleRow);
+
+    $section.appendChild(groupGap());
+
+    $section.appendChild(renderSwatchGrid({
+      title: "Color del Mapa estelar",
+      items: COLOR_THEMES,
+      activeId: state.map.colorTheme,
+      onPick: (id) => {
+        state.map.colorTheme = id;
+        if (isNeonThemeId(id)) state.map.backgroundMode = "match";
+        renderPosterAndMap();
+        renderAll();
+      },
+      dotBg: (it) => {
+        const neon = isNeonThemeId(it.id);
+        if (neon) return "#000000";
+        return colorsFor(it.id).bg;
+      },
+      starColor: (it) => {
+        const neon = isNeonThemeId(it.id);
+        if (neon) return colorsFor(it.id).star;
+        return "#FFFFFF";
+      }
+    }));
+
+    $section.appendChild(groupGap());
+
+    const isNeon = isNeonThemeId(state.map.colorTheme);
+    const bgItems = isNeon ? [{ id:"match", name: getSelectedThemeName() }] : [
+      { id:"match", name: getSelectedThemeName() },
+      { id:"white", name: "Blanco" },
+    ];
+
+    $section.appendChild(renderSwatchGrid({
+      title: "Color de fondo",
+      items: bgItems,
+      activeId: state.map.backgroundMode,
+      onPick: (id) => {
+        state.map.backgroundMode = id;
+        renderPosterAndMap();
+        renderAll();
+      },
+      dotBg: (it) => {
+        if (it.id === "white") return "#FFFFFF";
+        return colorsFor(state.map.colorTheme).bg;
+      },
+      starColor: (it) => {
+        if (it.id === "white") return "#000000";
+        return "#FFFFFF";
+      }
+    }));
+
+    $section.appendChild(groupGap());
+
+    // ✅ Marco/Margen aparecen también en Moderno (solo se ocultan en Poster)
+    if (!isPoster()){
+      $section.appendChild(fieldCard(
+        "Marco del póster",
+        !!state.map.posterFrameEnabled,
+        (val) => {
+          state.map.posterFrameEnabled = val;
+          if (val) state.map.posterMarginEnabled = false;
+          savePrefsForStyle(state.map.styleId);
+          renderPosterAndMap();
+          renderAll();
+        },
+        (body) => {
+          const label = document.createElement("div");
+          label.className = "label";
+          label.textContent = "Tamaño";
+          body.appendChild(label);
+
+          const r = document.createElement("input");
+          r.type = "range";
+          r.min = "0.00";
+          r.max = String(POSTER_FRAME_PCT_MAX);
+          r.step = "0.005";
+          r.value = String(state.map.posterFramePct ?? POSTER_FRAME_PCT_DEFAULT);
+          r.oninput = () => {
+            state.map.posterFramePct = Number(r.value);
+            updatePosterFrameInsetPx();
+            renderPosterAndMap();
+            renderAll();
+          };
+          body.appendChild(r);
+        }
+      ));
+
+      // ✅ margen fijo: NO mostrar body (no hay slider)
+      $section.appendChild(fieldCard(
+        "Margen del poster",
+        !!state.map.posterMarginEnabled,
+        (val) => {
+          state.map.posterMarginEnabled = val;
+          if (val) state.map.posterFrameEnabled = false;
+          savePrefsForStyle(state.map.styleId);
+          renderPosterAndMap();
+          renderAll();
+        },
+        null
+      ));
+
+      $section.appendChild(groupGap());
+    }
+
+    // ✅ contorno fijo: NO mostrar body (no hay slider)
+    $section.appendChild(fieldCard(
+      "Contorno del mapa",
+      !!state.map.mapCircleMarginEnabled,
+      (val) => {
+        state.map.mapCircleMarginEnabled = val;
+        savePrefsForStyle(state.map.styleId);
+        drawMap();
+        renderAll();
+      },
+      null
+    ));
+
+    $section.appendChild(fieldCard(
+      "Constelaciones",
+      !!state.map.showConstellations,
+      (val) => {
+        state.map.showConstellations = val;
+        drawMap();
+        renderAll();
+      },
+      (body) => {
+        const label = document.createElement("div");
+        label.className = "label sliderLabel";
+        label.textContent = "Tamaño";
+        body.appendChild(label);
+
+        const r = document.createElement("input");
+        r.type = "range";
+        r.min = "1";
+        r.max = "4";
+        r.step = "0.5";
+        r.value = String(state.map.constellationSize);
+        r.oninput = () => { state.map.constellationSize = Number(r.value); drawMap(); };
+        body.appendChild(r);
+      }
+    ));
+
+    // ✅ Retícula (toggle + slider opacidad)
+    if (isGridAllowedForCurrentStyle()){
+      $section.appendChild(fieldCard(
+        "Retícula",
+        !!state.map.showGrid,
+        (val) => { state.map.showGrid = val; drawMap(); renderAll(); },
+        (body) => {
+          const label = document.createElement("div");
+          label.className = "label sliderLabel";
+          const pct = Math.round(clamp(Number(state.map.gridOpacity ?? 0.60), 0.05, 0.60) * 100);
+          label.textContent = `Transparencia (${pct}%)`;
+          body.appendChild(label);
+
+          const r = document.createElement("input");
+          r.type = "range";
+          r.min = "0.05";
+          r.max = "0.60"; // ✅ max = 60%
+          r.step = "0.01";
+          r.value = String(clamp(Number(state.map.gridOpacity ?? 0.60), 0.05, 0.60));
+          r.oninput = () => {
+            state.map.gridOpacity = Number(r.value);
+            const pct2 = Math.round(state.map.gridOpacity * 100);
+            label.textContent = `Transparencia (${pct2}%)`;
+            drawMap();
+          };
+          body.appendChild(r);
+        }
+      ));
+    } else {
+      state.map.showGrid = false;
+    }
+
+    $section.appendChild(groupGap());
+
+    const seedCard = document.createElement("div");
+    seedCard.className = "formRow";
+    seedCard.innerHTML = `<div class="label">Nuevo cielo</div>`;
+    const seedBtn = document.createElement("button");
+    seedBtn.type = "button";
+    seedBtn.className = "btn ghost";
+    seedBtn.style.width = "100%";
+    seedBtn.textContent = "Generar nuevo cielo";
+    seedBtn.onclick = () => { state.map.seed = (Math.random() * 1e9) | 0; drawMap(); };
+    seedCard.appendChild(seedBtn);
+    $section.appendChild(seedCard);
+
+    const zoomCard = document.createElement("div");
+    zoomCard.className = "formRow";
+    zoomCard.innerHTML = `<div class="label">Zoom de Estrellas</div>`;
+    const mapZoomRange = document.createElement("input");
+    mapZoomRange.type = "range";
+    mapZoomRange.min = "1.00";
+    mapZoomRange.max = "1.60";
+    mapZoomRange.step = "0.05";
+    mapZoomRange.value = String(state.map.mapZoom);
+    mapZoomRange.oninput = () => { state.map.mapZoom = Number(mapZoomRange.value); drawMap(); };
+    zoomCard.appendChild(mapZoomRange);
+    $section.appendChild(zoomCard);
+
+    const btns = document.createElement("div");
+    btns.className = "btnRow";
+    const left = document.createElement("div");
+    const right = document.createElement("div");
+
+    const next = document.createElement("button");
+    next.type = "button";
+    next.className = "btn primary";
+    next.textContent = "Siguiente →";
+    next.onclick = () => { state.step = 1; renderAll(); };
+
+    right.appendChild(next);
+    btns.appendChild(left);
+    btns.appendChild(right);
+    $section.appendChild(btns);
   }
 
   function renderSectionContent(){
-    // (mantén igual que tu versión previa)
+    $section.innerHTML = "";
+
+    const t = document.createElement("div");
+    t.className = "title";
+    t.textContent = "Contenido";
+
+    const s = document.createElement("div");
+    s.className = "sub";
+    s.textContent = "Activa cada campo y escribe su contenido.";
+
+    const fontRow = document.createElement("div");
+    fontRow.className = "formRow";
+    fontRow.innerHTML = `<div class="label">Fuente</div>`;
+    const fontSel = document.createElement("select");
+    fontSel.className = "select";
+    FONT_PRESETS.forEach(f => {
+      const opt = document.createElement("option");
+      opt.value = f.key;
+      opt.textContent = f.name;
+      fontSel.appendChild(opt);
+    });
+    fontSel.value = state.text.fontKey;
+    fontSel.onchange = () => {
+      const key = fontSel.value;
+      state.text.fontKey = key;
+      const found = FONT_PRESETS.find(f => f.key === key) || FONT_PRESETS[0];
+      state.text.fontFamily = found.css;
+      renderPosterFont();
+      renderPosterText();
+    };
+    fontRow.appendChild(fontSel);
+
+    $section.appendChild(t);
+    $section.appendChild(s);
+    $section.appendChild(fontRow);
+
+    $section.appendChild(fieldCard(
+      "Título",
+      state.visible.title,
+      (val) => { state.visible.title = val; renderPosterText(); renderAll(); },
+      (body) => {
+        const inp = document.createElement("input");
+        inp.className = "fieldInput";
+        inp.value = state.text.title || "";
+        inp.maxLength = TITLE_MAX;
+        inp.oninput = () => { state.text.title = inp.value; renderPosterText(); };
+        body.appendChild(inp);
+      }
+    ));
+
+    $section.appendChild(fieldCard(
+      "Mensaje",
+      state.visible.subtitle,
+      (val) => { state.visible.subtitle = val; renderPosterText(); renderAll(); },
+      (body) => {
+        const inp = document.createElement("input");
+        inp.className = "fieldInput";
+        inp.value = state.text.subtitle || "";
+        inp.maxLength = SUB_MAX;
+        inp.oninput = () => { state.text.subtitle = inp.value; renderPosterText(); };
+        body.appendChild(inp);
+      }
+    ));
+
+    $section.appendChild(fieldCard(
+      "Lugar",
+      state.visible.place,
+      (val) => { state.visible.place = val; renderPosterText(); renderAll(); },
+      (body) => {
+        const inp = document.createElement("input");
+        inp.className = "fieldInput";
+        inp.value = state.text.place || "";
+        inp.oninput = () => { state.text.place = inp.value; renderPosterText(); };
+        body.appendChild(inp);
+      }
+    ));
+
+    $section.appendChild(fieldCard(
+      "Coordenadas",
+      state.visible.coords,
+      (val) => { state.visible.coords = val; renderPosterText(); renderAll(); },
+      (body) => {
+        const inp = document.createElement("input");
+        inp.className = "fieldInput";
+        inp.value = state.text.coords || "";
+        inp.oninput = () => {
+          state.text.coords = inp.value;
+          updateSeedFromDateTime();
+          renderPosterText();
+          drawMap();
+        };
+        body.appendChild(inp);
+      }
+    ));
+
+    $section.appendChild(fieldCard(
+      "Fecha / hora",
+      state.visible.datetime,
+      (val) => { state.visible.datetime = val; renderPosterText(); renderAll(); },
+      (body) => {
+        const dateInp = document.createElement("input");
+        dateInp.className = "fieldInput";
+        dateInp.type = "date";
+        dateInp.value = state.text.date || "";
+        dateInp.oninput = () => {
+          state.text.date = dateInp.value;
+          updateSeedFromDateTime();
+          renderPosterText();
+          drawMap();
+        };
+        body.appendChild(dateInp);
+
+        const spacer = document.createElement("div");
+        spacer.style.height = "10px";
+        body.appendChild(spacer);
+
+        const timeInp = document.createElement("input");
+        timeInp.className = "fieldInput";
+        timeInp.type = "time";
+        timeInp.value = state.text.time || "";
+        timeInp.oninput = () => {
+          state.text.time = timeInp.value;
+          updateSeedFromDateTime();
+          renderPosterText();
+          drawMap();
+        };
+        body.appendChild(timeInp);
+      }
+    ));
+
+    const btns = document.createElement("div");
+    btns.className = "btnRow";
+    const left = document.createElement("div");
+    const right = document.createElement("div");
+
+    const prev = document.createElement("button");
+    prev.type = "button";
+    prev.className = "btn ghost";
+    prev.textContent = "← Anterior";
+    prev.onclick = () => { state.step = 0; renderAll(); };
+
+    const next = document.createElement("button");
+    next.type = "button";
+    next.className = "btn primary";
+    next.textContent = "Siguiente →";
+    next.onclick = () => { state.step = 2; renderAll(); };
+
+    left.appendChild(prev);
+    right.appendChild(next);
+    btns.appendChild(left);
+    btns.appendChild(right);
+    $section.appendChild(btns);
   }
 
   function cmToPx(cm, dpi){
@@ -1185,7 +1807,9 @@
     a.remove();
   }
 
-  // ✅ jsPDF loader
+  // ===========================
+  // ✅ PDF REAL con jsPDF (descarga directa, sin print)
+  // ===========================
   function loadJsPDF(){
     if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
     if (window.__jspdfLoadingPromise) return window.__jspdfLoadingPromise;
@@ -1205,12 +1829,13 @@
     return window.__jspdfLoadingPromise;
   }
 
-  // ✅ PDF robusto (JPEG + esperar onload)
   async function downloadPDFfromCanvas(posterCanvas, Wpx, Hpx, dpi, filename){
     const jsPDF = await loadJsPDF();
 
+    // ✅ JPEG evita PDF en blanco por PNG/alpha/tamaño
     const jpgDataURL = posterCanvas.toDataURL("image/jpeg", 0.98);
 
+    // esperar carga real
     const img = new Image();
     await new Promise((res, rej) => {
       img.onload = () => res();
@@ -1219,6 +1844,8 @@
     });
 
     const safeDpi = Number(dpi) || 300;
+
+    // px -> pulgadas -> puntos (72pt = 1in)
     const wPt = (Wpx / safeDpi) * 72;
     const hPt = (Hpx / safeDpi) * 72;
 
@@ -1229,11 +1856,11 @@
       compress: true,
     });
 
+    // full-bleed
     doc.addImage(img, "JPEG", 0, 0, wPt, hPt, undefined, "FAST");
     doc.save(filename);
   }
 
-  // ✅ exportPoster async
   async function exportPoster(format, sizeKey){
     const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
     const dpi = state.export.dpi || 300;
@@ -1306,6 +1933,7 @@
     const mapY = Math.round(innerY + (70 * sy));
     ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
 
+    // ✅ Texto exportado: Moderno = alineado izquierda
     const family = state.text.fontFamily || "system-ui, -apple-system, Segoe UI, Roboto, Arial";
     ctx.fillStyle = tokens.posterInk;
 
@@ -1364,7 +1992,7 @@
       return;
     }
 
-    // ✅ PDF REAL (sin print) — evita PDF en blanco
+    // ✅ PDF REAL (sin print) — descarga directa
     try {
       await downloadPDFfromCanvas(out, W, H, dpi || 300, `poster_${sizeKey}.pdf`);
     } catch (err) {
@@ -1373,11 +2001,80 @@
     }
   }
 
-  // ✅ IMPORTANTE: En tu renderSectionExport, el botón debe llamar exportPoster con await o sin await (sirve)
-  // exportBtn.onclick = () => exportPoster(state.export.format, state.export.sizeKey);
-
   function renderSectionExport(){
-    // (mantén igual que tu versión previa)
+    $section.innerHTML = "";
+
+    const t = document.createElement("div");
+    t.className = "title";
+    t.textContent = "Exportar";
+
+    const s = document.createElement("div");
+    s.className = "sub";
+    s.textContent = "Selecciona formato y exporta tu póster.";
+
+    const sizeRow = document.createElement("div");
+    sizeRow.className = "formRow";
+    sizeRow.innerHTML = `<div class="label">Medidas</div>`;
+
+    const sizeSel = document.createElement("select");
+    sizeSel.className = "select";
+    EXPORT_SIZES.forEach(sz => {
+      const opt = document.createElement("option");
+      opt.value = sz.key;
+      opt.textContent = `${sz.title} — ${sz.sub}`;
+      sizeSel.appendChild(opt);
+    });
+    sizeSel.value = state.export.sizeKey;
+    sizeSel.onchange = () => { state.export.sizeKey = sizeSel.value; };
+    sizeRow.appendChild(sizeSel);
+
+    const formatRow = document.createElement("div");
+    formatRow.className = "formRow";
+    formatRow.innerHTML = `<div class="label">Formato</div>`;
+
+    const formatSel = document.createElement("select");
+    formatSel.className = "select";
+    [
+      ["png","PNG · Mejor calidad"],
+      ["jpg","JPG · Archivo más ligero"],
+      ["pdf","PDF · Perfecto para imprimir"]
+    ].forEach(([v,n]) => {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = n;
+      formatSel.appendChild(opt);
+    });
+    formatSel.value = state.export.format;
+    formatSel.onchange = () => { state.export.format = formatSel.value; };
+    formatRow.appendChild(formatSel);
+
+    const btns = document.createElement("div");
+    btns.className = "btnRow";
+    const left = document.createElement("div");
+    const right = document.createElement("div");
+
+    const prev = document.createElement("button");
+    prev.type = "button";
+    prev.className = "btn ghost";
+    prev.textContent = "← Anterior";
+    prev.onclick = () => { state.step = 1; renderAll(); };
+
+    const exportBtn = document.createElement("button");
+    exportBtn.type = "button";
+    exportBtn.className = "btn primary";
+    exportBtn.textContent = "Exportar";
+    exportBtn.onclick = () => { exportPoster(state.export.format, state.export.sizeKey); };
+
+    left.appendChild(prev);
+    right.appendChild(exportBtn);
+    btns.appendChild(left);
+    btns.appendChild(right);
+
+    $section.appendChild(t);
+    $section.appendChild(s);
+    $section.appendChild(sizeRow);
+    $section.appendChild(formatRow);
+    $section.appendChild(btns);
   }
 
   function renderSection(){
@@ -1394,6 +2091,9 @@
       state.map.posterMarginEnabled = false;
     }
 
+    // clamp retícula
+    state.map.gridOpacity = clamp(Number(state.map.gridOpacity ?? 0.60), 0.05, 0.60);
+
     renderTabs();
     renderSection();
     renderPosterFont();
@@ -1404,7 +2104,6 @@
   updateSeedFromDateTime();
   ensurePosterLayers();
   ensurePreviewWatermarkLayer();
-
   loadPrefsForStyle(state.map.styleId);
 
   applyPosterLayoutByStyle();

@@ -955,8 +955,6 @@
       ctx.fillStyle = tokens.mapBg;
       ctx.fillRect(0,0,mapW,mapH);
 
-      // si quieres retícula dentro del corazón, se puede, pero la mantengo off igual que tu estilo
-      // (solo se activa si showGrid está ON)
       if (state.map.showGrid && isGridAllowedForCurrentStyle()){
         drawGlobeGridWithRadius(ctx, cx, cy, size * 0.60, tokens.gridLine, gridMul);
       }
@@ -1251,6 +1249,251 @@
     ctx.restore();
   }
 
+  // ===========================
+  // Export helpers
+  // ===========================
+  function cmToPx(cm, dpi){
+    const inches = cm / 2.54;
+    return Math.round(inches * dpi);
+  }
+
+  function downloadDataURL(dataURL, filename){
+    const a = document.createElement("a");
+    a.href = dataURL;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  // ===========================
+  // ✅ PDF REAL con jsPDF (descarga directa, sin print)
+  // ===========================
+  function loadJsPDF(){
+    if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+    if (window.__jspdfLoadingPromise) return window.__jspdfLoadingPromise;
+
+    window.__jspdfLoadingPromise = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+      s.async = true;
+      s.onload = () => {
+        if (window.jspdf && window.jspdf.jsPDF) resolve(window.jspdf.jsPDF);
+        else reject(new Error("jsPDF cargó pero no se encontró window.jspdf.jsPDF"));
+      };
+      s.onerror = () => reject(new Error("No se pudo cargar jsPDF (CDN)."));
+      document.head.appendChild(s);
+    });
+
+    return window.__jspdfLoadingPromise;
+  }
+
+  // ✅ PDF en PX para que salga 1:1 con el canvas (sin bajar texto ni bordes)
+  async function downloadPDFfromCanvas(posterCanvas, Wpx, Hpx, dpi, filename){
+    const jsPDF = await loadJsPDF();
+
+    const jpgDataURL = posterCanvas.toDataURL("image/jpeg", 0.98);
+
+    const img = new Image();
+    await new Promise((res, rej) => {
+      img.onload = () => res();
+      img.onerror = () => rej(new Error("No se pudo cargar la imagen para PDF"));
+      img.src = jpgDataURL;
+    });
+
+    const doc = new jsPDF({
+      orientation: Wpx >= Hpx ? "l" : "p",
+      unit: "px",
+      format: [Wpx, Hpx],
+      compress: true,
+      hotfixes: ["px_scaling"],
+    });
+
+    doc.addImage(img, "JPEG", 0, 0, Wpx, Hpx, undefined, "FAST");
+    doc.save(filename);
+  }
+
+  // ===========================
+  // ✅ Export (idéntico al preview)
+  // ===========================
+  async function exportPoster(format, sizeKey){
+    const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
+    const dpi = state.export.dpi || 300;
+
+    let W, H;
+    if (sz.type === "px"){ W = sz.w; H = sz.h; }
+    else { W = cmToPx(sz.w, dpi); H = cmToPx(sz.h, dpi); }
+
+    const out = document.createElement("canvas");
+    out.width = W;
+    out.height = H;
+
+    const ctx = out.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    const tokens = computeRenderTokens();
+    updatePosterFrameInsetPx();
+    syncThickness();
+
+    const frameOn = (!isPoster()) && !!state.map.posterFrameEnabled;
+    const marginOn = (!isPoster()) && !!state.map.posterMarginEnabled && !frameOn;
+
+    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
+    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
+    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W));
+    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H));
+
+    const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
+    const frameX = Math.round(framePx * (W / POSTER_W));
+    const frameY = Math.round(framePx * (H / POSTER_H));
+
+    // Fondo poster
+    ctx.fillStyle = tokens.posterBg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Marco
+    if (frameOn){
+      ctx.fillStyle = tokens.posterInk;
+      ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
+    }
+
+    // Papel interior
+    const innerX = edgeFrameX + frameX;
+    const innerY = edgeFrameY + frameY;
+
+    ctx.fillStyle = tokens.posterBg;
+    ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
+
+    // Margen
+    if (marginOn){
+      const thick = POSTER_MARGIN_THICKNESS_FIXED;
+      const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
+      ctx.save();
+      ctx.strokeStyle = rgbaFromHex(tokens.posterInk, 1);
+      ctx.lineWidth = thickScaled;
+      ctx.globalAlpha = 1;
+      const half = thickScaled / 2;
+      ctx.strokeRect(
+        edgeMarginX + half,
+        edgeMarginY + half,
+        W - (edgeMarginX * 2) - thickScaled,
+        H - (edgeMarginY * 2) - thickScaled
+      );
+      ctx.restore();
+    }
+
+    // Escalas
+    const sx = W / POSTER_W;
+    const sy = H / POSTER_H;
+
+    // Mapa (canvas actual)
+    const mapW = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) * sx);
+    const mapH = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) * sy);
+
+    const mapX = Math.round((W - mapW) / 2);
+    const mapY = Math.round(innerY + (70 * sy));
+    ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
+
+    // ===========================
+    // ✅ Texto exportado usando posición REAL del preview (DOM)
+    // ===========================
+    const family = state.text.fontFamily || "system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillStyle = tokens.posterInk;
+
+    function rectInPosterUnscaled(el){
+      if (!el) return null;
+
+      const posterRect = $poster.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+
+      const scale = posterRect.width / POSTER_W || 1;
+
+      return {
+        x: (r.left - posterRect.left) / scale,
+        y: (r.top  - posterRect.top)  / scale,
+        w: r.width  / scale,
+        h: r.height / scale,
+      };
+    }
+
+    function drawDomTextLikePreview(el, weightFallback = 650){
+      const box = rectInPosterUnscaled(el);
+      if (!box) return;
+
+      const cs = getComputedStyle(el);
+      const text = (el.textContent || "").trim();
+      if (!text) return;
+
+      const fontPx = parseFloat(cs.fontSize || "16");
+      const opacity = clamp(parseFloat(cs.opacity || "1"), 0, 1);
+
+      const align = (cs.textAlign === "left" || cs.textAlign === "right") ? cs.textAlign : "center";
+
+      let x = box.x + box.w / 2;
+      if (align === "left")  x = box.x;
+      if (align === "right") x = box.x + box.w;
+
+      // baseline aproximada, muy cercana a como se ve en DOM
+      const yBaseline = box.y + (fontPx * 0.86);
+
+      const X = x * sx;
+      const Y = yBaseline * sy;
+      const maxW = box.w * sx;
+
+      const w = cs.fontWeight && cs.fontWeight !== "normal" ? cs.fontWeight : String(weightFallback);
+
+      function fitCanvasFont(text, startPx, minPx, weight, maxWidth){
+        let size = startPx;
+        while (size > minPx){
+          ctx.font = `${weight} ${Math.round(size)}px ${family}`;
+          if (ctx.measureText(text).width <= maxWidth) break;
+          size -= 1;
+        }
+        return Math.max(minPx, size);
+      }
+
+      const startPx = fontPx * sy;
+      const minPx = Math.max(10, (fontPx * 0.65) * sy);
+      const size = fitCanvasFont(text, startPx, minPx, w, maxW);
+
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      ctx.textAlign = align;
+      ctx.textBaseline = "alphabetic";
+      ctx.font = `${w} ${Math.round(size)}px ${family}`;
+      ctx.fillText(text, Math.round(X), Math.round(Y));
+      ctx.restore();
+    }
+
+    if (state.visible.title)    drawDomTextLikePreview($pTitle, 900);
+    if (state.visible.subtitle) drawDomTextLikePreview($pSubtitle, 650);
+    if (state.visible.place)    drawDomTextLikePreview($pPlace, 650);
+    if (state.visible.coords)   drawDomTextLikePreview($pCoords, 650);
+    if (state.visible.datetime) drawDomTextLikePreview($pDatetime, 650);
+
+    // ===========================
+    // Guardar
+    // ===========================
+    if (format === "png" || format === "jpg"){
+      const mime = format === "png" ? "image/png" : "image/jpeg";
+      const quality = format === "jpg" ? 0.95 : undefined;
+      const url = out.toDataURL(mime, quality);
+      downloadDataURL(url, `poster_${sizeKey}.${format}`);
+      return;
+    }
+
+    // ✅ PDF real (sin print)
+    try {
+      await downloadPDFfromCanvas(out, W, H, dpi || 300, `poster_${sizeKey}.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo generar el PDF. Revisa bloqueadores o intenta otro navegador.");
+    }
+  }
+
+  // ===========================
+  // UI (render sections) — tu código igual
+  // ===========================
   function renderSectionDesign(){
     $section.innerHTML = "";
 
@@ -1294,7 +1537,6 @@
       state.map.constellationSize = Math.round(pickRange(1, 4) * 2) / 2;
       state.map.mapZoom = Math.round(pickRange(1.0, 1.6) * 20) / 20;
 
-      // ✅ grid opacity se queda dentro de 0.05..0.60
       state.map.gridOpacity = clamp(state.map.gridOpacity ?? 0.60, 0.05, 0.60);
 
       if (isNeonThemeId(state.map.colorTheme)) state.map.backgroundMode = "match";
@@ -1507,7 +1749,6 @@
         }
       ));
 
-      // ✅ margen fijo: NO mostrar body (no hay slider)
       $section.appendChild(fieldCard(
         "Margen del poster",
         !!state.map.posterMarginEnabled,
@@ -1524,7 +1765,6 @@
       $section.appendChild(groupGap());
     }
 
-    // ✅ contorno fijo: NO mostrar body (no hay slider)
     $section.appendChild(fieldCard(
       "Contorno del mapa",
       !!state.map.mapCircleMarginEnabled,
@@ -1562,7 +1802,6 @@
       }
     ));
 
-    // ✅ Retícula (toggle + slider opacidad)
     if (isGridAllowedForCurrentStyle()){
       $section.appendChild(fieldCard(
         "Retícula",
@@ -1578,7 +1817,7 @@
           const r = document.createElement("input");
           r.type = "range";
           r.min = "0.05";
-          r.max = "0.60"; // ✅ max = 60%
+          r.max = "0.60";
           r.step = "0.01";
           r.value = String(clamp(Number(state.map.gridOpacity ?? 0.60), 0.05, 0.60));
           r.oninput = () => {
@@ -1793,214 +2032,6 @@
     $section.appendChild(btns);
   }
 
-  function cmToPx(cm, dpi){
-    const inches = cm / 2.54;
-    return Math.round(inches * dpi);
-  }
-
-  function downloadDataURL(dataURL, filename){
-    const a = document.createElement("a");
-    a.href = dataURL;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }
-
-  // ===========================
-  // ✅ PDF REAL con jsPDF (descarga directa, sin print)
-  // ===========================
-  function loadJsPDF(){
-    if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
-    if (window.__jspdfLoadingPromise) return window.__jspdfLoadingPromise;
-
-    window.__jspdfLoadingPromise = new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
-      s.async = true;
-      s.onload = () => {
-        if (window.jspdf && window.jspdf.jsPDF) resolve(window.jspdf.jsPDF);
-        else reject(new Error("jsPDF cargó pero no se encontró window.jspdf.jsPDF"));
-      };
-      s.onerror = () => reject(new Error("No se pudo cargar jsPDF (CDN)."));
-      document.head.appendChild(s);
-    });
-
-    return window.__jspdfLoadingPromise;
-  }
-
-  async function downloadPDFfromCanvas(posterCanvas, Wpx, Hpx, dpi, filename){
-    const jsPDF = await loadJsPDF();
-
-    // ✅ JPEG evita PDF en blanco por PNG/alpha/tamaño
-    const jpgDataURL = posterCanvas.toDataURL("image/jpeg", 0.98);
-
-    // esperar carga real
-    const img = new Image();
-    await new Promise((res, rej) => {
-      img.onload = () => res();
-      img.onerror = () => rej(new Error("No se pudo cargar la imagen para PDF"));
-      img.src = jpgDataURL;
-    });
-
-    const safeDpi = Number(dpi) || 300;
-
-    // px -> pulgadas -> puntos (72pt = 1in)
-    const wPt = (Wpx / safeDpi) * 72;
-    const hPt = (Hpx / safeDpi) * 72;
-
-    const doc = new jsPDF({
-      orientation: wPt >= hPt ? "l" : "p",
-      unit: "pt",
-      format: [wPt, hPt],
-      compress: true,
-    });
-
-    // full-bleed
-    doc.addImage(img, "JPEG", 0, 0, wPt, hPt, undefined, "FAST");
-    doc.save(filename);
-  }
-
-  async function exportPoster(format, sizeKey){
-    const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
-    const dpi = state.export.dpi || 300;
-
-    let W, H;
-    if (sz.type === "px"){ W = sz.w; H = sz.h; }
-    else { W = cmToPx(sz.w, dpi); H = cmToPx(sz.h, dpi); }
-
-    const out = document.createElement("canvas");
-    out.width = W;
-    out.height = H;
-
-    const ctx = out.getContext("2d");
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-    const tokens = computeRenderTokens();
-    updatePosterFrameInsetPx();
-    syncThickness();
-
-    const frameOn = (!isPoster()) && !!state.map.posterFrameEnabled;
-    const marginOn = (!isPoster()) && !!state.map.posterMarginEnabled && !frameOn;
-
-    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
-    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W));
-    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H));
-
-    const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
-    const frameX = Math.round(framePx * (W / POSTER_W));
-    const frameY = Math.round(framePx * (H / POSTER_H));
-
-    ctx.fillStyle = tokens.posterBg;
-    ctx.fillRect(0, 0, W, H);
-
-    if (frameOn){
-      ctx.fillStyle = tokens.posterInk;
-      ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
-    }
-
-    const innerX = edgeFrameX + frameX;
-    const innerY = edgeFrameY + frameY;
-
-    ctx.fillStyle = tokens.posterBg;
-    ctx.fillRect(innerX, innerY, W - innerX*2, H - innerY*2);
-
-    if (marginOn){
-      const thick = POSTER_MARGIN_THICKNESS_FIXED;
-      const thickScaled = Math.max(1, Math.round(thick * (W / POSTER_W)));
-      ctx.save();
-      ctx.strokeStyle = rgbaFromHex(tokens.posterInk, 1);
-      ctx.lineWidth = thickScaled;
-      ctx.globalAlpha = 1;
-      const half = thickScaled / 2;
-      ctx.strokeRect(
-        edgeMarginX + half,
-        edgeMarginY + half,
-        W - (edgeMarginX * 2) - thickScaled,
-        H - (edgeMarginY * 2) - thickScaled
-      );
-      ctx.restore();
-    }
-
-    const sx = W / POSTER_W;
-    const sy = H / POSTER_H;
-
-    const mapW = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapW")) * sx);
-    const mapH = Math.round(parseFloat(getComputedStyle($poster).getPropertyValue("--mapH")) * sy);
-
-    const mapX = Math.round((W - mapW) / 2);
-    const mapY = Math.round(innerY + (70 * sy));
-    ctx.drawImage($canvas, mapX, mapY, mapW, mapH);
-
-    // ✅ Texto exportado: Moderno = alineado izquierda
-    const family = state.text.fontFamily || "system-ui, -apple-system, Segoe UI, Roboto, Arial";
-    ctx.fillStyle = tokens.posterInk;
-
-    function fitCanvasFont(text, startPx, minPx, weight, maxWidth){
-      let size = startPx;
-      while (size > minPx){
-        ctx.font = `${weight} ${Math.round(size)}px ${family}`;
-        if (ctx.measureText(text).width <= maxWidth) break;
-        size -= 1;
-      }
-      return Math.max(minPx, size);
-    }
-
-    function drawTextFit(text, x, y, startPx, minPx, weight, align, alpha, maxWidth){
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.textAlign = align;
-      ctx.textBaseline = "alphabetic";
-      const size = fitCanvasFont(text, startPx, minPx, weight, maxWidth);
-      ctx.font = `${weight} ${Math.round(size)}px ${family}`;
-      ctx.fillText(text, Math.round(x), Math.round(y));
-      ctx.restore();
-    }
-
-    const show = state.visible;
-    const stNow = getStyleDef();
-    const isModernStyle = (stNow.id === "moderno");
-
-    const padX = Math.round(110 * sx);
-    const maxWText = W - padX * 2;
-
-    const textAlign = isModernStyle ? "left" : "center";
-    const textX = isModernStyle ? padX : (W / 2);
-
-    const yTitle    = Math.round(1085 * sy);
-    const ySubtitle = Math.round(1122 * sy);
-    const yPlace    = Math.round(1162 * sy);
-    const yCoords   = Math.round(1180 * sy);
-    const yDT       = Math.round(1196 * sy);
-
-    const title = String(state.text.title || "").slice(0, TITLE_MAX);
-    const sub = String(state.text.subtitle || "").slice(0, SUB_MAX);
-
-    if (show.title)    drawTextFit(title, textX, yTitle, 54 * sy, 22 * sy, 900, textAlign, 1, maxWText);
-    if (show.subtitle) drawTextFit(sub,   textX, ySubtitle, 18 * sy, 12 * sy, 650, textAlign, 0.85, maxWText);
-
-    if (show.place)    drawTextFit(state.text.place || "",  textX, yPlace, 14 * sy, 11 * sy, 650, textAlign, 0.82, maxWText);
-    if (show.coords)   drawTextFit(state.text.coords || "", textX, yCoords, 14 * sy, 11 * sy, 650, textAlign, 0.82, maxWText);
-    if (show.datetime) drawTextFit(getDateTimeString(),     textX, yDT,    14 * sy, 11 * sy, 650, textAlign, 0.82, maxWText);
-
-    if (format === "png" || format === "jpg"){
-      const mime = format === "png" ? "image/png" : "image/jpeg";
-      const quality = format === "jpg" ? 0.95 : undefined;
-      const url = out.toDataURL(mime, quality);
-      downloadDataURL(url, `poster_${sizeKey}.${format}`);
-      return;
-    }
-
-    // ✅ PDF REAL (sin print) — descarga directa
-    try {
-      await downloadPDFfromCanvas(out, W, H, dpi || 300, `poster_${sizeKey}.pdf`);
-    } catch (err) {
-      console.error(err);
-      alert("No se pudo generar el PDF. Revisa bloqueadores o intenta otro navegador.");
-    }
-  }
-
   function renderSectionExport(){
     $section.innerHTML = "";
 
@@ -2091,7 +2122,6 @@
       state.map.posterMarginEnabled = false;
     }
 
-    // clamp retícula
     state.map.gridOpacity = clamp(Number(state.map.gridOpacity ?? 0.60), 0.05, 0.60);
 
     renderTabs();
@@ -2119,4 +2149,7 @@
     applyAutoTextSizing();
     applyPreviewWatermark(computeRenderTokens());
   });
+
+  // Expose export (opcional)
+  window.__exportPoster = exportPoster;
 })();

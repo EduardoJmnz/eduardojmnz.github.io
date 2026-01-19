@@ -29,9 +29,10 @@
 
       --hdr-shadow: 0 10px 30px rgba(0,0,0,.08);
 
-      /* Mobile menu overlay animation */
+      /* Mobile menu overlay animation (SLOWER) */
       --menu-ease: cubic-bezier(.2,.8,.2,1);
-      --menu-dur: 260ms;
+      --menu-dur: 420ms;   /* was 260ms */
+      --menu-link-dur: 520ms;
     }
 
     *{box-sizing:border-box}
@@ -48,7 +49,7 @@
     a{color:inherit;text-decoration:none}
     a:hover{text-decoration:underline}
 
-    /* ===== Sticky header (white) with shadow only on scroll ===== */
+    /* Sticky header (white) with shadow only on scroll */
     header{
       position:sticky;
       top:0;
@@ -221,29 +222,33 @@
       transform: translateY(0);
     }
 
-    /* ===== Music: single album card that expands to show tracks inside ===== */
-    .album-card{
+    /* ===== Music (responsive behavior requested) =====
+       Desktop: cover left, tracks visible on the right (no collapse)
+       Mobile: show only album first; tap album to expand tracks inside same element
+    */
+    .music-shell{
+      max-width: 980px;
+    }
+
+    .music-grid{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    .album{
       border:1px solid var(--line);
       border-radius:16px;
       overflow:hidden;
       background:#fff;
-      max-width: 880px;
     }
-    .album-header{
-      display:grid;
-      grid-template-columns: 320px 1fr;
-      gap:14px;
-      padding:14px;
-      cursor:pointer;
-      user-select:none;
-    }
+
     .album-cover{
       width:100%;
       aspect-ratio:1/1;
-      border:1px solid rgba(0,0,0,.06);
-      border-radius:14px;
-      overflow:hidden;
       background:#f6f6f6;
+      border-bottom:1px solid rgba(0,0,0,.06);
     }
     .album-cover img{
       width:100%;
@@ -251,17 +256,17 @@
       object-fit:cover;
       display:block;
     }
-    .album-info{
+
+    .album-meta{
+      padding:12px 14px 14px;
       display:flex;
       flex-direction:column;
-      justify-content:space-between;
-      gap:8px;
-      min-height: 100%;
-      padding:4px 2px;
+      gap:6px;
     }
     .album-title{font-weight:500; font-size:18px;}
-    .album-sub{color:var(--muted); font-size:13px; margin-top:2px;}
+    .album-sub{color:var(--muted); font-size:13px;}
     .album-hint{
+      margin-top:4px;
       color:var(--muted);
       font-size:13px;
       display:flex;
@@ -274,55 +279,50 @@
       border-right:2px solid rgba(0,0,0,.45);
       border-bottom:2px solid rgba(0,0,0,.45);
       transform: rotate(45deg);
-      transition: transform 220ms var(--menu-ease);
+      transition: transform 320ms var(--menu-ease);
       margin-top:-2px;
     }
 
-    .album-tracks{
-      border-top:1px solid rgba(0,0,0,.06);
-      padding:12px 14px 14px;
-      display:grid;
-      gap:12px;
-
-      /* collapsed state */
-      max-height:0;
-      overflow:hidden;
-      padding-top:0;
-      padding-bottom:0;
-      opacity:0;
-      transition: max-height 320ms var(--menu-ease), opacity 220ms var(--menu-ease), padding 260ms var(--menu-ease);
-    }
-
-    .album-card.expanded .album-tracks{
-      max-height: 1200px; /* enough for several tracks */
-      opacity:1;
-      padding-top:12px;
-      padding-bottom:14px;
-    }
-    .album-card.expanded .chev{
-      transform: rotate(225deg);
-    }
-
-    .track-row{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:8px;
-      padding:12px;
-      border:1px solid rgba(0,0,0,.07);
-      border-radius:14px;
+    /* Tracklist simple rows (NO rectangles) */
+    .tracklist{
+      border:1px solid var(--line);
+      border-radius:16px;
       background:#fff;
+      overflow:hidden;
+    }
+
+    .track{
+      padding:12px 14px 14px;
+    }
+    .track + .track{
+      border-top:1px solid rgba(0,0,0,.08); /* subtle divider */
     }
     .track-top{
       display:flex;
       justify-content:space-between;
       gap:12px;
       align-items:baseline;
+      margin-bottom:10px;
     }
     .track-title{font-weight:500}
     .track-meta{color:var(--muted);font-size:13px}
     audio{ width:100%; }
 
-    /* ===== Mobile: match reference-style overlay (no "Menu" text, no outline) ===== */
+    /* Mobile collapsible tracklist INSIDE album */
+    .album-collapsible{
+      border-top:1px solid rgba(0,0,0,.06);
+      overflow:hidden;
+      max-height:0;
+      opacity:0;
+      transition: max-height 420ms var(--menu-ease), opacity 260ms var(--menu-ease);
+    }
+    .album.expanded .album-collapsible{
+      max-height: 1200px;
+      opacity:1;
+    }
+    .album.expanded .chev{ transform: rotate(225deg); }
+
+    /* Mobile overlay menu (icon only; close is X) */
     .menu-btn{
       display:none;
       align-items:center;
@@ -330,8 +330,8 @@
       width:40px;
       height:40px;
       padding:0;
-      border:0;          /* no outline */
-      background:transparent; /* no fill */
+      border:0;
+      background:transparent;
       cursor:pointer;
       user-select:none;
     }
@@ -353,7 +353,6 @@
     .menu-icon span:nth-child(2){ top:5px; }
     .menu-icon span:nth-child(3){ top:10px; }
 
-    /* Fullscreen overlay */
     .menu-overlay{
       position:fixed;
       inset:0;
@@ -379,7 +378,6 @@
       height:56px;
     }
 
-    /* Close = plain X (no button outline) */
     .xbtn{
       width:40px;
       height:40px;
@@ -400,6 +398,7 @@
       background:#111;
       border-radius:2px;
       transform-origin:center;
+      transition: opacity var(--menu-dur) var(--menu-ease);
     }
     .xbtn::before{ transform: translate(-50%,-50%) rotate(45deg); }
     .xbtn::after{ transform: translate(-50%,-50%) rotate(-45deg); }
@@ -410,7 +409,6 @@
       padding:22px 18px 40px;
     }
 
-    /* Big links + stagger animation */
     .overlay-links{
       display:flex;
       flex-direction:column;
@@ -425,42 +423,55 @@
       text-decoration:none;
       color:#111;
       opacity:0;
-      transform: translateY(8px);
+      transform: translateY(10px);
       transition:
-        opacity 420ms var(--menu-ease),
-        transform 420ms var(--menu-ease);
+        opacity var(--menu-link-dur) var(--menu-ease),
+        transform var(--menu-link-dur) var(--menu-ease);
     }
     .menu-overlay.open .overlay-links a{
       opacity:1;
       transform: translateY(0);
     }
-    .menu-overlay.open .overlay-links a:nth-child(1){ transition-delay: 40ms; }
-    .menu-overlay.open .overlay-links a:nth-child(2){ transition-delay: 90ms; }
-    .menu-overlay.open .overlay-links a:nth-child(3){ transition-delay: 140ms; }
+    .menu-overlay.open .overlay-links a:nth-child(1){ transition-delay: 90ms; }
+    .menu-overlay.open .overlay-links a:nth-child(2){ transition-delay: 160ms; }
+    .menu-overlay.open .overlay-links a:nth-child(3){ transition-delay: 230ms; }
 
-    /* Menu icon -> X when open */
     body.menu-open .menu-icon span:nth-child(1){ top:5px; transform: rotate(45deg); }
     body.menu-open .menu-icon span:nth-child(2){ opacity:0; }
     body.menu-open .menu-icon span:nth-child(3){ top:5px; transform: rotate(-45deg); }
 
-    /* Mobile */
+    /* ===== Responsive ===== */
     @media(max-width:720px){
       nav{ display:none; }
       .menu-btn{ display:inline-flex; }
-
       .grid{ grid-template-columns: 1fr; }
       .brand{ font-size:18px; }
       .header-inner{ padding:14px 18px; }
 
-      .album-header{
-        grid-template-columns: 1fr; /* cover on top, info under */
+      /* Music: single album element; tracks collapse inside album */
+      .music-grid{
+        grid-template-columns: 1fr;
       }
+      /* Hide desktop tracklist panel on mobile; use collapsible inside album */
+      .tracklist{
+        display:none;
+      }
+      .album{
+        cursor:pointer;
+      }
+    }
+
+    @media(min-width:721px){
+      /* Desktop: album NOT clickable, tracks always visible on right */
+      .album{ cursor:default; }
+      .album-hint{ display:none; }
+      .album-collapsible{ display:none; } /* mobile-only collapsible */
     }
 
     @media (prefers-reduced-motion: reduce){
       .reveal{opacity:1; transform:none; transition:none}
       .thumb img{transition:none}
-      .menu-overlay, .overlay-links a, .menu-icon span, .album-tracks, .chev{transition:none}
+      .menu-overlay, .overlay-links a, .menu-icon span, .album-collapsible, .chev{transition:none}
       .overlay-links a{opacity:1; transform:none}
     }
   </style>
@@ -478,7 +489,7 @@
       <a href="#contact" id="navContact">Contact</a>
     </nav>
 
-    <!-- Mobile icon button (no text, no outline) -->
+    <!-- Mobile icon button -->
     <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menuOverlay" aria-label="Open menu">
       <span class="menu-icon" aria-hidden="true"><span></span><span></span><span></span></span>
     </button>
@@ -542,7 +553,7 @@ const ARTWORKS = [
 
 const ALBUM = {
   title: "Wolffel — Album",
-  subtitle: "Tap the album to view tracks",
+  subtitle: "Selected tracks",
   cover: "img/album-cover.jpg"
 };
 
@@ -597,49 +608,63 @@ function works(){
 
 function music(){
   setActive("music");
-  app.innerHTML = `
-    <h1 class="reveal">Music</h1>
-    <div class="reveal" style="max-width:70ch;color:var(--muted);margin-bottom:14px">
-      Tap the album to expand the tracklist.
+
+  const trackRows = TRACKS.map(t=>`
+    <div class="track">
+      <div class="track-top">
+        <div class="track-title">${escapeHtml(t.title)}</div>
+        <div class="track-meta">${escapeHtml(t.year ?? "")}</div>
+      </div>
+      <audio controls preload="none">
+        <source src="${t.src}" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
     </div>
+  `).join("");
 
-    <section class="album-card reveal" id="albumCard" role="button" tabindex="0" aria-expanded="false">
-      <div class="album-header" id="albumHeader">
-        <div class="album-cover">
-          <img src="${ALBUM.cover}" alt="Album cover">
-        </div>
-        <div class="album-info">
-          <div>
-            <div class="album-title">${escapeHtml(ALBUM.title)}</div>
-            <div class="album-sub">${escapeHtml(ALBUM.subtitle)}</div>
-          </div>
-          <div class="album-hint">
-            <span class="chev" aria-hidden="true"></span>
-            <span id="albumHintText">Show tracks</span>
-          </div>
-        </div>
+  app.innerHTML = `
+    <div class="music-shell">
+      <h1 class="reveal">Music</h1>
+      <div class="reveal" style="max-width:70ch;color:var(--muted);margin-bottom:14px">
+        On desktop, tracks are shown alongside the artwork. On mobile, tap the album to expand the tracklist.
       </div>
 
-      <div class="album-tracks" id="albumTracks">
-        ${TRACKS.map(t=>`
-          <div class="track-row">
-            <div class="track-top">
-              <div class="track-title">${escapeHtml(t.title)}</div>
-              <div class="track-meta">${escapeHtml(t.year ?? "")}</div>
+      <section class="music-grid">
+        <!-- Album (always visible) -->
+        <div class="album reveal" id="albumBox" role="button" tabindex="0" aria-expanded="false">
+          <div class="album-cover">
+            <img src="${ALBUM.cover}" alt="Album cover">
+          </div>
+          <div class="album-meta">
+            <div>
+              <div class="album-title">${escapeHtml(ALBUM.title)}</div>
+              <div class="album-sub">${escapeHtml(ALBUM.subtitle)}</div>
             </div>
-            <audio controls preload="none">
-              <source src="${t.src}" type="audio/mpeg">
-              Your browser does not support the audio element.
-            </audio>
+            <div class="album-hint">
+              <span class="chev" aria-hidden="true"></span>
+              <span id="albumHint">Show tracks</span>
+            </div>
           </div>
-        `).join("")}
-      </div>
-    </section>
+
+          <!-- Mobile-only collapsible tracklist INSIDE album -->
+          <div class="album-collapsible" id="albumCollapsible">
+            <div class="tracklist" style="border:0;border-radius:0">
+              ${trackRows}
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop tracklist panel (always visible on the right) -->
+        <div class="tracklist reveal" id="desktopTracklist">
+          ${trackRows}
+        </div>
+      </section>
+    </div>
   `;
 
   attachReveal();
   updateHeaderElevation();
-  wireAlbumToggle();
+  wireAlbumToggleMobile();
 }
 
 function contact(){
@@ -658,42 +683,50 @@ function contact(){
   updateHeaderElevation();
 }
 
-/* ===== Album expand/collapse (single element) ===== */
-function wireAlbumToggle(){
-  const card = document.getElementById("albumCard");
-  const header = document.getElementById("albumHeader");
-  const hint = document.getElementById("albumHintText");
+/* ===== Mobile-only album toggle (desktop always expanded on right) ===== */
+function wireAlbumToggleMobile(){
+  const album = document.getElementById("albumBox");
+  const hint = document.getElementById("albumHint");
+  if(!album) return;
 
-  if(!card || !header) return;
+  function isMobile(){
+    return window.matchMedia("(max-width: 720px)").matches;
+  }
 
   function setExpanded(expanded){
-    card.classList.toggle("expanded", expanded);
-    card.setAttribute("aria-expanded", expanded ? "true" : "false");
+    album.classList.toggle("expanded", expanded);
+    album.setAttribute("aria-expanded", expanded ? "true" : "false");
     if(hint) hint.textContent = expanded ? "Hide tracks" : "Show tracks";
   }
 
-  // default collapsed
+  // default collapsed on mobile; not interactive on desktop
   setExpanded(false);
 
   function toggle(){
-    const expanded = card.classList.contains("expanded");
+    if(!isMobile()) return;
+    const expanded = album.classList.contains("expanded");
     setExpanded(!expanded);
   }
 
-  header.addEventListener("click", toggle);
+  album.addEventListener("click", (e)=>{
+    // don't toggle if user interacts with the audio controls
+    if(e.target.closest("audio")) return;
+    toggle();
+  });
 
-  // keyboard support
-  card.addEventListener("keydown", (e)=>{
+  album.addEventListener("keydown", (e)=>{
+    if(!isMobile()) return;
     if(e.key === "Enter" || e.key === " "){
       e.preventDefault();
       toggle();
     }
   });
 
-  // IMPORTANT: don’t toggle when user clicks audio controls
-  card.addEventListener("click", (e)=>{
-    if(e.target.closest("audio") || e.target.closest("button") || e.target.closest("source")) return;
-  }, true);
+  // When resizing from desktop->mobile, collapse for mobile
+  window.addEventListener("resize", ()=>{
+    if(isMobile()) setExpanded(false);
+    else setExpanded(false);
+  }, { passive:true });
 }
 
 /* ===== Modal ===== */
@@ -746,7 +779,7 @@ function updateHeaderElevation(){
 }
 window.addEventListener("scroll", updateHeaderElevation, { passive:true });
 
-/* ===== Mobile overlay menu (no text, close is X) ===== */
+/* ===== Mobile overlay menu (slower) ===== */
 const menuBtn = document.getElementById("menuBtn");
 const menuOverlay = document.getElementById("menuOverlay");
 const menuCloseBtn = document.getElementById("menuCloseBtn");
@@ -773,7 +806,6 @@ menuBtn.addEventListener("click", ()=>{
 });
 menuCloseBtn.addEventListener("click", closeMenu);
 
-/* close on overlay click outside links */
 menuOverlay.addEventListener("click", (e)=>{
   const clickedLink = e.target.closest(".overlay-links a");
   const clickedTop = e.target.closest(".overlay-top");
@@ -781,12 +813,10 @@ menuOverlay.addEventListener("click", (e)=>{
   closeMenu();
 });
 
-/* close on route change (menu links) */
 ["oWorks","oMusic","oContact"].forEach(id=>{
   document.getElementById(id).addEventListener("click", ()=> closeMenu());
 });
 
-/* close on ESC */
 window.addEventListener("keydown", (e)=>{
   if(e.key === "Escape" && menuOverlay.classList.contains("open")) closeMenu();
 });

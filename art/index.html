@@ -29,10 +29,10 @@
 
       --hdr-shadow: 0 10px 30px rgba(0,0,0,.08);
 
-      /* Mobile menu overlay animation (SLOWER) */
+      /* Mobile menu overlay animation (SLOWER: 2x previous) */
       --menu-ease: cubic-bezier(.2,.8,.2,1);
-      --menu-dur: 420ms;   /* was 260ms */
-      --menu-link-dur: 520ms;
+      --menu-dur: 840ms;      /* was 420ms */
+      --menu-link-dur: 1040ms;/* was 520ms */
     }
 
     *{box-sizing:border-box}
@@ -222,13 +222,8 @@
       transform: translateY(0);
     }
 
-    /* ===== Music (responsive behavior requested) =====
-       Desktop: cover left, tracks visible on the right (no collapse)
-       Mobile: show only album first; tap album to expand tracks inside same element
-    */
-    .music-shell{
-      max-width: 980px;
-    }
+    /* ===== Music (responsive behavior) ===== */
+    .music-shell{ max-width: 980px; }
 
     .music-grid{
       display:grid;
@@ -314,15 +309,15 @@
       overflow:hidden;
       max-height:0;
       opacity:0;
-      transition: max-height 420ms var(--menu-ease), opacity 260ms var(--menu-ease);
+      transition: max-height 520ms var(--menu-ease), opacity 320ms var(--menu-ease);
     }
     .album.expanded .album-collapsible{
-      max-height: 1200px;
+      max-height: 2000px;
       opacity:1;
     }
     .album.expanded .chev{ transform: rotate(225deg); }
 
-    /* Mobile overlay menu (icon only; close is X) */
+    /* ===== Mobile overlay menu (icon only; close is X) ===== */
     .menu-btn{
       display:none;
       align-items:center;
@@ -398,7 +393,6 @@
       background:#111;
       border-radius:2px;
       transform-origin:center;
-      transition: opacity var(--menu-dur) var(--menu-ease);
     }
     .xbtn::before{ transform: translate(-50%,-50%) rotate(45deg); }
     .xbtn::after{ transform: translate(-50%,-50%) rotate(-45deg); }
@@ -423,7 +417,7 @@
       text-decoration:none;
       color:#111;
       opacity:0;
-      transform: translateY(10px);
+      transform: translateY(12px);
       transition:
         opacity var(--menu-link-dur) var(--menu-ease),
         transform var(--menu-link-dur) var(--menu-ease);
@@ -432,9 +426,9 @@
       opacity:1;
       transform: translateY(0);
     }
-    .menu-overlay.open .overlay-links a:nth-child(1){ transition-delay: 90ms; }
-    .menu-overlay.open .overlay-links a:nth-child(2){ transition-delay: 160ms; }
-    .menu-overlay.open .overlay-links a:nth-child(3){ transition-delay: 230ms; }
+    .menu-overlay.open .overlay-links a:nth-child(1){ transition-delay: 160ms; }
+    .menu-overlay.open .overlay-links a:nth-child(2){ transition-delay: 260ms; }
+    .menu-overlay.open .overlay-links a:nth-child(3){ transition-delay: 360ms; }
 
     body.menu-open .menu-icon span:nth-child(1){ top:5px; transform: rotate(45deg); }
     body.menu-open .menu-icon span:nth-child(2){ opacity:0; }
@@ -448,21 +442,15 @@
       .brand{ font-size:18px; }
       .header-inner{ padding:14px 18px; }
 
-      /* Music: single album element; tracks collapse inside album */
-      .music-grid{
-        grid-template-columns: 1fr;
-      }
-      /* Hide desktop tracklist panel on mobile; use collapsible inside album */
-      .tracklist{
-        display:none;
-      }
-      .album{
-        cursor:pointer;
-      }
+      .music-grid{ grid-template-columns: 1fr; }
+
+      /* IMPORTANT FIX: only hide the desktop panel, NOT the mobile tracks inside the album */
+      #desktopTracklist{ display:none; }
+
+      .album{ cursor:pointer; }
     }
 
     @media(min-width:721px){
-      /* Desktop: album NOT clickable, tracks always visible on right */
       .album{ cursor:default; }
       .album-hint{ display:none; }
       .album-collapsible{ display:none; } /* mobile-only collapsible */
@@ -626,7 +614,7 @@ function music(){
     <div class="music-shell">
       <h1 class="reveal">Music</h1>
       <div class="reveal" style="max-width:70ch;color:var(--muted);margin-bottom:14px">
-        On desktop, tracks are shown alongside the artwork. On mobile, tap the album to expand the tracklist.
+        On desktop, tracks appear next to the artwork. On mobile, tap the album to expand the tracklist.
       </div>
 
       <section class="music-grid">
@@ -648,7 +636,7 @@ function music(){
 
           <!-- Mobile-only collapsible tracklist INSIDE album -->
           <div class="album-collapsible" id="albumCollapsible">
-            <div class="tracklist" style="border:0;border-radius:0">
+            <div style="border:0;border-radius:0">
               ${trackRows}
             </div>
           </div>
@@ -683,15 +671,13 @@ function contact(){
   updateHeaderElevation();
 }
 
-/* ===== Mobile-only album toggle (desktop always expanded on right) ===== */
+/* ===== Mobile-only album toggle ===== */
 function wireAlbumToggleMobile(){
   const album = document.getElementById("albumBox");
   const hint = document.getElementById("albumHint");
   if(!album) return;
 
-  function isMobile(){
-    return window.matchMedia("(max-width: 720px)").matches;
-  }
+  const mq = window.matchMedia("(max-width: 720px)");
 
   function setExpanded(expanded){
     album.classList.toggle("expanded", expanded);
@@ -699,34 +685,28 @@ function wireAlbumToggleMobile(){
     if(hint) hint.textContent = expanded ? "Hide tracks" : "Show tracks";
   }
 
-  // default collapsed on mobile; not interactive on desktop
+  // default collapsed on mobile
   setExpanded(false);
 
   function toggle(){
-    if(!isMobile()) return;
-    const expanded = album.classList.contains("expanded");
-    setExpanded(!expanded);
+    if(!mq.matches) return;
+    setExpanded(!album.classList.contains("expanded"));
   }
 
   album.addEventListener("click", (e)=>{
-    // don't toggle if user interacts with the audio controls
-    if(e.target.closest("audio")) return;
+    if(e.target.closest("audio")) return; // don't toggle when using player controls
     toggle();
   });
 
   album.addEventListener("keydown", (e)=>{
-    if(!isMobile()) return;
+    if(!mq.matches) return;
     if(e.key === "Enter" || e.key === " "){
       e.preventDefault();
       toggle();
     }
   });
 
-  // When resizing from desktop->mobile, collapse for mobile
-  window.addEventListener("resize", ()=>{
-    if(isMobile()) setExpanded(false);
-    else setExpanded(false);
-  }, { passive:true });
+  mq.addEventListener?.("change", ()=> setExpanded(false));
 }
 
 /* ===== Modal ===== */

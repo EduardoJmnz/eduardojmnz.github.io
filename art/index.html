@@ -18,6 +18,16 @@
       --muted:#6b6b6b;
       --line:#eaeaea;
       --max:1120px;
+
+      /* Header dark gray/black (grisaseo como te gusta) */
+      --hdr-bg:#141414;
+      --hdr-fg:#f2f2f2;
+      --hdr-muted:#bdbdbd;
+      --hdr-line: rgba(255,255,255,.10);
+
+      --reveal-y: 14px;
+      --reveal-dur: 520ms;
+      --reveal-ease: cubic-bezier(.2,.8,.2,1);
     }
 
     *{box-sizing:border-box}
@@ -37,42 +47,65 @@
     .wrap{
       max-width:var(--max);
       margin:0 auto;
-      padding:28px 18px 60px;
+      padding:0 18px 60px; /* el top se maneja por header sticky */
     }
 
+    /* Sticky header always visible */
     header{
+      position:sticky;
+      top:0;
+      z-index:50;
+      background: var(--hdr-bg);
+      color: var(--hdr-fg);
+      border-bottom: 1px solid var(--hdr-line);
+    }
+
+    .header-inner{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:18px 18px;
       display:flex;
-      justify-content:space-between;
       align-items:center;
-      padding-bottom:22px;
-      border-bottom:1px solid var(--line);
+      justify-content:space-between;
+      gap:16px;
     }
 
     .brand{
       font-size:22px;
       font-weight:500;
       letter-spacing:0.3px;
+      color: var(--hdr-fg);
+      text-decoration:none;
+      cursor:pointer;
     }
+    .brand:hover{ text-decoration:none; opacity:.92; }
 
     nav{
       display:flex;
       gap:18px;
+      align-items:center;
     }
 
     nav a{
-      color:var(--muted);
+      color:var(--hdr-muted);
       font-size:14px;
+      text-decoration:none;
     }
+    nav a:hover{ text-decoration:none; color: var(--hdr-fg); opacity:.95; }
 
     nav a[aria-current="page"]{
-      color:var(--fg);
+      color:var(--hdr-fg);
       font-weight:500;
+    }
+
+    main{
+      padding-top:26px;
     }
 
     h1{
       font-size:22px;
       font-weight:500;
-      margin:26px 0 18px;
+      margin:0 0 18px;
     }
 
     .grid{
@@ -80,14 +113,13 @@
       grid-template-columns:repeat(3,1fr);
       gap:18px;
     }
-
     @media(max-width:900px){
       .grid{grid-template-columns:repeat(2,1fr)}
     }
-
     @media(max-width:600px){
       .grid{grid-template-columns:1fr}
       .brand{font-size:18px}
+      .header-inner{padding:16px 18px}
     }
 
     .card{
@@ -117,33 +149,14 @@
       transform:scale(1.02);
     }
 
-    .meta{
-      font-size:14px;
-    }
-
-    .title{
-      font-weight:500;
-    }
-
-    .year{
-      color:var(--muted);
-    }
-
-    .sub{
-      font-size:13px;
-      color:var(--muted);
-      margin-top:2px;
-    }
-
+    .meta{font-size:14px}
+    .title{font-weight:500}
+    .year{color:var(--muted)}
+    .sub{font-size:13px;color:var(--muted);margin-top:2px}
     .more button{
-      border:0;
-      background:none;
-      padding:0;
-      font-size:13px;
-      color:var(--muted);
-      cursor:pointer;
-      text-decoration:underline;
-      margin-top:4px;
+      border:0;background:none;padding:0;
+      font-size:13px;color:var(--muted);
+      cursor:pointer;text-decoration:underline;margin-top:4px;
     }
 
     footer{
@@ -165,33 +178,22 @@
       border-radius:14px;
       padding:0;
     }
-
-    dialog::backdrop{
-      background:rgba(0,0,0,.35);
-    }
-
+    dialog::backdrop{background:rgba(0,0,0,.35)}
     .modal{
       display:grid;
       grid-template-columns:1.4fr 1fr;
     }
-
     @media(max-width:800px){
       .modal{grid-template-columns:1fr}
     }
-
     .modal-img{
       padding:16px;
       background:#fafafa;
       border-right:1px solid var(--line);
     }
-
     @media(max-width:800px){
-      .modal-img{
-        border-right:0;
-        border-bottom:1px solid var(--line);
-      }
+      .modal-img{border-right:0;border-bottom:1px solid var(--line)}
     }
-
     .modal-img img{
       width:100%;
       height:100%;
@@ -200,14 +202,12 @@
       border:1px solid var(--line);
       background:#fff;
     }
-
     .modal-body{
       padding:18px;
       display:flex;
       flex-direction:column;
       gap:10px;
     }
-
     .close{
       align-self:flex-end;
       border:1px solid var(--line);
@@ -218,36 +218,55 @@
       color:var(--muted);
       font-size:13px;
     }
-
     .row{
       display:grid;
       grid-template-columns:120px 1fr;
       gap:10px;
       font-size:14px;
     }
-
     .k{color:var(--muted)}
+
+    /* ===== Reveal animation (scroll) ===== */
+    .reveal{
+      opacity:0;
+      transform: translateY(var(--reveal-y));
+      transition:
+        opacity var(--reveal-dur) var(--reveal-ease),
+        transform var(--reveal-dur) var(--reveal-ease);
+      will-change: opacity, transform;
+    }
+    .reveal.is-visible{
+      opacity:1;
+      transform: translateY(0);
+    }
+
+    /* reduce motion accessibility */
+    @media (prefers-reduced-motion: reduce){
+      .reveal{opacity:1; transform:none; transition:none}
+      .thumb img{transition:none}
+    }
   </style>
 </head>
 
 <body>
-<div class="wrap">
-
-  <header>
-    <div class="brand">Eduardo Wolffel</div>
+<header>
+  <div class="header-inner">
+    <!-- Click brand => go to main (works) -->
+    <a class="brand" href="#works" id="brandLink">Eduardo Wolffel</a>
     <nav>
       <a href="#works" id="navWorks">Works</a>
       <a href="#contact" id="navContact">Contact</a>
     </nav>
-  </header>
+  </div>
+</header>
 
+<div class="wrap">
   <main id="app"></main>
 
-  <footer>
+  <footer class="reveal">
     <div>© <span id="year"></span> Eduardo Wolffel</div>
     <div><a href="https://instagram.com/" target="_blank" rel="noreferrer">Instagram</a></div>
   </footer>
-
 </div>
 
 <dialog id="dlg">
@@ -269,58 +288,66 @@
 
 <script>
 const ARTWORKS = [
-  {id:"obra-01",title:"Unidad 705",year:2025,size:"160 × 130 cm",medium:"Acrílico sobre lienzo",status:"Disponible",image:"img/1.png"},
-  {id:"obra-02",title:"Unidad 707",year:2025,size:"160 × 130 cm",medium:"Acrílico sobre lienzo",status:"Vendido",image:"img/2.png"},
-  {id:"obra-03",title:"Unidad 712",year:2024,size:"130 × 130 cm",medium:"Acrílico sobre lienzo",status:"Disponible",image:"img/1.png"},
-  {id:"obra-04",title:"Unidad 721",year:2024,size:"120 × 100 cm",medium:"Óleo sobre lienzo",status:"Disponible",image:"img/2.png"},
-  {id:"obra-05",title:"Unidad 734",year:2023,size:"150 × 120 cm",medium:"Óleo sobre lino",status:"Vendido",image:"img/1.png"},
-  {id:"obra-06",title:"Unidad 748",year:2023,size:"100 × 80 cm",medium:"Acrílico y grafito",status:"Disponible",image:"img/1.png"},
-  {id:"obra-07",title:"Unidad 759",year:2022,size:"140 × 110 cm",medium:"Mixta sobre lienzo",status:"Disponible",image:"img/2.png"},
-  {id:"obra-08",title:"Unidad 770",year:2022,size:"110 × 90 cm",medium:"Óleo sobre lienzo",status:"Vendido",image:"img/1.png"},
-  {id:"obra-09",title:"Unidad 781",year:2021,size:"90 × 70 cm",medium:"Mixta sobre papel",status:"Disponible",image:"img/29.png"},
-  {id:"obra-10",title:"Unidad 799",year:2021,size:"80 × 60 cm",medium:"Acrílico sobre papel",status:"Disponible",image:"img/1.png"},
+  {id:"obra-01",title:"Unidad 705",year:2025,size:"160 × 130 cm",medium:"Acrílico sobre lienzo",status:"Disponible",image:"img/obra-01.jpg"},
+  {id:"obra-02",title:"Unidad 707",year:2025,size:"160 × 130 cm",medium:"Acrílico sobre lienzo",status:"Vendido",image:"img/obra-02.jpg"},
+  {id:"obra-03",title:"Unidad 712",year:2024,size:"130 × 130 cm",medium:"Acrílico sobre lienzo",status:"Disponible",image:"img/obra-03.jpg"},
+  {id:"obra-04",title:"Unidad 721",year:2024,size:"120 × 100 cm",medium:"Óleo sobre lienzo",status:"Disponible",image:"img/obra-04.jpg"},
+  {id:"obra-05",title:"Unidad 734",year:2023,size:"150 × 120 cm",medium:"Óleo sobre lino",status:"Vendido",image:"img/obra-05.jpg"},
+  {id:"obra-06",title:"Unidad 748",year:2023,size:"100 × 80 cm",medium:"Acrílico y grafito",status:"Disponible",image:"img/obra-06.jpg"},
+  {id:"obra-07",title:"Unidad 759",year:2022,size:"140 × 110 cm",medium:"Mixta sobre lienzo",status:"Disponible",image:"img/obra-07.jpg"},
+  {id:"obra-08",title:"Unidad 770",year:2022,size:"110 × 90 cm",medium:"Óleo sobre lienzo",status:"Vendido",image:"img/obra-08.jpg"},
+  {id:"obra-09",title:"Unidad 781",year:2021,size:"90 × 70 cm",medium:"Mixta sobre papel",status:"Disponible",image:"img/obra-09.jpg"},
+  {id:"obra-10",title:"Unidad 799",year:2021,size:"80 × 60 cm",medium:"Acrílico sobre papel",status:"Disponible",image:"img/obra-10.jpg"},
 ];
 
 const app = document.getElementById("app");
 const dlg = document.getElementById("dlg");
 
-function works(){
-  navWorks.setAttribute("aria-current","page");
-  navContact.removeAttribute("aria-current");
+function setActive(tab){
+  if(tab === "contact"){
+    navContact.setAttribute("aria-current","page");
+    navWorks.removeAttribute("aria-current");
+  } else {
+    navWorks.setAttribute("aria-current","page");
+    navContact.removeAttribute("aria-current");
+  }
+}
 
+function works(){
+  setActive("works");
   app.innerHTML = `
-    <h1>Selected works</h1>
-    <section class="grid">
+    <h1 class="reveal">Selected works</h1>
+    <section class="grid" id="grid">
       ${ARTWORKS.map(a=>`
-        <article class="card">
+        <article class="card reveal">
           <div class="thumb" onclick="openModal('${a.id}')">
-            <img src="${a.image}" alt="${a.title}">
+            <img src="${a.image}" alt="${escapeHtml(a.title)}">
           </div>
           <div class="meta">
-            <div class="title">${a.title} <span class="year">${a.year}</span></div>
-            <div class="sub">${a.size}<br>${a.medium}</div>
-            <div class="more">
-              <button onclick="openModal('${a.id}')">View details</button>
-            </div>
+            <div class="title">${escapeHtml(a.title)} <span class="year">${a.year}</span></div>
+            <div class="sub">${escapeHtml(a.size)}<br>${escapeHtml(a.medium)}</div>
+            <div class="more"><button onclick="openModal('${a.id}')">View details</button></div>
           </div>
         </article>
       `).join("")}
     </section>
   `;
+  attachReveal();
 }
 
 function contact(){
-  navContact.setAttribute("aria-current","page");
-  navWorks.removeAttribute("aria-current");
-
+  setActive("contact");
   app.innerHTML = `
-    <h1>Contact</h1>
-    <p style="max-width:70ch;color:var(--muted)">
+    <h1 class="reveal">Contact</h1>
+    <div class="reveal" style="max-width:70ch;color:var(--muted);margin-bottom:14px">
       Para ventas, exposiciones o comisiones.
-    </p>
-    <p><strong>Email</strong><br><a href="mailto:tucorreo@ejemplo.com">tucorreo@ejemplo.com</a></p>
-    <p><strong>Instagram</strong><br><a href="https://instagram.com/" target="_blank">@tuusuario</a></p>
+    </div>
+    <div class="reveal">
+      <p><strong>Email</strong><br><a href="mailto:tucorreo@ejemplo.com">tucorreo@ejemplo.com</a></p>
+      <p><strong>Instagram</strong><br><a href="https://instagram.com/" target="_blank" rel="noreferrer">@tuusuario</a></p>
+    </div>
   `;
+  attachReveal();
 }
 
 function openModal(id){
@@ -328,20 +355,57 @@ function openModal(id){
   if(!a) return;
   dlgImg.src = a.image;
   dlgTitle.textContent = a.title;
-  dlgYear.textContent = a.year;
-  dlgSize.textContent = a.size;
-  dlgMedium.textContent = a.medium;
-  dlgStatus.textContent = a.status;
+  dlgYear.textContent = a.year ?? "—";
+  dlgSize.textContent = a.size ?? "—";
+  dlgMedium.textContent = a.medium ?? "—";
+  dlgStatus.textContent = a.status ?? "—";
   dlg.showModal();
 }
 
 dlgClose.onclick = ()=>dlg.close();
-navWorks.onclick = works;
-navContact.onclick = contact;
+navWorks.onclick = (e)=>{ e.preventDefault(); location.hash = "#works"; };
+navContact.onclick = (e)=>{ e.preventDefault(); location.hash = "#contact"; };
+// brand already href="#works", but keep it explicit:
+brandLink.onclick = (e)=>{ e.preventDefault(); location.hash = "#works"; };
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+/* Reveal observer */
+let revealObserver = null;
+
+function attachReveal(){
+  // reset any previous observer (when navigating between works/contact)
+  if(revealObserver) revealObserver.disconnect();
+
+  const items = document.querySelectorAll(".reveal");
+  // make sure they start hidden (in case of route switches)
+  items.forEach(el => el.classList.remove("is-visible"));
+
+  revealObserver = new IntersectionObserver((entries)=>{
+    for(const entry of entries){
+      if(entry.isIntersecting){
+        entry.target.classList.add("is-visible");
+        revealObserver.unobserve(entry.target);
+      }
+    }
+  }, { threshold: 0.12, rootMargin: "0px 0px -10% 0px" });
+
+  items.forEach(el => revealObserver.observe(el));
+}
+
+function router(){
+  const h = location.hash || "#works";
+  if(h === "#contact") return contact();
+  return works();
+}
 
 document.getElementById("year").textContent = new Date().getFullYear();
-works();
+window.addEventListener("hashchange", router);
+router();
 </script>
 </body>
 </html>
-

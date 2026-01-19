@@ -221,39 +221,95 @@
       transform: translateY(0);
     }
 
-    /* ===== Music layout: cover left + tracks right (mobile stacked) ===== */
-    .music-layout{
-      display:grid;
-      grid-template-columns: 360px 1fr;
-      gap:18px;
-      align-items:start;
-    }
-    .album{
+    /* ===== Music: single album card that expands to show tracks inside ===== */
+    .album-card{
       border:1px solid var(--line);
-      border-radius:14px;
+      border-radius:16px;
       overflow:hidden;
       background:#fff;
+      max-width: 880px;
     }
-    .album img{
+    .album-header{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:14px;
+      padding:14px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .album-cover{
       width:100%;
-      height:auto;
-      display:block;
-      aspect-ratio: 1/1;
-      object-fit:cover;
+      aspect-ratio:1/1;
+      border:1px solid rgba(0,0,0,.06);
+      border-radius:14px;
+      overflow:hidden;
       background:#f6f6f6;
     }
-    .album-meta{
-      padding:12px 12px 14px;
-      border-top:1px solid rgba(0,0,0,.06);
+    .album-cover img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
     }
-    .album-title{font-weight:500}
-    .album-sub{color:var(--muted); font-size:13px; margin-top:2px}
+    .album-info{
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:8px;
+      min-height: 100%;
+      padding:4px 2px;
+    }
+    .album-title{font-weight:500; font-size:18px;}
+    .album-sub{color:var(--muted); font-size:13px; margin-top:2px;}
+    .album-hint{
+      color:var(--muted);
+      font-size:13px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .chev{
+      display:inline-block;
+      width:10px;height:10px;
+      border-right:2px solid rgba(0,0,0,.45);
+      border-bottom:2px solid rgba(0,0,0,.45);
+      transform: rotate(45deg);
+      transition: transform 220ms var(--menu-ease);
+      margin-top:-2px;
+    }
 
-    .tracklist{ display:flex; flex-direction:column; gap:12px; }
-    .track{
-      border:1px solid var(--line);
+    .album-tracks{
+      border-top:1px solid rgba(0,0,0,.06);
+      padding:12px 14px 14px;
+      display:grid;
+      gap:12px;
+
+      /* collapsed state */
+      max-height:0;
+      overflow:hidden;
+      padding-top:0;
+      padding-bottom:0;
+      opacity:0;
+      transition: max-height 320ms var(--menu-ease), opacity 220ms var(--menu-ease), padding 260ms var(--menu-ease);
+    }
+
+    .album-card.expanded .album-tracks{
+      max-height: 1200px; /* enough for several tracks */
+      opacity:1;
+      padding-top:12px;
+      padding-bottom:14px;
+    }
+    .album-card.expanded .chev{
+      transform: rotate(225deg);
+    }
+
+    .track-row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:8px;
+      padding:12px;
+      border:1px solid rgba(0,0,0,.07);
       border-radius:14px;
-      padding:14px;
       background:#fff;
     }
     .track-top{
@@ -261,29 +317,26 @@
       justify-content:space-between;
       gap:12px;
       align-items:baseline;
-      margin-bottom:10px;
     }
     .track-title{font-weight:500}
     .track-meta{color:var(--muted);font-size:13px}
     audio{ width:100%; }
 
-    /* ===== Mobile: match reference-style "Menu" overlay ===== */
+    /* ===== Mobile: match reference-style overlay (no "Menu" text, no outline) ===== */
     .menu-btn{
       display:none;
       align-items:center;
-      gap:10px;
-      padding:8px 10px;
-      border:1px solid rgba(0,0,0,.08);
-      border-radius:999px;
-      background:#fff;
+      justify-content:center;
+      width:40px;
+      height:40px;
+      padding:0;
+      border:0;          /* no outline */
+      background:transparent; /* no fill */
       cursor:pointer;
-      font: inherit;
-      color: var(--fg);
       user-select:none;
     }
-    .menu-btn:hover{opacity:.92}
     .menu-icon{
-      width:16px;
+      width:18px;
       height:12px;
       position:relative;
     }
@@ -318,34 +371,46 @@
     .menu-overlay .overlay-top{
       display:flex;
       align-items:center;
-      justify-content:space-between;
+      justify-content:flex-end;
       padding:16px 18px;
       border-bottom:1px solid rgba(0,0,0,.06);
       max-width:var(--max);
       margin:0 auto;
+      height:56px;
     }
-    .menu-overlay .overlay-title{
-      font-weight:500;
-      font-size:16px;
-      color:var(--muted);
-      letter-spacing:.2px;
-    }
-    .menu-overlay .close-btn{
-      border:1px solid rgba(0,0,0,.08);
-      background:#fff;
-      border-radius:999px;
-      padding:8px 12px;
+
+    /* Close = plain X (no button outline) */
+    .xbtn{
+      width:40px;
+      height:40px;
+      border:0;
+      background:transparent;
+      padding:0;
       cursor:pointer;
-      font: inherit;
+      position:relative;
     }
+    .xbtn::before,
+    .xbtn::after{
+      content:"";
+      position:absolute;
+      top:50%;
+      left:50%;
+      width:18px;
+      height:2px;
+      background:#111;
+      border-radius:2px;
+      transform-origin:center;
+    }
+    .xbtn::before{ transform: translate(-50%,-50%) rotate(45deg); }
+    .xbtn::after{ transform: translate(-50%,-50%) rotate(-45deg); }
 
     .overlay-content{
       max-width:var(--max);
       margin:0 auto;
-      padding:20px 18px 40px;
+      padding:22px 18px 40px;
     }
 
-    /* Big links + stagger animation (very “gallery site”) */
+    /* Big links + stagger animation */
     .overlay-links{
       display:flex;
       flex-direction:column;
@@ -378,20 +443,24 @@
     body.menu-open .menu-icon span:nth-child(2){ opacity:0; }
     body.menu-open .menu-icon span:nth-child(3){ top:5px; transform: rotate(-45deg); }
 
-    /* Mobile sizing */
+    /* Mobile */
     @media(max-width:720px){
       nav{ display:none; }
       .menu-btn{ display:inline-flex; }
+
       .grid{ grid-template-columns: 1fr; }
       .brand{ font-size:18px; }
       .header-inner{ padding:14px 18px; }
-      .music-layout{ grid-template-columns:1fr; }
+
+      .album-header{
+        grid-template-columns: 1fr; /* cover on top, info under */
+      }
     }
 
     @media (prefers-reduced-motion: reduce){
       .reveal{opacity:1; transform:none; transition:none}
       .thumb img{transition:none}
-      .menu-overlay, .overlay-links a, .menu-icon span{transition:none}
+      .menu-overlay, .overlay-links a, .menu-icon span, .album-tracks, .chev{transition:none}
       .overlay-links a{opacity:1; transform:none}
     }
   </style>
@@ -409,10 +478,9 @@
       <a href="#contact" id="navContact">Contact</a>
     </nav>
 
-    <!-- Mobile "Menu" button (reference-style) -->
-    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menuOverlay">
+    <!-- Mobile icon button (no text, no outline) -->
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menuOverlay" aria-label="Open menu">
       <span class="menu-icon" aria-hidden="true"><span></span><span></span><span></span></span>
-      <span>Menu</span>
     </button>
   </div>
 </header>
@@ -420,8 +488,7 @@
 <!-- Mobile fullscreen overlay menu -->
 <div class="menu-overlay" id="menuOverlay" aria-hidden="true">
   <div class="overlay-top">
-    <div class="overlay-title">Menu</div>
-    <button class="close-btn" id="menuCloseBtn">Close</button>
+    <button class="xbtn" id="menuCloseBtn" aria-label="Close menu"></button>
   </div>
   <div class="overlay-content">
     <div class="overlay-links">
@@ -473,11 +540,10 @@ const ARTWORKS = [
   {id:"obra-10",title:"Unit 799",year:2021,size:"80 × 60 cm",medium:"Acrylic on paper",status:"Available",image:"img/obra-10.jpg"},
 ];
 
-/* Music: cover left (top on mobile) + tracks right (below on mobile) */
 const ALBUM = {
   title: "Wolffel — Album",
-  subtitle: "Selected tracks",
-  cover: "img/album-cover.jpg"   // <-- put your album art here
+  subtitle: "Tap the album to view tracks",
+  cover: "img/album-cover.jpg"
 };
 
 const TRACKS = [
@@ -534,21 +600,29 @@ function music(){
   app.innerHTML = `
     <h1 class="reveal">Music</h1>
     <div class="reveal" style="max-width:70ch;color:var(--muted);margin-bottom:14px">
-      Listen to my music here.
+      Tap the album to expand the tracklist.
     </div>
 
-    <section class="music-layout">
-      <div class="album reveal">
-        <img src="${ALBUM.cover}" alt="Album cover">
-        <div class="album-meta">
-          <div class="album-title">${escapeHtml(ALBUM.title)}</div>
-          <div class="album-sub">${escapeHtml(ALBUM.subtitle)}</div>
+    <section class="album-card reveal" id="albumCard" role="button" tabindex="0" aria-expanded="false">
+      <div class="album-header" id="albumHeader">
+        <div class="album-cover">
+          <img src="${ALBUM.cover}" alt="Album cover">
+        </div>
+        <div class="album-info">
+          <div>
+            <div class="album-title">${escapeHtml(ALBUM.title)}</div>
+            <div class="album-sub">${escapeHtml(ALBUM.subtitle)}</div>
+          </div>
+          <div class="album-hint">
+            <span class="chev" aria-hidden="true"></span>
+            <span id="albumHintText">Show tracks</span>
+          </div>
         </div>
       </div>
 
-      <div class="tracklist">
+      <div class="album-tracks" id="albumTracks">
         ${TRACKS.map(t=>`
-          <div class="track reveal">
+          <div class="track-row">
             <div class="track-top">
               <div class="track-title">${escapeHtml(t.title)}</div>
               <div class="track-meta">${escapeHtml(t.year ?? "")}</div>
@@ -562,8 +636,10 @@ function music(){
       </div>
     </section>
   `;
+
   attachReveal();
   updateHeaderElevation();
+  wireAlbumToggle();
 }
 
 function contact(){
@@ -580,6 +656,44 @@ function contact(){
   `;
   attachReveal();
   updateHeaderElevation();
+}
+
+/* ===== Album expand/collapse (single element) ===== */
+function wireAlbumToggle(){
+  const card = document.getElementById("albumCard");
+  const header = document.getElementById("albumHeader");
+  const hint = document.getElementById("albumHintText");
+
+  if(!card || !header) return;
+
+  function setExpanded(expanded){
+    card.classList.toggle("expanded", expanded);
+    card.setAttribute("aria-expanded", expanded ? "true" : "false");
+    if(hint) hint.textContent = expanded ? "Hide tracks" : "Show tracks";
+  }
+
+  // default collapsed
+  setExpanded(false);
+
+  function toggle(){
+    const expanded = card.classList.contains("expanded");
+    setExpanded(!expanded);
+  }
+
+  header.addEventListener("click", toggle);
+
+  // keyboard support
+  card.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" || e.key === " "){
+      e.preventDefault();
+      toggle();
+    }
+  });
+
+  // IMPORTANT: don’t toggle when user clicks audio controls
+  card.addEventListener("click", (e)=>{
+    if(e.target.closest("audio") || e.target.closest("button") || e.target.closest("source")) return;
+  }, true);
 }
 
 /* ===== Modal ===== */
@@ -632,7 +746,7 @@ function updateHeaderElevation(){
 }
 window.addEventListener("scroll", updateHeaderElevation, { passive:true });
 
-/* ===== Mobile overlay menu (reference-style) ===== */
+/* ===== Mobile overlay menu (no text, close is X) ===== */
 const menuBtn = document.getElementById("menuBtn");
 const menuOverlay = document.getElementById("menuOverlay");
 const menuCloseBtn = document.getElementById("menuCloseBtn");
@@ -642,7 +756,6 @@ function openMenu(){
   menuOverlay.classList.add("open");
   menuOverlay.setAttribute("aria-hidden","false");
   menuBtn.setAttribute("aria-expanded","true");
-  // lock scroll
   document.body.style.overflow = "hidden";
 }
 
@@ -660,7 +773,7 @@ menuBtn.addEventListener("click", ()=>{
 });
 menuCloseBtn.addEventListener("click", closeMenu);
 
-/* close on overlay click outside content area */
+/* close on overlay click outside links */
 menuOverlay.addEventListener("click", (e)=>{
   const clickedLink = e.target.closest(".overlay-links a");
   const clickedTop = e.target.closest(".overlay-top");

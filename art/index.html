@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Eduardo Wolffel — Works</title>
-  <meta name="description" content="Paintings by Eduardo Wolffel." />
+  <meta name="description" content="Works by Eduardo Wolffel." />
 
-  <!-- Inter font -->
+  <!-- Roboto (reference-style sans) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -23,8 +23,8 @@
       --reveal-dur: 520ms;
       --reveal-ease: cubic-bezier(.2,.8,.2,1);
 
-      /* header shadow */
       --hdr-shadow: 0 10px 30px rgba(0,0,0,.08);
+      --panel-shadow: 0 24px 60px rgba(0,0,0,.14);
     }
 
     *{box-sizing:border-box}
@@ -33,7 +33,7 @@
       margin:0;
       background:var(--bg);
       color:var(--fg);
-      font-family:"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+      font-family:"Roboto", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
       font-size:15px;
       line-height:1.45;
     }
@@ -41,7 +41,7 @@
     a{color:inherit;text-decoration:none}
     a:hover{text-decoration:underline}
 
-    /* Sticky header always visible */
+    /* ===== Sticky header (white) with conditional shadow ===== */
     header{
       position:sticky;
       top:0;
@@ -58,7 +58,7 @@
     .header-inner{
       max-width:var(--max);
       margin:0 auto;
-      padding:18px 18px;
+      padding:16px 18px;
       display:flex;
       align-items:center;
       justify-content:space-between;
@@ -68,7 +68,7 @@
     .brand{
       font-size:22px;
       font-weight:500;
-      letter-spacing:0.3px;
+      letter-spacing:0.2px;
       text-decoration:none;
       cursor:pointer;
       white-space:nowrap;
@@ -87,18 +87,98 @@
       text-decoration:none;
     }
     nav a:hover{ text-decoration:none; color: var(--fg); opacity:.95; }
-
     nav a[aria-current="page"]{
       color:var(--fg);
       font-weight:500;
     }
 
+    /* ===== Mobile hamburger ===== */
+    .burger{
+      display:none;
+      width:44px;
+      height:38px;
+      border:1px solid rgba(0,0,0,.08);
+      background:#fff;
+      border-radius:12px;
+      padding:0;
+      cursor:pointer;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+    }
+    .burger-lines{
+      position:relative;
+      width:18px;
+      height:14px;
+    }
+    .burger-lines span{
+      position:absolute;
+      left:0;
+      width:100%;
+      height:2px;
+      background:#111;
+      border-radius:2px;
+      transition: transform .22s ease, opacity .18s ease, top .22s ease;
+    }
+    .burger-lines span:nth-child(1){ top:0; }
+    .burger-lines span:nth-child(2){ top:6px; }
+    .burger-lines span:nth-child(3){ top:12px; }
+
+    /* mobile menu panel */
+    .mobile-panel{
+      display:none;
+      border-top:1px solid rgba(0,0,0,.06);
+      background:#fff;
+      transform-origin: top;
+      max-height:0;
+      overflow:hidden;
+      opacity:0;
+      transform: translateY(-6px);
+      transition: max-height .28s ease, opacity .22s ease, transform .22s ease;
+      box-shadow: none;
+    }
+    header.menu-open .mobile-panel{
+      max-height:260px;
+      opacity:1;
+      transform: translateY(0);
+      box-shadow: var(--panel-shadow);
+    }
+    .mobile-panel .mobile-inner{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:12px 18px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .mobile-panel a{
+      padding:10px 0;
+      font-size:15px;
+      color:#111;
+      text-decoration:none;
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    .mobile-panel a:last-child{ border-bottom:0; }
+
+    /* burger -> X */
+    header.menu-open .burger-lines span:nth-child(1){
+      top:6px;
+      transform: rotate(45deg);
+    }
+    header.menu-open .burger-lines span:nth-child(2){
+      opacity:0;
+    }
+    header.menu-open .burger-lines span:nth-child(3){
+      top:6px;
+      transform: rotate(-45deg);
+    }
+
+    /* layout wrapper */
     .wrap{
       max-width:var(--max);
       margin:0 auto;
       padding:0 18px 60px;
     }
-
     main{ padding-top:26px; }
 
     h1{
@@ -107,17 +187,13 @@
       margin:0 0 18px;
     }
 
+    /* Works grid */
     .grid{
       display:grid;
       grid-template-columns:repeat(3,1fr);
       gap:18px;
     }
     @media(max-width:900px){ .grid{grid-template-columns:repeat(2,1fr)} }
-    @media(max-width:600px){
-      .grid{grid-template-columns:1fr}
-      .brand{font-size:18px}
-      .header-inner{padding:16px 18px}
-    }
 
     .card{ display:flex; flex-direction:column; gap:10px; }
 
@@ -146,6 +222,7 @@
       border:0;background:none;padding:0;
       font-size:13px;color:var(--muted);
       cursor:pointer;text-decoration:underline;margin-top:4px;
+      font-family:inherit;
     }
 
     footer{
@@ -201,6 +278,7 @@
       cursor:pointer;
       color:var(--muted);
       font-size:13px;
+      font-family:inherit;
     }
     .row{ display:grid; grid-template-columns:120px 1fr; gap:10px; font-size:14px; }
     .k{color:var(--muted)}
@@ -221,14 +299,42 @@
     @media (prefers-reduced-motion: reduce){
       .reveal{opacity:1; transform:none; transition:none}
       .thumb img{transition:none}
+      .mobile-panel{transition:none}
+      .burger-lines span{transition:none}
     }
 
-    /* Music section */
-    .music{
+    /* ===== Music layout: cover left + tracks right (mobile stacked) ===== */
+    .music-layout{
       display:grid;
-      grid-template-columns: 1fr;
-      gap:16px;
-      max-width: 760px;
+      grid-template-columns: 360px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    .album{
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .album img{
+      width:100%;
+      height:auto;
+      display:block;
+      aspect-ratio: 1/1;
+      object-fit:cover;
+      background:#f6f6f6;
+    }
+    .album-meta{
+      padding:12px 12px 14px;
+      border-top:1px solid rgba(0,0,0,.06);
+    }
+    .album-title{font-weight:500}
+    .album-sub{color:var(--muted); font-size:13px; margin-top:2px}
+
+    .tracklist{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
     }
     .track{
       border:1px solid var(--line);
@@ -246,6 +352,21 @@
     .track-title{font-weight:500}
     .track-meta{color:var(--muted);font-size:13px}
     audio{ width:100%; }
+
+    /* Mobile rules */
+    @media(max-width:720px){
+      nav{ display:none; }          /* hide desktop nav */
+      .burger{ display:flex; }      /* show burger */
+      .mobile-panel{ display:block; }
+
+      .grid{grid-template-columns:1fr}
+      .brand{font-size:18px}
+      .header-inner{padding:14px 18px}
+
+      .music-layout{
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 
@@ -253,11 +374,29 @@
 <header id="hdr">
   <div class="header-inner">
     <a class="brand" href="#works" id="brandLink">Eduardo Wolffel</a>
-    <nav>
+
+    <!-- Desktop nav -->
+    <nav aria-label="Primary">
       <a href="#works" id="navWorks">Works</a>
       <a href="#music" id="navMusic">Music</a>
       <a href="#contact" id="navContact">Contact</a>
     </nav>
+
+    <!-- Mobile burger -->
+    <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
+      <span class="burger-lines" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </span>
+    </button>
+  </div>
+
+  <!-- Mobile panel -->
+  <div class="mobile-panel" id="mobilePanel">
+    <div class="mobile-inner" aria-label="Mobile menu">
+      <a href="#works" id="mWorks">Works</a>
+      <a href="#music" id="mMusic">Music</a>
+      <a href="#contact" id="mContact">Contact</a>
+    </div>
   </div>
 </header>
 
@@ -288,6 +427,7 @@
 </dialog>
 
 <script>
+/* ===== Data ===== */
 const ARTWORKS = [
   {id:"obra-01",title:"Unit 705",year:2025,size:"160 × 130 cm",medium:"Acrylic on canvas",status:"Available",image:"img/obra-01.jpg"},
   {id:"obra-02",title:"Unit 707",year:2025,size:"160 × 130 cm",medium:"Acrylic on canvas",status:"Sold",image:"img/obra-02.jpg"},
@@ -301,32 +441,71 @@ const ARTWORKS = [
   {id:"obra-10",title:"Unit 799",year:2021,size:"80 × 60 cm",medium:"Acrylic on paper",status:"Available",image:"img/obra-10.jpg"},
 ];
 
-/* Music tracks: put your files in /audio/ and edit titles */
+/* Album cover + tracks */
+const ALBUM = {
+  title: "Wolffel — Album",
+  subtitle: "Selected tracks",
+  cover: "img/album-cover.jpg"
+};
+
 const TRACKS = [
   { title: "Track 01", year: "2025", src: "audio/track-01.mp3" },
   { title: "Track 02", year: "2025", src: "audio/track-02.mp3" },
   { title: "Track 03", year: "2024", src: "audio/track-03.mp3" },
 ];
 
+/* ===== Helpers ===== */
 const app = document.getElementById("app");
 const dlg = document.getElementById("dlg");
 const hdr = document.getElementById("hdr");
+const burger = document.getElementById("burger");
 
-function setActive(tab){
-  navWorks.removeAttribute("aria-current");
-  navMusic.removeAttribute("aria-current");
-  navContact.removeAttribute("aria-current");
-
-  if(tab === "music") navMusic.setAttribute("aria-current","page");
-  else if(tab === "contact") navContact.setAttribute("aria-current","page");
-  else navWorks.setAttribute("aria-current","page");
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
 }
 
+/* ===== Menu (mobile) ===== */
+function closeMenu(){
+  hdr.classList.remove("menu-open");
+  burger.setAttribute("aria-expanded","false");
+  burger.setAttribute("aria-label","Open menu");
+}
+function toggleMenu(){
+  const open = hdr.classList.toggle("menu-open");
+  burger.setAttribute("aria-expanded", String(open));
+  burger.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+}
+burger.addEventListener("click", toggleMenu);
+
+/* Close menu when clicking a mobile link */
+["mWorks","mMusic","mContact"].forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener("click", ()=> closeMenu());
+});
+
+/* Close menu if user clicks outside panel while open (mobile) */
+document.addEventListener("click",(e)=>{
+  if(!hdr.classList.contains("menu-open")) return;
+  const isInside = hdr.contains(e.target);
+  if(!isInside) closeMenu();
+});
+
+/* ===== Active nav ===== */
+function setActive(tab){
+  ["navWorks","navMusic","navContact"].forEach(id=>document.getElementById(id).removeAttribute("aria-current"));
+  if(tab === "music") document.getElementById("navMusic").setAttribute("aria-current","page");
+  else if(tab === "contact") document.getElementById("navContact").setAttribute("aria-current","page");
+  else document.getElementById("navWorks").setAttribute("aria-current","page");
+}
+
+/* ===== Views ===== */
 function works(){
   setActive("works");
   app.innerHTML = `
     <h1 class="reveal">Selected works</h1>
-    <section class="grid" id="grid">
+    <section class="grid">
       ${ARTWORKS.map(a=>`
         <article class="card reveal">
           <div class="thumb" onclick="openModal('${a.id}')">
@@ -343,6 +522,7 @@ function works(){
   `;
   attachReveal();
   updateHeaderElevation();
+  window.scrollTo({top:0, behavior:"instant"});
 }
 
 function music(){
@@ -352,23 +532,35 @@ function music(){
     <div class="reveal" style="max-width:70ch;color:var(--muted);margin-bottom:14px">
       Listen to my music here.
     </div>
-    <section class="music">
-      ${TRACKS.map((t,i)=>`
-        <div class="track reveal">
-          <div class="track-top">
-            <div class="track-title">${escapeHtml(t.title)}</div>
-            <div class="track-meta">${escapeHtml(t.year ?? "")}</div>
-          </div>
-          <audio controls preload="none">
-            <source src="${t.src}" type="audio/mpeg">
-            Your browser does not support the audio element.
-          </audio>
+
+    <section class="music-layout">
+      <div class="album reveal">
+        <img src="${ALBUM.cover}" alt="Album cover">
+        <div class="album-meta">
+          <div class="album-title">${escapeHtml(ALBUM.title)}</div>
+          <div class="album-sub">${escapeHtml(ALBUM.subtitle)}</div>
         </div>
-      `).join("")}
+      </div>
+
+      <div class="tracklist">
+        ${TRACKS.map(t=>`
+          <div class="track reveal">
+            <div class="track-top">
+              <div class="track-title">${escapeHtml(t.title)}</div>
+              <div class="track-meta">${escapeHtml(t.year ?? "")}</div>
+            </div>
+            <audio controls preload="none">
+              <source src="${t.src}" type="audio/mpeg">
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        `).join("")}
+      </div>
     </section>
   `;
   attachReveal();
   updateHeaderElevation();
+  window.scrollTo({top:0, behavior:"instant"});
 }
 
 function contact(){
@@ -385,8 +577,10 @@ function contact(){
   `;
   attachReveal();
   updateHeaderElevation();
+  window.scrollTo({top:0, behavior:"instant"});
 }
 
+/* ===== Modal ===== */
 function openModal(id){
   const a = ARTWORKS.find(x=>x.id===id);
   if(!a) return;
@@ -399,26 +593,18 @@ function openModal(id){
   dlgStatus.textContent = a.status ?? "—";
   dlg.showModal();
 }
-
 dlgClose.onclick = ()=>dlg.close();
 
-/* Brand click => always go home (works) */
+/* Brand click => home */
 brandLink.onclick = (e)=>{ e.preventDefault(); location.hash = "#works"; };
 
-/* Keep navigation as hash routes */
+/* Desktop nav click: route */
 navWorks.onclick = (e)=>{ e.preventDefault(); location.hash = "#works"; };
 navMusic.onclick = (e)=>{ e.preventDefault(); location.hash = "#music"; };
 navContact.onclick = (e)=>{ e.preventDefault(); location.hash = "#contact"; };
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
-}
-
-/* Reveal observer */
+/* ===== Reveal observer ===== */
 let revealObserver = null;
-
 function attachReveal(){
   if(revealObserver) revealObserver.disconnect();
 
@@ -437,23 +623,24 @@ function attachReveal(){
   items.forEach(el => revealObserver.observe(el));
 }
 
-/* Header: add shadow only when there is content under it (scrolling) */
+/* ===== Header elevation only when content is under it (scroll) ===== */
 function updateHeaderElevation(){
-  // at top => no shadow, when scrolled => shadow
   const y = window.scrollY || document.documentElement.scrollTop || 0;
   hdr.classList.toggle("is-elevated", y > 2);
 }
 window.addEventListener("scroll", updateHeaderElevation, { passive:true });
 
+/* ===== Router ===== */
 function router(){
+  closeMenu(); // always close mobile menu on navigation
   const h = location.hash || "#works";
-  if(h === "#contact") return contact();
   if(h === "#music") return music();
+  if(h === "#contact") return contact();
   return works();
 }
+window.addEventListener("hashchange", router);
 
 document.getElementById("year").textContent = new Date().getFullYear();
-window.addEventListener("hashchange", router);
 router();
 updateHeaderElevation();
 </script>

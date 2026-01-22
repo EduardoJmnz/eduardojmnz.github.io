@@ -1,5 +1,4 @@
-import { createExporter } from "./export.js";
-
+(() => {
   const POSTER_W = 900;
   const POSTER_H = 1200;
 
@@ -435,34 +434,6 @@ import { createExporter } from "./export.js";
       $pSubtitle.style.fontSize = `${size}px`;
     }
   }
-
-// ===========================
-// ✅ Exporter (módulo) — usa export.js
-// ===========================
-let exporter = null;
-
-function makeExporterCore(){
-  return {
-    state,
-    posterEl: document.getElementById("poster"),
-    mapCanvasEl: document.getElementById("mapCanvas"),
-    EXPORT_SIZES,
-    POSTER_W,
-    POSTER_H,
-    clamp,
-    cmToPx,
-    computeRenderTokens,
-    getStyleDef,
-    isPoster,
-    updatePosterFrameInsetPx,
-    syncThickness,
-    rgbaFromHex,
-    getDateTimeString,
-    renderPosterText,
-    applyAutoTextSizing,
-  };
-}
-
 
   // --------------------------
   // CAPAS: marco + papel + margen
@@ -1891,12 +1862,43 @@ function makeExporterCore(){
   }
 
   async function exportPoster(format, sizeKey){
-  if (!exporter) {
-    // Crear exporter si por alguna razón aún no existe
-    exporter = createExporter(makeExporterCore());
-  }
-  return exporter.exportPoster(format, sizeKey);
-}
+    const sz = EXPORT_SIZES.find(x => x.key === sizeKey) || EXPORT_SIZES[0];
+    const dpi = state.export.dpi || 300;
+
+    let W, H;
+    if (sz.type === "px"){ W = sz.w; H = sz.h; }
+    else { W = cmToPx(sz.w, dpi); H = cmToPx(sz.h, dpi); }
+
+    const out = document.createElement("canvas");
+    out.width = W;
+    out.height = H;
+
+    const ctx = out.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    const tokens = computeRenderTokens();
+    updatePosterFrameInsetPx();
+    syncThickness();
+
+    const frameOn = (!isPoster()) && !!state.map.posterFrameEnabled;
+    const marginOn = (!isPoster()) && !!state.map.posterMarginEnabled && !frameOn;
+
+    const edgeFrameX = Math.round(POSTER_FRAME_EDGE_GAP_PX * (W / POSTER_W));
+    const edgeFrameY = Math.round(POSTER_FRAME_EDGE_GAP_PX * (H / POSTER_H));
+    const edgeMarginX = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (W / POSTER_W));
+    const edgeMarginY = Math.round(POSTER_MARGIN_EDGE_GAP_PX * (H / POSTER_H));
+
+    const framePx = frameOn ? clamp(state.map.posterFrameInsetPx, 0, 160) : 0;
+    const frameX = Math.round(framePx * (W / POSTER_W));
+    const frameY = Math.round(framePx * (H / POSTER_H));
+
+    ctx.fillStyle = tokens.posterBg;
+    ctx.fillRect(0, 0, W, H);
+
+    if (frameOn){
+      ctx.fillStyle = tokens.posterInk;
+      ctx.fillRect(edgeFrameX, edgeFrameY, W - edgeFrameX*2, H - edgeFrameY*2);
+    }
 
     const innerX = edgeFrameX + frameX;
     const innerY = edgeFrameY + frameY;
@@ -2099,7 +2101,6 @@ function makeExporterCore(){
   }
 
   // Init
-exporter = createExporter(makeExporterCore());
   updateSeedFromDateTime();
   ensurePosterLayers();
   ensurePreviewWatermarkLayer();
@@ -2118,6 +2119,4 @@ exporter = createExporter(makeExporterCore());
     applyAutoTextSizing();
     applyPreviewWatermark(computeRenderTokens());
   });
-
-// Exports útiles para debug / integración
-export { state, exportPoster, renderAll };
+})();

@@ -1,347 +1,249 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es-MX">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- SEO: títulos claros + intención de compra sin spam -->
-  <title>Mapas estelares por un dólar | Regalo único y especial</title>
-  <meta name="description" content="Genera un mapa estelar personalizado del cielo exacto de tu momento especial. Mapas estelares más baratos garantizado: por un dólar, crea un regalo único y especial en minutos." />
-  <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://TU-DOMINIO.com/" />
+  <!-- SEO -->
+  <title>SKYMAP | Mapas estelares más baratos garantizado por un dólar</title>
+  <meta name="description" content="Crea tu mapa estelar personalizado: el cielo exacto de un momento especial. Mapas estelares más baratos garantizado por un dólar. Regalo único y especial." />
+  <meta name="keywords" content="mapas estelares mas baratos garantizado, por un dolar, regalo unico y especial, mapa estelar personalizado, mapas estelares" />
+  <meta name="author" content="SKYMAP" />
 
-  <!-- Open Graph / Social -->
+  <!-- Open Graph -->
+  <meta property="og:title" content="SKYMAP | Mapas estelares por un dólar" />
+  <meta property="og:description" content="Genera un mapa estelar con precisión astronómica. Un regalo único y especial." />
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="es_MX" />
-  <meta property="og:title" content="Mapa Estelar | Regalo único y especial por un dólar" />
-  <meta property="og:description" content="Crea un mapa estelar personalizado con precisión astronómica. Mapas estelares más baratos garantizado: por un dólar." />
-  <meta property="og:url" content="https://TU-DOMINIO.com/" />
-  <meta property="og:image" content="https://TU-DOMINIO.com/og-image.jpg" />
 
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Mapa Estelar | Regalo único y especial" />
-  <meta name="twitter:description" content="Genera tu mapa estelar del cielo exacto de una fecha y lugar. Por un dólar." />
-  <meta name="twitter:image" content="https://TU-DOMINIO.com/og-image.jpg" />
-
-  <!-- (Opcional) keywords: hoy pesa poco, pero no estorba -->
-  <meta name="keywords" content="mapas estelares mas baratos garantizado, por un dolar, regalo unico y especial, mapa estelar personalizado" />
-
-  <!-- Performance: preconnect fuentes del sistema (sin dependencias externas) -->
-  <link rel="stylesheet" href="./styles.css" />
-
-  <!-- JSON-LD (SEO avanzado) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "Mapa Estelar",
-    "url": "https://TU-DOMINIO.com/",
-    "inLanguage": "es-MX",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://TU-DOMINIO.com/?q={search_term_string}",
-      "query-input": "required name=search_term_string"
+  <!-- Styles -->
+  <style>
+    /* RESET BASE */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #000;
+      color: #fff;
     }
-  }
-  </script>
 
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": "Mapa estelar personalizado",
-    "description": "Mapa estelar personalizado del cielo exacto de una fecha y lugar. Ideal como regalo único y especial.",
-    "brand": { "@type": "Brand", "name": "Mapa Estelar" },
-    "offers": {
-      "@type": "Offer",
-      "price": "1.00",
-      "priceCurrency": "USD",
-      "availability": "https://schema.org/InStock",
-      "url": "https://TU-DOMINIO.com/generator.html"
+    /* PROMO BAR */
+    .promo-bar {
+      background: #ff7f7f;
+      color: #000;
+      text-align: center;
+      font-size: 0.85rem;
+      padding: 0.6rem 1rem;
+      font-weight: 500;
     }
-  }
-  </script>
+
+    /* NAVBAR */
+    .navbar {
+      background: #1c1c1c;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .logo {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.6rem;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      opacity: 0.85;
+    }
+
+    .nav-links a:hover { opacity: 1; }
+
+    .nav-cart {
+      font-size: 1.2rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: calc(100vh - 120px);
+      background: url("background.jpg") center / cover no-repeat;
+      display: flex;
+      align-items: center;
+    }
+
+    .hero-content {
+      max-width: 650px;
+      padding: 4rem 2rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .hero h2 {
+      font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+      margin-top: 0.5rem;
+      font-weight: 600;
+      opacity: 0.95;
+    }
+
+    .hero p {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 520px;
+      opacity: 0.9;
+    }
+
+    .hero-btn {
+      display: inline-block;
+      margin-top: 2rem;
+      background: #e5e28a;
+      color: #000;
+      padding: 0.9rem 2.2rem;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hero-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    /* Placeholder sections (para que el scroll del navbar funcione) */
+    section.anchor {
+      padding: 6rem 2rem;
+      max-width: 1100px;
+      margin: auto;
+      color: #fff;
+    }
+
+    section.anchor h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    section.anchor p {
+      opacity: 0.8;
+      max-width: 700px;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .nav-links { display: none; } /* luego metemos hamburguesa */
+      .nav-container { padding: 1rem 1.25rem; }
+    }
+
+    @media (max-width: 600px) {
+      .hero-content { padding: 3rem 1.5rem; }
+      .promo-bar { font-size: 0.75rem; }
+    }
+  </style>
 </head>
 
 <body>
-  <a class="skip" href="#contenido">Saltar al contenido</a>
 
-  <!-- Topbar -->
-  <header class="topbar">
-    <a class="logo" href="./">
-      <span class="logoDot" aria-hidden="true"></span>
-      <span class="logoText">Mapa Estelar</span>
-    </a>
+  <!-- PROMO BAR -->
+  <div class="promo-bar">
+    ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER FOR JUST $1.00 UNTIL FEBRUARY 14TH!
+  </div>
 
-    <nav class="nav">
-      <a href="#como-funciona">Cómo funciona</a>
-      <a href="#regalos">Para regalar</a>
-      <a href="#faq">FAQ</a>
-      <a class="navCta" href="./generator.html">Generar mapa</a>
-    </nav>
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">SKYMAP</div>
+
+      <nav class="nav-links" aria-label="Navegación principal">
+        <a href="#home">Home</a>
+        <a href="#porque">¿Por qué nosotros?</a>
+        <a href="#design">Design</a>
+        <a href="#how">HIW?</a>
+        <a href="#reminder">Reminder</a>
+        <a href="#opinions">Opinions</a>
+        <a href="#faq">FAQs</a>
+      </nav>
+
+      <div class="nav-cart" aria-label="Carrito">👜</div>
+    </div>
   </header>
 
-  <main id="contenido">
-    <!-- HERO -->
-    <section class="hero" aria-label="Hero">
-      <div class="heroBg" aria-hidden="true"></div>
+  <!-- HERO -->
+  <section id="home" class="hero" role="banner">
+    <div class="hero-content">
+      <h1>EL CIELO EXACTO</h1>
+      <h2>DE UN MOMENTO QUE CAMBIO TU VIDA</h2>
 
-      <div class="heroInner">
-        <div class="heroCopy">
-          <p class="pill">✨ Precisión astronómica · Descarga inmediata</p>
-          <h1>El cielo exacto de un momento que cambió tu vida</h1>
-          <p class="lead">
-            Genera un <strong>mapa estelar</strong> del cielo tal como se veía en una fecha y lugar especiales.
-            Un recuerdo elegante, personalizado y listo para imprimir.
-          </p>
-
-          <div class="ctaRow">
-            <a class="btnPrimary" href="./generator.html">🌌 Crear mi mapa estelar</a>
-            <a class="btnGhost" href="#como-funciona">Ver cómo funciona</a>
-          </div>
-
-          <p class="micro">
-            <strong>Mapas estelares más baratos garantizado</strong> · <strong>por un dólar</strong> ·
-            <strong>regalo único y especial</strong>
-          </p>
-
-          <div class="trustRow" role="list" aria-label="Beneficios rápidos">
-            <div class="trust" role="listitem">✅ Personalizado</div>
-            <div class="trust" role="listitem">✅ Diseño moderno</div>
-            <div class="trust" role="listitem">✅ Fácil y rápido</div>
-          </div>
-        </div>
-
-        <div class="heroVisual" aria-label="Vista previa del mapa">
-          <div class="card">
-            <div class="cardTop">
-              <div class="chip">Vista previa</div>
-              <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
-            </div>
-            <div class="poster" aria-hidden="true">
-              <div class="posterStars"></div>
-              <div class="posterCircle"></div>
-              <div class="posterText">
-                <div class="t1">NUESTRO MOMENTO</div>
-                <div class="t2">CDMX · 14 FEB 2024</div>
-              </div>
-            </div>
-            <div class="cardBottom">
-              <span class="hint">Personaliza colores, texto y estilo</span>
-              <a class="link" href="./generator.html">Abrir generador →</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- PREVIEWS -->
-    <section class="section" aria-label="Ejemplos">
-      <div class="sectionHead">
-        <h2>Así se ve tu mapa estelar</h2>
-        <p>Cada diseño es único. Ningún cielo se repite.</p>
-      </div>
-
-      <div class="previewGrid">
-        <div class="previewCard" aria-label="Estilo oscuro">
-          <div class="previewThumb thumb1"></div>
-          <div class="previewMeta">
-            <div class="previewTitle">Minimal oscuro</div>
-            <div class="previewSub">Elegante · moderno</div>
-          </div>
-        </div>
-
-        <div class="previewCard" aria-label="Estilo claro">
-          <div class="previewThumb thumb2"></div>
-          <div class="previewMeta">
-            <div class="previewTitle">Claro premium</div>
-            <div class="previewSub">Limpio · luminoso</div>
-          </div>
-        </div>
-
-        <div class="previewCard" aria-label="Estilo romántico">
-          <div class="previewThumb thumb3"></div>
-          <div class="previewMeta">
-            <div class="previewTitle">Romántico</div>
-            <div class="previewSub">Para regalar</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="center">
-        <a class="btnPrimary" href="./generator.html">Generar el mío</a>
-      </div>
-    </section>
-
-    <!-- QUÉ ES -->
-    <section class="section" aria-label="Qué es">
-      <div class="split">
-        <div>
-          <h2>¿Qué es un mapa estelar personalizado?</h2>
-          <p>
-            Un <strong>mapa estelar personalizado</strong> representa la posición real de las estrellas en un momento específico:
-            una fecha, una hora y un lugar que significan algo para ti.
-          </p>
-          <p>
-            No es una ilustración genérica. Es el cielo tal como fue una sola vez.
-          </p>
-
-          <div class="infoPills" role="list" aria-label="Ejemplos">
-            <span role="listitem">👶 Nacimiento</span>
-            <span role="listitem">💍 Boda</span>
-            <span role="listitem">❤️ Aniversario</span>
-            <span role="listitem">🌠 Momento único</span>
-          </div>
-        </div>
-
-        <div class="glass">
-          <h3>Lo que obtienes</h3>
-          <ul class="check">
-            <li>Mapa con diseño moderno y limpio</li>
-            <li>Texto personalizable (título, lugar, fecha)</li>
-            <li>Exportación lista para imprimir</li>
-            <li>Generación rápida desde el navegador</li>
-          </ul>
-          <a class="btnGhost full" href="./generator.html">Abrir generador</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- CÓMO FUNCIONA -->
-    <section id="como-funciona" class="section" aria-label="Cómo funciona">
-      <div class="sectionHead">
-        <h2>Crear tu mapa estelar es muy fácil</h2>
-        <p>Hecho para que lo termines en minutos, sin complicaciones.</p>
-      </div>
-
-      <div class="steps">
-        <div class="step">
-          <div class="stepN">1</div>
-          <h3>Elige el momento</h3>
-          <p>Selecciona fecha y lugar. Ese es el cielo que vamos a inmortalizar.</p>
-        </div>
-        <div class="step">
-          <div class="stepN">2</div>
-          <h3>Personaliza el diseño</h3>
-          <p>Cambia estilo, colores y texto para que sea totalmente tuyo.</p>
-        </div>
-        <div class="step">
-          <div class="stepN">3</div>
-          <h3>Genera y descarga</h3>
-          <p>Obtén tu archivo listo para imprimir o compartir.</p>
-        </div>
-      </div>
-
-      <div class="center">
-        <a class="btnPrimary" href="./generator.html">Empezar ahora</a>
-      </div>
-    </section>
-
-    <!-- QUOTE -->
-    <section class="quote" aria-label="Frase">
-      <p>“Todos los momentos importantes ocurrieron bajo un cielo irrepetible.”</p>
-    </section>
-
-    <!-- REGALOS -->
-    <section id="regalos" class="section" aria-label="Regalos">
-      <div class="sectionHead">
-        <h2>Un regalo único y especial</h2>
-        <p>Perfecto para sorprender con algo que no se repite.</p>
-      </div>
-
-      <div class="occasionGrid">
-        <div class="occasion">🎁 Nacimientos</div>
-        <div class="occasion">💍 Bodas y aniversarios</div>
-        <div class="occasion">❤️ San Valentín</div>
-        <div class="occasion">🎂 Cumpleaños</div>
-        <div class="occasion">🌠 Momentos inolvidables</div>
-        <div class="occasion">🏡 Nuevo hogar</div>
-      </div>
-
-      <div class="center">
-        <a class="btnPrimary" href="./generator.html">Crear un regalo</a>
-      </div>
-
-      <p class="seoLine">
-        ¿Buscas <strong>mapas estelares más baratos garantizado</strong> y listos en minutos?
-        Aquí puedes crearlo <strong>por un dólar</strong>, con un resultado que se siente premium.
+      <p>
+        Genera un mapa estelar del cielo tal como se veía en una
+        fecha y lugar especiales. Un recuerdo elegante,
+        personalizado y listo para imprimir.
       </p>
-    </section>
 
-    <!-- FAQ -->
-    <section id="faq" class="section" aria-label="Preguntas frecuentes">
-      <div class="sectionHead">
-        <h2>Preguntas frecuentes</h2>
-        <p>Respuestas rápidas para que compres/crees con confianza.</p>
-      </div>
-
-      <div class="faq">
-        <details>
-          <summary>¿El mapa es realmente del cielo de mi fecha y lugar?</summary>
-          <p>Sí. El generador calcula el cielo según los datos que ingreses y los traduce en un diseño listo para imprimir.</p>
-        </details>
-        <details>
-          <summary>¿Puedo personalizar el texto y el estilo?</summary>
-          <p>Sí. Puedes editar títulos, ubicación, fecha, colores y estilos antes de exportar.</p>
-        </details>
-        <details>
-          <summary>¿Qué recibo al final?</summary>
-          <p>Un archivo listo para imprimir o compartir. (Según tu exportación dentro del generador.)</p>
-        </details>
-        <details>
-          <summary>¿Por qué dicen “por un dólar”?</summary>
-          <p>Es parte de la propuesta: acceso simple y económico. Puedes ajustar tu oferta/precio final en el checkout o plataforma que uses.</p>
-        </details>
-      </div>
-
-      <div class="center">
-        <a class="btnPrimary" href="./generator.html">Abrir generador</a>
-      </div>
-    </section>
-
-    <!-- CTA FINAL -->
-    <section class="cta" aria-label="Llamado a la acción final">
-      <div class="ctaInner">
-        <h2>Crea hoy un recuerdo que durará para siempre</h2>
-        <p>Elige tu fecha. Elige tu lugar. Nosotros hacemos el resto.</p>
-        <div class="ctaRow">
-          <a class="btnPrimary" href="./generator.html">🌌 Generar mi mapa estelar ahora</a>
-          <a class="btnGhost" href="#como-funciona">Ver pasos</a>
-        </div>
-        <p class="micro">Sin registro · Resultado inmediato · Regalo único y especial</p>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="footerInner">
-      <div class="footLeft">
-        <div class="logo mini">
-          <span class="logoDot" aria-hidden="true"></span>
-          <span class="logoText">Mapa Estelar</span>
-        </div>
-        <p class="footNote">© 2026 · Todos los derechos reservados</p>
-      </div>
-      <div class="footRight">
-        <a href="./generator.html">Generar mapa</a>
-        <a href="#faq">FAQ</a>
-        <a href="#contenido">Arriba</a>
-      </div>
+      <a href="generator.html" class="hero-btn">¡CREAR AHORA!</a>
     </div>
-  </footer>
+  </section>
 
-  <script>
-    // Micro UX: scroll suave para anclas
-    document.addEventListener('click', (e) => {
-      const a = e.target.closest('a[href^="#"]');
-      if (!a) return;
-      const id = a.getAttribute('href');
-      const el = document.querySelector(id);
-      if (!el) return;
-      e.preventDefault();
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      history.pushState(null, '', id);
-    });
-  </script>
+  <!-- SECCIONES PLACEHOLDER (para scroll del navbar) -->
+  <section id="porque" class="anchor">
+    <h2>¿Por qué nosotros?</h2>
+    <p>
+      Aquí irá la sección “¿Por qué nosotros?” (la maquetamos cuando me mandes el Figma).
+      Incluiremos SEO natural: “mapas estelares más baratos garantizado”, “por un dólar” y “regalo único y especial”.
+    </p>
+  </section>
+
+  <section id="design" class="anchor">
+    <h2>Design</h2>
+    <p>Sección de diseños y ejemplos (placeholder).</p>
+  </section>
+
+  <section id="how" class="anchor">
+    <h2>HIW?</h2>
+    <p>Cómo funciona el generador (placeholder).</p>
+  </section>
+
+  <section id="reminder" class="anchor">
+    <h2>Reminder</h2>
+    <p>Recordatorios y fechas especiales (placeholder).</p>
+  </section>
+
+  <section id="opinions" class="anchor">
+    <h2>Opinions</h2>
+    <p>Opiniones de clientes (placeholder).</p>
+  </section>
+
+  <section id="faq" class="anchor">
+    <h2>FAQs</h2>
+    <p>Preguntas frecuentes (placeholder).</p>
+  </section>
+
 </body>
 </html>

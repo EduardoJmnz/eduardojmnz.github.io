@@ -1,253 +1,78 @@
 /* =========================================================
-   SKYMAP LANDING - styles.css (BASE)
-   - Incluye: Promo bar, Navbar, Hero, Why
-   - Incluye "slots" comentados para futuras secciones
+   SKYMAP – styles.css (COMPLETO)
    ========================================================= */
 
 /* =========================
-   1) VARIABLES / BASE
+   1) GLOBALS / RESET
    ========================= */
-:root{
-  --bg: #000;
-  --bg-soft: #111;
-  --nav: #1c1c1c;
-  --promo: #ff7f7f;
-
-  --text: #fff;
-  --muted: rgba(255,255,255,.85);
-
-  --btn: #e5e28a;       /* color botones */
-  --btn-2: #e1db88;     /* color CTA sección Why (figma export) */
-
-  --icon-grey: #d9d9d9;
-
-  --max: 1200px;
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
 }
 
-*{ margin:0; padding:0; box-sizing:border-box; }
-html{ scroll-behavior:smooth; }
+html, body{
+  width: 100%;
+  height: 100%;
+}
+
 body{
   font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-
-/* (Opcional) links base */
-a{ color: inherit; }
-
-/* =========================
-   2) PROMO BAR (marquee loop)
-   ========================= */
-.promo-bar{
-  background: var(--promo);
-  overflow: hidden;
-  white-space: nowrap;
-  position: relative;
-}
-
-.promo-track{
-  display: inline-flex;
-  gap: 3rem;
-  padding: 0.65rem 0;
-  will-change: transform;
-  animation: promo-marquee 18s linear infinite;
-}
-
-.promo-text{
+  background: #000;
   color: #fff;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  opacity: 0.95;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.15);
 }
 
-@keyframes promo-marquee{
-  from{ transform: translateX(0); }
-  to{ transform: translateX(-50%); }
-}
+a{ text-decoration: none; color: inherit; }
 
-@media (prefers-reduced-motion: reduce){
-  .promo-track{ animation: none; }
+button:focus-visible{
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
 }
 
 /* =========================
-   3) NAVBAR
-   ========================= */
-.navbar{
-  background: var(--nav);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
-}
-
-.nav-container{
-  max-width: var(--max);
-  margin: auto;
-  padding: 1rem 2rem;
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 1.5rem;
-}
-
-.logo{
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  white-space: nowrap;
-}
-
-.nav-links{
-  display:flex;
-  gap: 1.6rem;
-  align-items:center;
-  justify-content:center;
-  flex: 1;
-  flex-wrap: wrap;
-}
-
-.nav-links a{
-  text-decoration:none;
-  font-size: 0.95rem;
-  opacity: 0.85;
-}
-.nav-links a:hover{ opacity: 1; }
-
-/* Bolsa (sin funcionalidad aún) */
-.nav-cart{
-  display:grid;
-  place-items:center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.bag-icon{
-  width: 22px;
-  height: 22px;
-  color: var(--btn);
-  display:block;
-}
-
-/* =========================
-   4) HERO (MAIN)
-   - background.jpg debe existir
-   ========================= */
-.hero{
-  min-height: calc(100vh - 120px);
-  background: url("background.jpg") center / cover no-repeat;
-  display:flex;
-  align-items:center;
-}
-
-.hero-content{
-  max-width: 650px;
-  padding: 4rem 2rem; /* mobile ok */
-}
-
-.hero h1{
-  font-size: clamp(2.5rem, 5vw, 3.5rem);
-  font-weight: 800;
-  letter-spacing: 0.5px;
-}
-
-.hero h2{
-  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
-  margin-top: 0.5rem;
-  font-weight: 600;
-  opacity: 0.95;
-}
-
-.hero p{
-  margin-top: 1.5rem;
-  font-size: 1rem;
-  line-height: 1.6;
-  max-width: 520px;
-  opacity: 0.9;
-}
-
-.hero-btn{
-  display:inline-block;
-  margin-top: 2rem;
-  background: var(--btn);
-  color: #000;
-  padding: 0.9rem 2.2rem;
-  font-weight: 700;
-  text-decoration:none;
-  border-radius: 4px;
-  transition: transform .2s, box-shadow .2s;
-}
-
-.hero-btn:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-}
-
-/* Más aire en escritorio (como pediste) */
-@media (min-width: 1024px){
-  .hero-content{ padding-left: 7rem; padding-right: 2rem; }
-}
-@media (min-width: 1280px){
-  .hero-content{ padding-left: 9rem; }
-}
-
-/* =========================================================
-   5) PEGAR AQUÍ: SECCIÓN "¿POR QUÉ SKYMAP?" (WHY)
-   - Este bloque corresponde al HTML con .why, .why-title, etc.
-   ========================================================= */
-
-/* WHY (export traducido a HTML) */
-/* =========================
-   WHY (Figma export)
+   2) WHY – ¿POR QUÉ SKYMAP?
+   (RESPONSIVE – basado en Figma)
    ========================= */
 
-.why {
+.why{
   background-color: #1b1a1a;
   width: 100%;
-  min-width: 1280px;
-  min-height: 751px;
-  display: flex;
-  flex-direction: column;
+  padding: 84px 24px 96px;
 }
 
-.why .text-wrapper {
-  margin-left: -1px;
-  height: 48px;
-  width: 743px;
-  align-self: center;
-  margin-top: 83px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  color: #ffffff;
+/* Título */
+.why .text-wrapper{
+  max-width: 760px;
+  margin: 0 auto;
   font-size: 40px;
+  font-weight: 700;
   text-align: center;
-  letter-spacing: 0;
-  line-height: normal;
-  white-space: nowrap;
+  line-height: 1.2;
 }
 
-.why .group {
-  margin-left: 123px;
-  width: 1034px;
-  height: 303px;
+/* Grid principal (reemplaza posiciones absolutas) */
+.why .group{
+  max-width: 1034px;
+  margin: 78px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 56px 90px; /* row / column gap similares a Figma */
+}
+
+/* Item */
+.why .div,
+.why .group-2,
+.why .group-3,
+.why .group-4,
+.why .group-5,
+.why .group-6{
   position: relative;
-  margin-top: 78px;
+  min-height: 126px;
 }
 
-.why .div {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 272px;
-  height: 126px;
-}
-
-.why .rectangle {
+/* Rectángulo gris */
+.why .rectangle{
   width: 56px;
   height: 56px;
   background-color: #d9d9d9;
@@ -256,281 +81,138 @@ a{ color: inherit; }
   left: 0;
 }
 
-.why .p {
-  position: absolute;
-  top: 2px;
-  left: 75px;
-  width: 171px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  color: #ffffff;
-  font-size: 22px;
-  letter-spacing: 0;
-  line-height: normal;
-}
-
-.why .text-wrapper-2 {
-  position: absolute;
-  top: 72px;
-  left: 0;
-  width: 268px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 400;
-  color: #ffffff;
-  font-size: 15px;
-  letter-spacing: 0;
-  line-height: normal;
-}
-
-.why .group-2 {
-  position: absolute;
-  top: 177px;
-  left: 0;
-  width: 260px;
-  height: 126px;
-}
-
-.why .text-wrapper-3 {
+/* Títulos */
+.why .p,
+.why .text-wrapper-3,
+.why .text-wrapper-5,
+.why .text-wrapper-7,
+.why .text-wrapper-9{
   position: absolute;
   top: 0;
   left: 75px;
-  width: 181px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  color: #ffffff;
   font-size: 22px;
-  letter-spacing: 0;
-  line-height: normal;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.why .text-wrapper-4 {
+/* Descripciones */
+.why .text-wrapper-2,
+.why .text-wrapper-4,
+.why .text-wrapper-6,
+.why .text-wrapper-8,
+.why .text-wrapper-10{
   position: absolute;
   top: 72px;
   left: 0;
-  width: 256px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 400;
-  color: #ffffff;
   font-size: 15px;
-  letter-spacing: 0;
-  line-height: normal;
-}
-
-.why .group-3 {
-  position: absolute;
-  top: 0;
-  left: 363px;
-  width: 298px;
-  height: 126px;
-}
-
-.why .text-wrapper-5 {
-  position: absolute;
-  top: 0;
-  left: 75px;
-  width: 149px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  color: #ffffff;
-  font-size: 22px;
-  letter-spacing: 0;
-  line-height: normal;
-}
-
-.why .text-wrapper-6 {
-  position: absolute;
-  top: 72px;
-  left: 0;
-  width: 294px;
-  font-family: "Inter", system-ui, sans-serif;
   font-weight: 400;
-  color: #ffffff;
-  font-size: 15px;
-  letter-spacing: 0;
-  line-height: normal;
+  line-height: 1.4;
+  opacity: 0.95;
 }
 
-.why .group-4 {
-  position: absolute;
-  top: 0;
-  left: 741px;
-  width: 297px;
-  height: 126px;
-}
-
-.why .text-wrapper-7 {
-  position: absolute;
-  top: 0;
-  left: 75px;
-  width: 192px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  color: #ffffff;
+/* Línea de precio */
+.why .crea-tu-mapa-estelar{
+  margin: 78px auto 0;
+  text-align: center;
   font-size: 22px;
-  letter-spacing: 0;
-  line-height: normal;
+  max-width: 720px;
 }
 
-.why .text-wrapper-8 {
-  position: absolute;
-  top: 72px;
-  left: 0;
-  width: 293px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 400;
-  color: #ffffff;
-  font-size: 15px;
-  letter-spacing: 0;
-  line-height: normal;
-}
-
-.why .group-5 {
-  position: absolute;
-  top: 177px;
-  left: 363px;
-  width: 301px;
-  height: 126px;
-}
-
-.why .text-wrapper-9 {
-  position: absolute;
-  top: 0;
-  left: 75px;
-  width: 222px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  color: #ffffff;
-  font-size: 22px;
-  letter-spacing: 0;
-  line-height: normal;
-}
-
-.why .group-6 {
-  position: absolute;
-  top: 177px;
-  left: 741px;
-  width: 271px;
-  height: 126px;
-}
-
-.why .text-wrapper-10 {
-  position: absolute;
-  top: 72px;
-  left: 0;
-  width: 267px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 400;
-  color: #ffffff;
-  font-size: 15px;
-  letter-spacing: 0;
-  line-height: normal;
-}
-
-.why .crea-tu-mapa-estelar {
-  margin-left: -16px;
-  height: 27px;
-  width: 674px;
-  align-self: center;
-  margin-top: 78px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 400;
-  color: #ffffff;
-  font-size: 22px;
-  letter-spacing: 0;
-  line-height: normal;
-}
-
-.why .span {
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 400;
-  color: #ffffff;
-  font-size: 22px;
-  letter-spacing: 0;
-}
-
-.why .text-wrapper-11 {
-  font-family: "Inter", system-ui, sans-serif;
+.why .text-wrapper-11{
   font-weight: 700;
 }
 
-.why .group-7 {
-  margin-left: 548px;
-  width: 172px;
+/* CTA */
+.why .group-7{
+  margin: 36px auto 0;
+  width: 170px;
   height: 36px;
   position: relative;
-  margin-top: 36px;
-  display: block; /* para <a> */
+  display: block;
 }
 
-.why .rectangle-2 {
+.why .rectangle-2{
   width: 170px;
   height: 36px;
   background-color: #e1db88;
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
 }
 
-.why .text-wrapper-12 {
+.why .text-wrapper-12{
   position: absolute;
-  top: 12px;
-  left: 46px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 400;
-  color: #000000;
-  font-size: 10px;
-  text-align: center;
-  letter-spacing: 0;
-  line-height: normal;
-  white-space: nowrap;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000;
+  letter-spacing: 0.4px;
 }
-
-
-/* =========================================================
-   6) PEGAR AQUÍ: SECCIÓN "DESIGN"
-   - Ej: .design, .design-title, .design-grid, etc.
-   ========================================================= */
-
-
-/* =========================================================
-   7) PEGAR AQUÍ: SECCIÓN "HIW?" (How it works)
-   - Ej: .hiw, .hiw-steps, .hiw-step, etc.
-   ========================================================= */
-
-
-/* =========================================================
-   8) PEGAR AQUÍ: SECCIÓN "REMINDER"
-   - Ej: .reminder, .reminder-card, etc.
-   ========================================================= */
-
-
-/* =========================================================
-   9) PEGAR AQUÍ: SECCIÓN "OPINIONS"
-   - Ej: .opinions, .opinions-grid, .testimonial, etc.
-   ========================================================= */
-
-
-/* =========================================================
-   10) PEGAR AQUÍ: SECCIÓN "FAQS"
-   - Ej: .faq, .faq-item, etc.
-   ========================================================= */
-
-
-/* =========================================================
-   11) PEGAR AQUÍ: FOOTER
-   - Ej: .footer, .footer-links, etc.
-   ========================================================= */
-
 
 /* =========================
-   12) RESPONSIVE GLOBAL
+   3) RESPONSIVE BREAKPOINTS
    ========================= */
-@media (max-width: 900px){
-  .nav-links{ display:none; } /* luego metemos hamburguesa */
-  .nav-container{ padding: 1rem 1.25rem; }
+
+/* Tablet */
+@media (max-width: 1024px){
+  .why .group{
+    grid-template-columns: repeat(2, 1fr);
+    gap: 48px 48px;
+  }
+
+  .why .text-wrapper{
+    font-size: 34px;
+  }
 }
 
-@media (max-width: 600px){
-  .promo-text{ font-size: 0.75rem; }
-  .hero-content{ padding: 3rem 1.5rem; }
+/* Mobile */
+@media (max-width: 640px){
+  .why{
+    padding: 64px 16px 72px;
+  }
+
+  .why .group{
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .why .text-wrapper{
+    font-size: 28px;
+  }
+
+  .why .p,
+  .why .text-wrapper-3,
+  .why .text-wrapper-5,
+  .why .text-wrapper-7,
+  .why .text-wrapper-9{
+    font-size: 20px;
+  }
+
+  .why .crea-tu-mapa-estelar{
+    font-size: 18px;
+    margin-top: 56px;
+  }
 }
+
+/* =========================================================
+   4) PEGAR AQUÍ FUTURAS SECCIONES
+   ========================================================= */
+
+/* ===== DESIGN ===== */
+/* .design { } */
+
+/* ===== HOW IT WORKS ===== */
+/* .hiw { } */
+
+/* ===== REMINDER ===== */
+/* .reminder { } */
+
+/* ===== OPINIONS ===== */
+/* .opinions { } */
+
+/* ===== FAQ ===== */
+/* .faq { } */
+
+/* ===== FOOTER ===== */
+/* .footer { } */

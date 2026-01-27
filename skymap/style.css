@@ -1,5 +1,5 @@
 /* =========================================================
-   SKYMAP – styles.css (COMPLETO)
+   SKYMAP – style.css (COMPLETO)
    ========================================================= */
 
 /* =========================
@@ -48,6 +48,7 @@ button:focus-visible {
   gap: 3rem;
   padding: 0.6rem 0;
   animation: marquee 18s linear infinite;
+  will-change: transform;
 }
 
 .promo-text {
@@ -56,6 +57,12 @@ button:focus-visible {
   letter-spacing: 0.6px;
   text-transform: uppercase;
   color: #fff;
+  font-style: italic;
+}
+
+.promo-strong {
+  font-weight: 800;
+  font-style: italic;
 }
 
 @keyframes marquee {
@@ -161,6 +168,20 @@ button:focus-visible {
   border-radius: 4px;
 }
 
+/* HERO: forzar 1 sola línea en desktop */
+.hero h1,
+.hero h2 {
+  white-space: nowrap;
+}
+
+/* En pantallas pequeñas permitimos que se parta */
+@media (max-width: 768px) {
+  .hero h1,
+  .hero h2 {
+    white-space: normal;
+  }
+}
+
 /* Espaciado desktop */
 @media (min-width: 1024px) {
   .hero-content {
@@ -174,7 +195,7 @@ button:focus-visible {
 }
 
 /* =========================================================
-   5) WHY – ¿POR QUÉ SKYMAP? (PDF → RESPONSIVE)
+   5) WHY – ¿POR QUÉ SKYMAP? (RESPONSIVE)
    ========================================================= */
 .why2 {
   background: #1b1a1a;
@@ -216,23 +237,29 @@ button:focus-visible {
   place-items: center;
 }
 
-.why2__iconBox svg {
-  width: 28px;
-  height: 28px;
-  color: #111;
-}
-
+/* Título: máximo 2 líneas */
 .why2__itemTitle {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
+/* Body: máximo 3 líneas */
 .why2__itemDesc {
-  margin-top: 10px;
-  font-size: 15px;
-  line-height: 1.45;
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.35;
   opacity: .95;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 
 .why2__priceLine {
@@ -275,7 +302,11 @@ button:focus-visible {
   }
 
   .why2__itemTitle {
-    font-size: 20px;
+    font-size: 18px;
+  }
+
+  .why2__itemDesc {
+    font-size: 12.5px;
   }
 
   .why2__priceLine {
@@ -284,14 +315,11 @@ button:focus-visible {
   }
 }
 
-/* =========================================================
-   6) FUTURAS SECCIONES
-   ========================================================= */
-/*
-.design { }
-.hiw { }
-.reminder { }
-.opinions { }
-.faq { }
-.footer { }
-*/
+/* =========================
+   6) NAV LINKS RESPONSIVE
+   ========================= */
+@media (max-width: 900px) {
+  .nav-links {
+    display: none;
+  }
+}

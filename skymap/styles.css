@@ -5,214 +5,293 @@
 /* =========================
    1) GLOBALS / RESET
    ========================= */
-*{
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
 }
 
-html, body{
+html,
+body {
   width: 100%;
   height: 100%;
 }
 
-body{
+body {
   font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   background: #000;
   color: #fff;
 }
 
-a{ text-decoration: none; color: inherit; }
+a {
+  text-decoration: none;
+  color: inherit;
+}
 
-button:focus-visible{
+button:focus-visible {
   outline: 2px solid #4a90e2;
   outline-offset: 2px;
 }
 
 /* =========================
-   2) WHY – ¿POR QUÉ SKYMAP?
-   (RESPONSIVE – basado en Figma)
+   2) PROMO BAR (marquee)
    ========================= */
-
-.why{
-  background-color: #1b1a1a;
-  width: 100%;
-  padding: 84px 24px 96px;
+.promo-bar {
+  background: #ff7f7f;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-/* Título */
-.why .text-wrapper{
-  max-width: 760px;
-  margin: 0 auto;
-  font-size: 40px;
-  font-weight: 700;
-  text-align: center;
-  line-height: 1.2;
+.promo-track {
+  display: inline-flex;
+  gap: 3rem;
+  padding: 0.6rem 0;
+  animation: marquee 18s linear infinite;
 }
 
-/* Grid principal (reemplaza posiciones absolutas) */
-.why .group{
-  max-width: 1034px;
-  margin: 78px auto 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 56px 90px; /* row / column gap similares a Figma */
-}
-
-/* Item */
-.why .div,
-.why .group-2,
-.why .group-3,
-.why .group-4,
-.why .group-5,
-.why .group-6{
-  position: relative;
-  min-height: 126px;
-}
-
-/* Rectángulo gris */
-.why .rectangle{
-  width: 56px;
-  height: 56px;
-  background-color: #d9d9d9;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-/* Títulos */
-.why .p,
-.why .text-wrapper-3,
-.why .text-wrapper-5,
-.why .text-wrapper-7,
-.why .text-wrapper-9{
-  position: absolute;
-  top: 0;
-  left: 75px;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-/* Descripciones */
-.why .text-wrapper-2,
-.why .text-wrapper-4,
-.why .text-wrapper-6,
-.why .text-wrapper-8,
-.why .text-wrapper-10{
-  position: absolute;
-  top: 72px;
-  left: 0;
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 1.4;
-  opacity: 0.95;
-}
-
-/* Línea de precio */
-.why .crea-tu-mapa-estelar{
-  margin: 78px auto 0;
-  text-align: center;
-  font-size: 22px;
-  max-width: 720px;
-}
-
-.why .text-wrapper-11{
-  font-weight: 700;
-}
-
-/* CTA */
-.why .group-7{
-  margin: 36px auto 0;
-  width: 170px;
-  height: 36px;
-  position: relative;
-  display: block;
-}
-
-.why .rectangle-2{
-  width: 170px;
-  height: 36px;
-  background-color: #e1db88;
-  position: absolute;
-  inset: 0;
-}
-
-.why .text-wrapper-12{
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
+.promo-text {
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #000;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 /* =========================
-   3) RESPONSIVE BREAKPOINTS
+   3) NAVBAR
    ========================= */
+.navbar {
+  background: #1c1c1c;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.6rem;
+  margin: auto;
+}
+
+.nav-links a {
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.nav-links a:hover {
+  opacity: 1;
+}
+
+/* Icono bolsa */
+.nav-cart {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.bag-icon {
+  width: 22px;
+  height: 22px;
+  color: #e5e28a;
+}
+
+/* =========================
+   4) HERO
+   ========================= */
+.hero {
+  min-height: calc(100vh - 120px);
+  background: url("background.jpg") center / cover no-repeat;
+  display: flex;
+  align-items: center;
+}
+
+.hero-content {
+  max-width: 650px;
+  padding: 4rem 2rem;
+}
+
+.hero h1 {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 800;
+}
+
+.hero h2 {
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  margin-top: .5rem;
+  font-weight: 600;
+}
+
+.hero p {
+  margin-top: 1.5rem;
+  line-height: 1.6;
+  opacity: .9;
+}
+
+.hero-btn {
+  display: inline-block;
+  margin-top: 2rem;
+  background: #e5e28a;
+  color: #000;
+  padding: .9rem 2.2rem;
+  font-weight: 700;
+  border-radius: 4px;
+}
+
+/* Espaciado desktop */
+@media (min-width: 1024px) {
+  .hero-content {
+    padding-left: 7rem;
+  }
+}
+@media (min-width: 1280px) {
+  .hero-content {
+    padding-left: 9rem;
+  }
+}
+
+/* =========================================================
+   5) WHY – ¿POR QUÉ SKYMAP? (PDF → RESPONSIVE)
+   ========================================================= */
+.why2 {
+  background: #1b1a1a;
+  padding: 84px 24px 96px;
+}
+
+.why2__container {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.why2__title {
+  font-weight: 700;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.2;
+}
+
+.why2__grid {
+  margin-top: 78px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 90px;
+  row-gap: 56px;
+  text-align: left;
+}
+
+.why2__item {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 19px;
+}
+
+.why2__iconBox {
+  width: 56px;
+  height: 56px;
+  background: #d9d9d9;
+  display: grid;
+  place-items: center;
+}
+
+.why2__iconBox svg {
+  width: 28px;
+  height: 28px;
+  color: #111;
+}
+
+.why2__itemTitle {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.why2__itemDesc {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.45;
+  opacity: .95;
+}
+
+.why2__priceLine {
+  margin-top: 78px;
+  font-size: 22px;
+}
+
+.why2__cta {
+  margin-top: 36px;
+  width: 170px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  background: #e1db88;
+  color: #000;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .4px;
+}
 
 /* Tablet */
-@media (max-width: 1024px){
-  .why .group{
+@media (max-width: 1024px) {
+  .why2__grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 48px 48px;
-  }
-
-  .why .text-wrapper{
-    font-size: 34px;
+    column-gap: 48px;
+    row-gap: 44px;
   }
 }
 
 /* Mobile */
-@media (max-width: 640px){
-  .why{
+@media (max-width: 640px) {
+  .why2 {
     padding: 64px 16px 72px;
   }
 
-  .why .group{
+  .why2__grid {
     grid-template-columns: 1fr;
-    gap: 36px;
+    margin-top: 48px;
+    gap: 30px;
   }
 
-  .why .text-wrapper{
-    font-size: 28px;
-  }
-
-  .why .p,
-  .why .text-wrapper-3,
-  .why .text-wrapper-5,
-  .why .text-wrapper-7,
-  .why .text-wrapper-9{
+  .why2__itemTitle {
     font-size: 20px;
   }
 
-  .why .crea-tu-mapa-estelar{
+  .why2__priceLine {
     font-size: 18px;
     margin-top: 56px;
   }
 }
 
 /* =========================================================
-   4) PEGAR AQUÍ FUTURAS SECCIONES
+   6) FUTURAS SECCIONES
    ========================================================= */
-
-/* ===== DESIGN ===== */
-/* .design { } */
-
-/* ===== HOW IT WORKS ===== */
-/* .hiw { } */
-
-/* ===== REMINDER ===== */
-/* .reminder { } */
-
-/* ===== OPINIONS ===== */
-/* .opinions { } */
-
-/* ===== FAQ ===== */
-/* .faq { } */
-
-/* ===== FOOTER ===== */
-/* .footer { } */
+/*
+.design { }
+.hiw { }
+.reminder { }
+.opinions { }
+.faq { }
+.footer { }
+*/

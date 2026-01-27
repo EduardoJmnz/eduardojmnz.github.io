@@ -3,54 +3,332 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO -->
   <title>SKYMAP | Mapas estelares más baratos garantizado por un dólar</title>
-  <meta name="description" content="Crea tu mapa estelar personalizado. Mapas estelares más baratos garantizado por un dólar. Regalo único y especial." />
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="Crea tu mapa estelar personalizado: el cielo exacto de un momento especial. Mapas estelares más baratos garantizado por un dólar. Regalo único y especial." />
+  <meta name="keywords" content="mapas estelares mas baratos garantizado, por un dolar, regalo unico y especial, mapa estelar personalizado, mapas estelares" />
+  <meta name="author" content="SKYMAP" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="SKYMAP | Mapas estelares por un dólar" />
+  <meta property="og:description" content="Genera un mapa estelar con precisión astronómica. Un regalo único y especial." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_MX" />
+
+  <style>
+    /* RESET BASE */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #000;
+      color: #fff;
+    }
+
+    /* ============ PROMO BAR (MARQUEE) ============ */
+    .promo-bar {
+      background: #ff7f7f;
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .promo-track {
+      display: inline-flex;
+      gap: 3rem;
+      padding: 0.65rem 0;
+      will-change: transform;
+      animation: promo-marquee 18s linear infinite;
+    }
+
+    .promo-text {
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      opacity: 0.95;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.15);
+    }
+
+    @keyframes promo-marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    /* Respeta usuarios que prefieren menos animación */
+    @media (prefers-reduced-motion: reduce) {
+      .promo-track { animation: none; }
+    }
+
+    /* ============ NAVBAR ============ */
+    .navbar {
+      background: #1c1c1c;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .logo {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.6rem;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      opacity: 0.85;
+    }
+
+    .nav-links a:hover { opacity: 1; }
+
+    /* Bolsa minimalista (color botones) */
+    .nav-cart {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .bag-icon{
+      width: 22px;
+      height: 22px;
+      color: #e5e28a; /* mismo color de los botones */
+      display: block;
+    }
+
+    /* ============ HERO ============ */
+    .hero {
+      min-height: calc(100vh - 120px);
+      background: url("background.jpg") center / cover no-repeat;
+      display: flex;
+      align-items: center;
+    }
+
+    .hero-content {
+      max-width: 650px;
+      padding: 4rem 2rem; /* mobile ok */
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .hero h2 {
+      font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+      margin-top: 0.5rem;
+      font-weight: 600;
+      opacity: 0.95;
+    }
+
+    .hero p {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 520px;
+      opacity: 0.9;
+    }
+
+    .hero-btn {
+      display: inline-block;
+      margin-top: 2rem;
+      background: #e5e28a;
+      color: #000;
+      padding: 0.9rem 2.2rem;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hero-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    /* ============ SECCIONES PLACEHOLDER (solo para scroll) ============ */
+    section.anchor {
+      padding: 6rem 2rem;
+      max-width: 1100px;
+      margin: auto;
+      color: #fff;
+    }
+
+    section.anchor h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    section.anchor p {
+      opacity: 0.8;
+      max-width: 700px;
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 900px) {
+      .nav-links { display: none; } /* luego metemos hamburguesa */
+      .nav-container { padding: 1rem 1.25rem; }
+    }
+
+    @media (max-width: 600px) {
+      .hero-content { padding: 3rem 1.5rem; }
+      .promo-text { font-size: 0.75rem; }
+    }
+
+    /* ✅ MÁS ESPACIO A LA IZQUIERDA EN ESCRITORIO */
+    @media (min-width: 1024px) {
+      .hero-content {
+        padding-left: 7rem; /* separa el texto del borde */
+        padding-right: 2rem;
+      }
+    }
+
+    @media (min-width: 1280px) {
+      .hero-content {
+        padding-left: 9rem; /* aún más aire en pantallas grandes */
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="promo-bar">
-  <div class="promo-track">
-    <span class="promo-text">¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
-    <span class="promo-text">¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
-  </div>
-</div>
-
-<header class="navbar">
-  <div class="nav-container">
-    <div class="logo">SKYMAP</div>
-    <nav class="nav-links">
-      <a href="#home">Home</a>
-      <a href="#porque">¿Por qué nosotros?</a>
-    </nav>
-    <div class="nav-cart">
-      <svg class="bag-icon" viewBox="0 0 24 24" fill="none">
-        <path d="M7 8V7a5 5 0 0 1 10 0v1" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M6 8h12l-1 13H7L6 8Z" stroke="currentColor" stroke-width="1.8"/>
-      </svg>
+  <!-- ============================= -->
+  <!-- PROMO BAR (LOOP) -->
+  <!-- ============================= -->
+  <div class="promo-bar" aria-label="Promoción">
+    <!-- Duplicamos el contenido para loop continuo -->
+    <div class="promo-track" aria-hidden="true">
+      <span class="promo-text">¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
+      <span class="promo-text">¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
+      <span class="promo-text">¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
+      <span class="promo-text">¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
     </div>
   </div>
-</header>
 
-<section id="home" class="hero">
-  <div class="hero-content">
-    <h1>EL CIELO EXACTO</h1>
-    <h2>DE UN MOMENTO QUE CAMBIO TU VIDA</h2>
-    <p>Genera un mapa estelar personalizado y listo para imprimir.</p>
-    <a href="generator.html" class="hero-btn">¡CREAR AHORA!</a>
-  </div>
-</section>
+  <!-- ============================= -->
+  <!-- NAVBAR -->
+  <!-- ============================= -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">SKYMAP</div>
 
-<section id="porque" class="why">
-  <div class="why-wrap">
-    <h2>¿Por qué SKYMAP es la mejor opción?</h2>
-    <div class="why-grid">
-      <div class="why-item"><div class="why-icon">⏱</div><div><h3>Fácil y rápido</h3><p>En menos de 5 minutos.</p></div></div>
-      <div class="why-item"><div class="why-icon">★</div><div><h3>Único</h3><p>Totalmente personalizado.</p></div></div>
-      <div class="why-item"><div class="why-icon">$</div><div><h3>Mejor precio</h3><p>Más barato garantizado.</p></div></div>
+      <nav class="nav-links" aria-label="Navegación principal">
+        <a href="#home">Home</a>
+        <a href="#porque">¿Por qué nosotros?</a>
+        <a href="#design">Design</a>
+        <a href="#how">HIW?</a>
+        <a href="#reminder">Reminder</a>
+        <a href="#opinions">Opinions</a>
+        <a href="#faq">FAQs</a>
+      </nav>
+
+      <!-- Icono bolsa (sin funcionalidad aún) -->
+      <div class="nav-cart" aria-label="Carrito" title="Carrito (próximamente)">
+        <svg class="bag-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M7 8V7a5 5 0 0 1 10 0v1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M6 8h12l-1 13H7L6 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>
-  </div>
-</section>
+  </header>
+
+  <!-- ============================= -->
+  <!-- HERO (MAIN) -->
+  <!-- background.jpg va aquí -->
+  <!-- ============================= -->
+  <section id="home" class="hero" role="banner">
+    <div class="hero-content">
+      <h1>EL CIELO EXACTO</h1>
+      <h2>DE UN MOMENTO QUE CAMBIO TU VIDA</h2>
+
+      <p>
+        Genera un mapa estelar del cielo tal como se veía en una
+        fecha y lugar especiales. Un recuerdo elegante,
+        personalizado y listo para imprimir.
+      </p>
+
+      <a href="generator.html" class="hero-btn">¡CREAR AHORA!</a>
+    </div>
+  </section>
+
+  <!-- ===================================================== -->
+  <!-- PEGAR AQUÍ: SECCIÓN "¿POR QUÉ SKYMAP ES LA MEJOR OPCIÓN?" -->
+  <!-- (Aquí insertaremos el HTML de esa sección cuando lo generemos bien) -->
+  <!-- ===================================================== -->
+  <section id="porque" class="anchor">
+    <h2>¿Por qué nosotros?</h2>
+    <p>Placeholder temporal. Aquí va la sección real del Figma.</p>
+  </section>
+
+  <!-- ===================================================== -->
+  <!-- PEGAR AQUÍ: SECCIÓN "DESIGN" -->
+  <!-- ===================================================== -->
+  <section id="design" class="anchor">
+    <h2>Design</h2>
+    <p>Placeholder temporal. Aquí va la sección real del Figma.</p>
+  </section>
+
+  <!-- ===================================================== -->
+  <!-- PEGAR AQUÍ: SECCIÓN "HIW?" (HOW IT WORKS) -->
+  <!-- ===================================================== -->
+  <section id="how" class="anchor">
+    <h2>HIW?</h2>
+    <p>Placeholder temporal. Aquí va la sección real del Figma.</p>
+  </section>
+
+  <!-- ===================================================== -->
+  <!-- PEGAR AQUÍ: SECCIÓN "REMINDER" -->
+  <!-- ===================================================== -->
+  <section id="reminder" class="anchor">
+    <h2>Reminder</h2>
+    <p>Placeholder temporal. Aquí va la sección real del Figma.</p>
+  </section>
+
+  <!-- ===================================================== -->
+  <!-- PEGAR AQUÍ: SECCIÓN "OPINIONS" -->
+  <!-- ===================================================== -->
+  <section id="opinions" class="anchor">
+    <h2>Opinions</h2>
+    <p>Placeholder temporal. Aquí va la sección real del Figma.</p>
+  </section>
+
+  <!-- ===================================================== -->
+  <!-- PEGAR AQUÍ: SECCIÓN "FAQS" -->
+  <!-- ===================================================== -->
+  <section id="faq" class="anchor">
+    <h2>FAQs</h2>
+    <p>Placeholder temporal. Aquí va la sección real del Figma.</p>
+  </section>
 
 </body>
 </html>

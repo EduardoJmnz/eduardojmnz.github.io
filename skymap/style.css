@@ -1,88 +1,323 @@
-body{
-  margin:0;
-  font-family: system-ui, Arial;
-  background:#050614;
-  color:white;
+/* =====================================================
+   VARIABLES GLOBALES
+   ===================================================== */
+:root{
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.72);
+
+  --bg-dark: #050614;
+  --overlay-60: rgba(10,12,24,.60);
+
+  --green-main: rgba(20,45,50,.85);
+  --green-border: rgba(90,170,170,.60);
+
+  --shadow-lg: 0 18px 60px rgba(0,0,0,.25);
 }
 
-.bg-video{
-  position:fixed;
-  inset:0;
+/* =====================================================
+   RESET
+   ===================================================== */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+html, body{
   width:100%;
   height:100%;
-  object-fit:cover;
-  z-index:-2;
 }
+body{
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: var(--bg-dark);
+  color: var(--text);
+  overflow-x: hidden;
+}
+a{ text-decoration:none; color:inherit; }
+
+/* =====================================================
+   VIDEO DE FONDO GLOBAL
+   ===================================================== */
+.bg-video{
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -3;
+}
+
 .bg-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(5,6,20,.75);
-  z-index:-1;
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(1400px 800px at 50% 30%, rgba(5,6,20,.55), rgba(5,6,20,.90));
+  z-index: -2;
 }
 
+.bg-fade{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.18);
+  opacity: 0;
+  transition: opacity .22s ease;
+  z-index: -1;
+}
+.bg-fade.is-on{ opacity:1; }
+
+/* =====================================================
+   PROMO BAR (ROJO + ITALIC)
+   ===================================================== */
+.promo-bar{
+  height: 40px;
+  background: #e73535;
+  overflow: hidden;
+}
+.promo-marquee{
+  display:flex;
+  animation: marquee 18s linear infinite;
+}
+.promo-row{
+  display:flex;
+  gap: 60px;
+  white-space: nowrap;
+  padding: 0 24px;
+}
+.promo-text{
+  font-size: 12px;
+  font-style: italic;
+  text-transform: uppercase;
+  color: #fff;
+}
+.promo-strong{
+  font-weight: 800;
+  font-style: italic;
+}
+
+@keyframes marquee{
+  from{ transform: translateX(0); }
+  to{ transform: translateX(-50%); }
+}
+
+/* =====================================================
+   NAVBAR
+   ===================================================== */
+.navbar{
+  height: 64px;
+  background: rgba(10,12,24,.55);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.nav-container{
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 100%;
+  padding: 0 20px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+}
+.nav-links{
+  display:flex;
+  gap: 18px;
+}
+.nav-links a{
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,.75);
+}
+.nav-links a:hover{ color:#fff; }
+
+/* =====================================================
+   BOTÓN PRINCIPAL (VERDE)
+   ===================================================== */
 .btn-primary{
-  padding:16px 42px;
-  border-radius:999px;
-  background:rgba(20,45,50,.85);
-  border:2px solid rgba(90,170,170,.6);
-  color:#fff;
-  font-weight:800;
-  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 18px 48px;
+  border-radius: 999px;
+  background: var(--green-main);
+  border: 2px solid var(--green-border);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  transition: all .25s ease;
+}
+.btn-primary:hover{
+  transform: translateY(-2px);
+  background: rgba(30,65,70,.95);
+}
+.btn-primary--small{
+  padding: 14px 38px;
+  font-size: 14px;
 }
 
+/* =====================================================
+   HERO  ←←← INICIO
+   ===================================================== */
 .hero{
-  min-height:100vh;
+  min-height: 100vh;
   display:flex;
   align-items:center;
 }
 .hero-inner{
-  max-width:1200px;
-  margin:auto;
-  padding:80px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 110px 24px;
   display:grid;
-  grid-template-columns:1fr 420px;
-  gap:60px;
+  grid-template-columns: 1fr 420px;
+  gap: 80px;
 }
-.hero-sample img{
-  width:100%;
-  border-radius:12px;
+.hero h1{
+  font-size: 56px;
+  font-weight: 800;
 }
+.hero h2{
+  font-size: 20px;
+  margin-top: 10px;
+}
+.hero p{
+  margin-top: 26px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+/* ===================== HERO ←←← FIN ================= */
 
+/* =====================================================
+   WHY  ←←← INICIO
+   ===================================================== */
 .why2{
-  background:rgba(10,12,24,.6);
-  padding:80px 24px;
+  background: var(--overlay-60);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 84px 24px 96px;
+}
+.why2__container{
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+.why2__title{
+  font-size: 40px;
+  font-weight: 700;
+}
+.why2__grid{
+  margin-top: 70px;
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 56px;
+  text-align:left;
+}
+/* ===================== WHY ←←← FIN ================= */
+
+/* =====================================================
+   ESTILOS  ←←← INICIO
+   ===================================================== */
+.styles{
+  padding: 92px 24px;
+}
+.styles__container{
+  max-width: 1100px;
+  margin: 0 auto;
   text-align:center;
 }
-
-.styles{
-  padding:80px 24px;
-}
 .styles__grid{
+  margin-top: 48px;
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 26px;
 }
-.styles__card{text-decoration:none;color:white;}
-.styles__thumb{aspect-ratio:3/4;border-radius:14px;background-size:cover;}
-.e1{background-image:url(media/e1.jpg)}
-.e2{background-image:url(media/e2.jpg)}
-.e3{background-image:url(media/e3.jpg)}
-.e4{background-image:url(media/e4.jpg)}
-.styles__label{text-align:center;margin-top:12px;font-weight:700;}
+.styles__thumb{
+  aspect-ratio: 3/4;
+  border-radius: 16px;
+  background-size: cover;
+  background-position: center;
+  box-shadow: var(--shadow-lg);
+}
+.styles__card:nth-child(1) .styles__thumb{ background-image:url("./media/e1.jpg"); }
+.styles__card:nth-child(2) .styles__thumb{ background-image:url("./media/e2.jpg"); }
+.styles__card:nth-child(3) .styles__thumb{ background-image:url("./media/e3.jpg"); }
+.styles__card:nth-child(4) .styles__thumb{ background-image:url("./media/e4.jpg"); }
+/* ===================== ESTILOS ←←← FIN ============== */
 
+/* =====================================================
+   WHAT IS?  ←←← INICIO
+   ===================================================== */
 .whatis{
-  background:rgba(10,12,24,.6);
-  padding:80px 24px;
+  background: var(--overlay-60);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 84px 24px 96px;
+}
+.whatis__container{
+  max-width: 1100px;
+  margin: 0 auto;
 }
 .whatis__grid{
-  max-width:1100px;
-  margin:auto;
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:28px;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: stretch;
 }
+
+/* Cards simétricas */
 .whatis__col{
-  background:rgba(255,255,255,.06);
-  border-radius:18px;
-  padding:28px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  padding: 28px;
+  min-height: 260px;
+  box-shadow: var(--shadow-lg);
+  display:flex;
+  flex-direction: column;
+}
+
+/* Títulos IGUALES */
+.whatis__title,
+.whatis__subtitle{
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+/* Texto izquierda */
+.whatis__desc{
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* Lista derecha */
+.whatis__list{
+  list-style:none;
+  display:grid;
+  gap: 12px;
+}
+.whatis__item{
+  display:grid;
+  grid-template-columns: 26px 1fr;
+  gap: 10px;
+  font-size: 14px;
+}
+.whatis__emoji{
+  font-size: 16px;
+}
+/* ===================== WHAT IS? ←←← FIN ============= */
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+@media (max-width: 1024px){
+  .hero-inner{ grid-template-columns: 1fr; }
+  .styles__grid{ grid-template-columns: repeat(2,1fr); }
+  .whatis__grid{ grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px){
+  .styles__grid{ grid-template-columns: 1fr; }
+  .why2__grid{ grid-template-columns: 1fr; }
 }

@@ -244,68 +244,129 @@ a{ text-decoration:none; color:inherit; }
 /* ===================== ESTILOS ←←← FIN ============== */
 
 /* =====================================================
-   WHAT IS?  ←←← INICIO
+   WHAT IS?
+   (mismo fondo que WHY + simetría perfecta)
    ===================================================== */
+
 .whatis{
-  background: var(--overlay-60);
+  background: rgba(10,12,24,.60);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
   border-top: 1px solid rgba(255,255,255,.06);
   border-bottom: 1px solid rgba(255,255,255,.06);
+
   padding: 84px 24px 96px;
 }
+
 .whatis__container{
   max-width: 1100px;
   margin: 0 auto;
 }
+
+/* GRID DE LOS DOS RECTÁNGULOS */
 .whatis__grid{
-  display:grid;
+  display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 28px;
   align-items: stretch;
 }
 
-/* Cards simétricas */
+/* RECTÁNGULOS (cards) */
 .whatis__col{
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.25);
+
   padding: 28px;
   min-height: 260px;
-  box-shadow: var(--shadow-lg);
-  display:flex;
+
+  display: flex;
   flex-direction: column;
+  justify-content: flex-start;
 }
 
-/* Títulos IGUALES */
-.whatis__title,
-.whatis__subtitle{
+/* TÍTULOS (MISMO TAMAÑO EN AMBOS) */
+.whatis__title{
   font-size: 32px;
   font-weight: 700;
+  line-height: 1.15;
+  color: #fff;
   margin-bottom: 16px;
 }
 
-/* Texto izquierda */
+/* TEXTO IZQUIERDA */
 .whatis__desc{
   font-size: 15px;
   line-height: 1.55;
-  color: var(--muted);
+  color: rgba(255,255,255,.74);
+  max-width: 520px;
 }
 
-/* Lista derecha */
+/* LISTA DERECHA */
 .whatis__list{
-  list-style:none;
-  display:grid;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  display: grid;
   gap: 12px;
 }
+
 .whatis__item{
-  display:grid;
+  display: grid;
   grid-template-columns: 26px 1fr;
   gap: 10px;
+  align-items: start;
+
   font-size: 14px;
+  line-height: 1.45;
+  color: rgba(255,255,255,.78);
 }
+
 .whatis__emoji{
   font-size: 16px;
+  line-height: 1.2;
+  transform: translateY(1px);
 }
+
+/* BOTÓN CENTRADO */
+.whatis__ctaWrap{
+  margin-top: 42px;
+  display: flex;
+  justify-content: center;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px){
+  .whatis__grid{
+    grid-template-columns: 1fr;
+  }
+
+  .whatis__col{
+    min-height: auto;
+  }
+
+  .whatis__ctaWrap{
+    margin-top: 32px;
+  }
+}
+
+@media (max-width: 900px){
+  .whatis{
+    padding: 70px 18px 86px;
+  }
+
+  .whatis__title{
+    font-size: clamp(24px, 6vw, 32px);
+  }
+
+  .whatis__desc{
+    font-size: 14px;
+  }
+}
+
 /* ===================== WHAT IS? ←←← FIN ============= */
 
 /* =====================================================

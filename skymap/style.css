@@ -1,0 +1,435 @@
+/* =========================================================
+   SKYMAP – style.css (COMPLETO)
+   ========================================================= */
+
+/* =========================
+   GLOBALS / RESET
+   ========================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: #000;
+  color: #fff;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+body.menu-open {
+  overflow: hidden;
+}
+
+/* =========================
+   TOPBAR (PROMO + NAV)
+   ========================= */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 300;
+}
+
+/* =========================
+   PROMO BAR (INFINITE LOOP)
+   ========================= */
+.promo-bar {
+  background: #ff7f7f;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.promo-viewport {
+  overflow: hidden;
+}
+
+.promo-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeX 18s linear infinite;
+}
+
+.promo-row {
+  display: inline-flex;
+  gap: 3rem;
+  padding: 0.6rem 0;
+}
+
+.promo-text {
+  font-size: 0.85rem;
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.promo-strong {
+  font-weight: 800;
+  font-style: italic;
+}
+
+@keyframes marqueeX {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* =========================
+   NAVBAR
+   ========================= */
+.navbar {
+  background: #1c1c1c;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.6rem;
+  margin: auto;
+}
+
+.nav-links a {
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.nav-links a:hover {
+  opacity: 1;
+}
+
+.nav-cart {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.bag-icon {
+  width: 22px;
+  height: 22px;
+  color: #e5e28a;
+}
+
+/* =========================
+   HAMBURGER + MOBILE MENU
+   ========================= */
+.hamburger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 10px;
+  z-index: 401;
+}
+
+.hamburger span {
+  display: block;
+  height: 2px;
+  background: #fff;
+  margin: 6px 0;
+  transition: transform .25s ease, opacity .25s ease;
+}
+
+.hamburger.is-open span:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+.hamburger.is-open span:nth-child(2) {
+  opacity: 0;
+}
+.hamburger.is-open span:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+.mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+  z-index: 350;
+}
+
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  background: #1c1c1c;
+  padding: 120px 24px 32px;
+  display: grid;
+  gap: 18px;
+  transform: translateY(-12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .25s ease, opacity .25s ease;
+  z-index: 400;
+}
+
+.mobile-menu a {
+  font-size: 1.05rem;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.mobile-menu a:hover {
+  background: rgba(255,255,255,.06);
+}
+
+body.menu-open .mobile-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.menu-open .mobile-menu {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* =========================
+   HERO (VIDEO BG + MOCK)
+   ========================= */
+.hero {
+  min-height: calc(100vh - 120px);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.38);
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1280px;
+  margin: auto;
+  padding: 110px 80px;
+  display: grid;
+  grid-template-columns: 1fr 460px;
+  gap: 90px;
+  align-items: center;
+}
+
+.hero-content {
+  max-width: 520px;
+}
+
+.hero h1 {
+  font-size: 56px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.hero h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-top: 10px;
+  white-space: nowrap;
+}
+
+.hero p {
+  margin-top: 28px;
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: .92;
+  max-width: 360px;
+}
+
+.hero-btn {
+  display: inline-grid;
+  place-items: center;
+  margin-top: 26px;
+  width: 170px;
+  height: 36px;
+  background: #e5e28a;
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.hero-sample {
+  width: 460px;
+  height: 460px;
+  background: #d9d9d9;
+  box-shadow: 0 12px 30px rgba(0,0,0,.35);
+  overflow: hidden;
+}
+
+.hero-sample img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* =========================
+   WHY
+   ========================= */
+.why2 {
+  background: #1b1a1a;
+  padding: 84px 24px 96px;
+}
+
+.why2__container {
+  max-width: 1100px;
+  margin: auto;
+  text-align: center;
+}
+
+.why2__title {
+  font-size: 40px;
+  font-weight: 700;
+}
+
+.why2__grid {
+  margin-top: 78px;
+  display: grid;
+  grid-template-columns: repeat(3, 280px);
+  justify-content: space-between;
+  gap: 56px;
+  text-align: left;
+}
+
+.why2__item {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  grid-template-areas:
+    "icon title"
+    "desc desc";
+  column-gap: 16px;
+  row-gap: 10px;
+}
+
+.why2__iconBox {
+  grid-area: icon;
+  width: 56px;
+  height: 56px;
+  background: #d9d9d9;
+}
+
+.why2__itemTitle {
+  grid-area: title;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.why2__itemDesc {
+  grid-area: desc;
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: .95;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.why2__priceLine {
+  margin-top: 78px;
+  font-size: 22px;
+}
+
+.why2__cta {
+  margin-top: 36px;
+  width: 170px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  background: #e1db88;
+  color: #000;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+@media (max-width: 1024px) {
+  .hero-inner {
+    grid-template-columns: 1fr 380px;
+    padding: 90px 40px;
+    gap: 50px;
+  }
+  .hero-sample {
+    width: 380px;
+    height: 380px;
+  }
+  .why2__grid {
+    grid-template-columns: repeat(2, 280px);
+    justify-content: center;
+  }
+}
+
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .hamburger { display: block; }
+
+  .hero-inner {
+    grid-template-columns: 1fr;
+    padding: 70px 18px;
+  }
+  .hero h1,
+  .hero h2 {
+    white-space: normal;
+  }
+  .hero-sample {
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .why2__grid {
+    grid-template-columns: 1fr;
+    gap: 52px;
+  }
+}

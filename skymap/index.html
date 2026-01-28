@@ -1,74 +1,446 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SKYMAP</title>
-  <link rel="stylesheet" href="style.css" />
+
+  <!-- SEO (se ajusta también por JS para EN/ES) -->
+  <title>SKYMAP | Mapas estelares más baratos garantizado por un dólar</title>
+  <meta id="metaDesc" name="description" content="Crea tu mapa estelar personalizado con SKYMAP. El cielo exacto de un momento especial. Mapas estelares más baratos garantizado por un dólar. Regalo único y especial." />
+  <meta id="metaKeys" name="keywords" content="mapas estelares mas baratos garantizado, por un dolar, regalo unico y especial, mapa estelar personalizado" />
+
+  <link rel="stylesheet" href="./style.css?v=green_i18n" />
 </head>
+
 <body>
 
-<video class="bg-video" autoplay muted loop playsinline>
-  <source src="background.mov" type="video/quicktime" />
-</video>
-<div class="bg-overlay"></div>
+  <!-- =========================
+       VIDEO GLOBAL (FONDO FIJO)
+       ========================= -->
+  <video class="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="./background.mov" type="video/quicktime" />
+    <!-- Fallback opcional si lo tienes -->
+    <source src="./background.mp4" type="video/mp4" />
+  </video>
 
-<section class="hero">
-  <div class="hero-inner">
-    <div class="hero-content">
-      <h1>EL CIELO EXACTO</h1>
-      <h2>DE UN MOMENTO QUE CAMBIÓ TU VIDA</h2>
-      <p>
-        Genera un mapa estelar del cielo tal como se veía en una fecha y lugar
-        especiales. Un recuerdo elegante y personalizado.
+  <div class="bg-overlay" aria-hidden="true"></div>
+  <div class="bg-fade" aria-hidden="true"></div>
+
+  <!-- =========================
+       TOPBAR FIJO
+       ========================= -->
+  <div class="topbar">
+
+    <!-- PROMO BAR -->
+    <div class="promo-bar">
+      <div class="promo-viewport">
+        <div class="promo-marquee">
+          <div class="promo-row">
+            <span class="promo-text" data-i18n="promo">
+              ¡PROMO DE SAN VALENTÍN: TU POSTER SKYMAP POR
+              <span class="promo-strong">SÓLO $1.00 HASTA EL 14 DE FEBRERO</span>!
+            </span>
+            <span class="promo-text" data-i18n="promo">
+              ¡PROMO DE SAN VALENTÍN: TU POSTER SKYMAP POR
+              <span class="promo-strong">SÓLO $1.00 HASTA EL 14 DE FEBRERO</span>!
+            </span>
+            <span class="promo-text" data-i18n="promo">
+              ¡PROMO DE SAN VALENTÍN: TU POSTER SKYMAP POR
+              <span class="promo-strong">SÓLO $1.00 HASTA EL 14 DE FEBRERO</span>!
+            </span>
+          </div>
+
+          <div class="promo-row" aria-hidden="true">
+            <span class="promo-text" data-i18n="promo">
+              ¡PROMO DE SAN VALENTÍN: TU POSTER SKYMAP POR
+              <span class="promo-strong">SÓLO $1.00 HASTA EL 14 DE FEBRERO</span>!
+            </span>
+            <span class="promo-text" data-i18n="promo">
+              ¡PROMO DE SAN VALENTÍN: TU POSTER SKYMAP POR
+              <span class="promo-strong">SÓLO $1.00 HASTA EL 14 DE FEBRERO</span>!
+            </span>
+            <span class="promo-text" data-i18n="promo">
+              ¡PROMO DE SAN VALENTÍN: TU POSTER SKYMAP POR
+              <span class="promo-strong">SÓLO $1.00 HASTA EL 14 DE FEBRERO</span>!
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="nav-container">
+        <div class="logo">SKYMAP</div>
+
+        <nav class="nav-links" aria-label="Primary navigation">
+          <a href="#home" data-i18n="nav_home">Home</a>
+          <a href="#porque" data-i18n="nav_why">¿Por qué nosotros?</a>
+          <a href="#estilos" data-i18n="nav_design">Design</a>
+          <a href="#how" data-i18n="nav_hiw">HIW?</a>
+          <a href="#reminder" data-i18n="nav_reminder">Reminder</a>
+          <a href="#opinions" data-i18n="nav_opinions">Opinions</a>
+          <a href="#faq" data-i18n="nav_faq">FAQs</a>
+        </nav>
+
+        <div class="nav-actions">
+          <div class="nav-cart" title="Carrito (próximamente)" aria-label="Cart">
+            <svg class="bag-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 8V7a5 5 0 0 1 10 0v1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M6 8h12l-1 13H7L6 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile menu -->
+      <div class="mobile-backdrop" id="mobileBackdrop" aria-hidden="true"></div>
+
+      <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Menu">
+        <a class="mobile-link" href="#home" data-i18n="nav_home">Home</a>
+        <a class="mobile-link" href="#porque" data-i18n="nav_why">¿Por qué nosotros?</a>
+        <a class="mobile-link" href="#estilos" data-i18n="nav_design">Design</a>
+        <a class="mobile-link" href="#how" data-i18n="nav_hiw">HIW?</a>
+        <a class="mobile-link" href="#reminder" data-i18n="nav_reminder">Reminder</a>
+        <a class="mobile-link" href="#opinions" data-i18n="nav_opinions">Opinions</a>
+        <a class="mobile-link" href="#faq" data-i18n="nav_faq">FAQs</a>
+      </div>
+    </header>
+
+  </div>
+
+  <!-- =========================
+       HERO
+       ========================= -->
+  <section id="home" class="hero">
+    <div class="hero-inner">
+      <!-- Móvil: primero imagen -->
+      <div class="hero-sample" aria-label="Poster examples">
+        <img src="./hero-posters.png" alt="Poster examples">
+      </div>
+
+      <div class="hero-content">
+        <h1 data-i18n="hero_h1">EL CIELO EXACTO</h1>
+        <h2 data-i18n="hero_h2">DE UN MOMENTO QUE CAMBIO TU VIDA</h2>
+
+        <p data-i18n="hero_p">
+          Genera un mapa estelar del cielo tal como se veía en una fecha y lugar
+          especiales. Un recuerdo elegante, personalizado y listo para imprimir.
+        </p>
+
+        <a href="generator.html" class="btn-primary" data-i18n="btn_create">¡CREAR AHORA!</a>
+      </div>
+    </div>
+  </section><!-- =========================
+       WHY
+       ========================= -->
+  <section id="porque" class="why2">
+    <div class="why2__container">
+      <h2 class="why2__title" data-i18n="why_title">¿Por qué SKYMAP es la mejor opción?</h2>
+
+      <div class="why2__grid">
+        <article class="why2__item">
+          <div class="why2__iconBox"></div>
+          <h3 class="why2__itemTitle" data-i18n="b1_title">Fácil y rapido de crear</h3>
+          <p class="why2__itemDesc" data-i18n="b1_desc">Diseña tu mapa estelar en menos de 5 minutos desde tu celular o computadora y descarga al instante.</p>
+        </article>
+
+        <article class="why2__item">
+          <div class="why2__iconBox"></div>
+          <h3 class="why2__itemTitle" data-i18n="b2_title">No son puntos y líneas al azar</h3>
+          <p class="why2__itemDesc" data-i18n="b2_desc">Cada mapa estelar es astronómicamente preciso y verificable en planetarios en línea.</p>
+        </article>
+
+        <article class="why2__item">
+          <div class="why2__iconBox"></div>
+          <h3 class="why2__itemTitle" data-i18n="b3_title">Cada mapa es único</h3>
+          <p class="why2__itemDesc" data-i18n="b3_desc">Cada mapa estelar es personalizado por ti, pensado para una persona especial y un momento que merece ser recordado.</p>
+        </article>
+
+        <article class="why2__item">
+          <div class="why2__iconBox"></div>
+          <h3 class="why2__itemTitle" data-i18n="b4_title">La mejor relación precio–calidad</h3>
+          <p class="why2__itemDesc" data-i18n="b4_desc">Ofrecemos los mapas estelares más baratos garantizado, sin cargos ocultos ni sorpresas al finalizar tu compra.</p>
+        </article>
+
+        <article class="why2__item">
+          <div class="why2__iconBox"></div>
+          <h3 class="why2__itemTitle" data-i18n="b5_title">Un regalo ecologico y sustentable</h3>
+          <p class="why2__itemDesc" data-i18n="b5_desc">Al ser un producto digital, evitas empaques plásticos y reduces el impacto ambiental sin costos adicionales.</p>
+        </article>
+
+        <article class="why2__item">
+          <div class="why2__iconBox"></div>
+          <h3 class="why2__itemTitle" data-i18n="b6_title">Un regalo único y especial</h3>
+          <p class="why2__itemDesc" data-i18n="b6_desc">Ideal para aniversarios, cumpleaños, bodas o momentos irrepetibles. Un detalle emocional que nadie olvida.</p>
+        </article>
+      </div>
+
+      <p class="why2__priceLine" data-i18n="why_price">
+        ¡Crea tu mapa estelar personalizado ahora por <strong>sólo $20.00 mxn</strong>!
       </p>
-      <a href="generator.html" class="btn-primary">¡CREAR AHORA!</a>
-    </div>
-    <div class="hero-sample">
-      <img src="hero.jpg" alt="Mapa estelar" />
-    </div>
-  </div>
-</section>
 
-<section class="why2">
-  <div class="why2__container">
-    <h2>¿Por qué SKYMAP?</h2>
-  </div>
-</section>
-
-<section class="styles">
-  <div class="styles__container">
-    <h2>Elige un estilo</h2>
-    <div class="styles__grid">
-      <a href="generator.html" class="styles__card"><div class="styles__thumb e1"></div><div class="styles__label">Clásico</div></a>
-      <a href="generator.html" class="styles__card"><div class="styles__thumb e2"></div><div class="styles__label">Moderno</div></a>
-      <a href="generator.html" class="styles__card"><div class="styles__thumb e3"></div><div class="styles__label">Póster</div></a>
-      <a href="generator.html" class="styles__card"><div class="styles__thumb e4"></div><div class="styles__label">Romántico</div></a>
+      <a href="generator.html" class="btn-primary btn-primary--small" data-i18n="btn_create">¡CREAR AHORA!</a>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="whatis">
-  <div class="whatis__grid">
-    <div class="whatis__col">
-      <h2>¿Qué es un MAPA ESTELAR?</h2>
-      <p>
-        Un mapa estelar personalizado representa la posición real de las estrellas
-        en un momento específico. Es el cielo tal como fue una sola vez.
+
+
+  
+  <!-- =========================
+       STYLES (formerly Designs)
+       ========================= -->
+  <section id="estilos" class="styles">
+    <div class="styles__container">
+      <h2 class="styles__title" data-i18n="styles_title">Elige un increíble estilo</h2>
+      <p class="styles__subtitle" data-i18n="styles_subtitle">
+        Selecciona el estilo de mapa estelar que más te guste y personalízalo. ¡Cada mapa estelar es diferente!
       </p>
+
+      <div class="styles__grid" aria-label="Estilos de diseño">
+        <article class="styles__card">
+          <div class="styles__thumb" role="img" aria-label="Estilo Clásico"></div>
+          <h3 class="styles__label" data-i18n="style_classic">Clásico</h3>
+        </article>
+
+        <article class="styles__card">
+          <div class="styles__thumb" role="img" aria-label="Estilo Moderno"></div>
+          <h3 class="styles__label" data-i18n="style_modern">Moderno</h3>
+        </article>
+
+        <article class="styles__card">
+          <div class="styles__thumb" role="img" aria-label="Estilo Poster"></div>
+          <h3 class="styles__label" data-i18n="style_poster">Póster</h3>
+        </article>
+
+        <article class="styles__card">
+          <div class="styles__thumb" role="img" aria-label="Estilo Romántico"></div>
+          <h3 class="styles__label" data-i18n="style_romantic">Romántico</h3>
+        </article>
+      </div>
+
+      <a href="generator.html" class="btn-primary btn-primary--small styles__cta" data-i18n="styles_cta">
+        VER MÁS OPCIONES
+      </a>
     </div>
-    <div class="whatis__col">
-      <h2>Lo que obtienes</h2>
-      <ul>
-        <li>📍 Momento único</li>
-        <li>✨ Diseño moderno</li>
-        <li>📝 Texto personalizable</li>
-        <li>🖨️ Listo para imprimir</li>
-        <li>⚡ Generación rápida</li>
-      </ul>
+  </section>
+
+
+ <!-- =========================
+     WHAT IS?
+     ========================= -->
+<section id="whatis" class="whatis">
+  <div class="whatis__container">
+
+    <div class="whatis__grid">
+      <!-- Columna izquierda -->
+      <div class="whatis__col whatis__col--left">
+        <h2 class="whatis__title" data-i18n="whatis_title">¿Qué es un MAPA ESTELAR?</h2>
+
+        <p class="whatis__desc" data-i18n="whatis_desc">
+          Un mapa estelar personalizado representa la posición real de las estrellas en un momento específico:
+          una fecha, una hora y un lugar que significan algo para ti. 
+          
+          <br>No es una ilustración genérica. Es el cielo tal como fue una sola vez.</br>
+
+          <br> 👶 Nacimiento 💍 Boda ❤️ Aniversario 🌠 Momento únic </br>
+        </p>
+      </div>
+
+      <!-- Columna derecha -->
+      <div class="whatis__col whatis__col--right">
+        <h3 class="whatis__subtitle" data-i18n="whatis_label">Lo que obtienes</h3>
+
+        <ul class="whatis__list">
+          <li class="whatis__item"><span class="whatis__emoji">📍</span> <span data-i18n="whatis_item_1">Nacimiento – Boda – Aniversario – Momento único</span></li>
+          <li class="whatis__item"><span class="whatis__emoji">✨</span> <span data-i18n="whatis_item_2">Mapa con diseño moderno y limpio</span></li>
+          <li class="whatis__item"><span class="whatis__emoji">📝</span> <span data-i18n="whatis_item_3">Texto personalizable (título, lugar, fecha)</span></li>
+          <li class="whatis__item"><span class="whatis__emoji">🖨️</span> <span data-i18n="whatis_item_4">Exportación lista para imprimir</span></li>
+          <li class="whatis__item"><span class="whatis__emoji">⚡</span> <span data-i18n="whatis_item_5">Generación rápida desde el navegador</span></li>
+        </ul>
+      </div>
     </div>
+
   </div>
 </section>
+
+
+
+  <script>
+    // --------- Mobile menu ----------
+    const btn = document.getElementById("hamburgerBtn");
+    const backdrop = document.getElementById("mobileBackdrop");
+    const links = document.querySelectorAll(".mobile-link");
+
+    function openMenu(){
+      document.body.classList.add("menu-open");
+      btn.classList.add("is-open");
+      btn.setAttribute("aria-expanded", "true");
+    }
+    function closeMenu(){
+      document.body.classList.remove("menu-open");
+      btn.classList.remove("is-open");
+      btn.setAttribute("aria-expanded", "false");
+    }
+    btn.addEventListener("click", () => {
+      if (document.body.classList.contains("menu-open")) closeMenu();
+      else openMenu();
+    });
+    backdrop.addEventListener("click", closeMenu);
+    links.forEach(a => a.addEventListener("click", closeMenu));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
+
+    // --------- Video loop smoothing (micro fade) ----------
+    const v = document.querySelector(".bg-video");
+    const fade = document.querySelector(".bg-fade");
+    if (v && fade) {
+      v.addEventListener("timeupdate", () => {
+        if (v.duration && (v.duration - v.currentTime) < 0.18) {
+          fade.classList.add("is-on");
+          setTimeout(() => fade.classList.remove("is-on"), 220);
+        }
+      });
+    }
+
+    // --------- i18n (ES/EN by browser language) ----------
+    const i18n = {
+      es: {
+        // head
+        title: "SKYMAP | Mapas estelares más baratos garantizado por un dólar",
+        desc: "Crea tu mapa estelar personalizado con SKYMAP. El cielo exacto de un momento especial. Mapas estelares más baratos garantizado por un dólar. Regalo único y especial.",
+        keys: "mapas estelares mas baratos garantizado, por un dolar, regalo unico y especial, mapa estelar personalizado",
+
+        // promo
+        promo: "¡PROMO DE SAN VALENTÍN: TU POSTER SKYMAP POR <span class='promo-strong'>SÓLO $1.00 HASTA EL 14 DE FEBRERO</span>!",
+
+        // nav
+        nav_home: "Home",
+        nav_why: "¿Por qué nosotros?",
+        nav_design: "Diseño",
+        nav_hiw: "¿Cómo funciona?",
+        nav_reminder: "Recordatorio",
+        nav_opinions: "Opiniones",
+        nav_faq: "FAQs",
+
+        // hero
+        hero_h1: "EL CIELO EXACTO",
+        hero_h2: "DE UN MOMENTO QUE CAMBIO TU VIDA",
+        hero_p: "Genera un mapa estelar del cielo tal como se veía en una fecha y lugar especiales. Un recuerdo elegante, personalizado y listo para imprimir.",
+        btn_create: "¡CREAR AHORA!",
+
+        // styles
+        styles_title: "Elige un increíble estilo",
+        styles_subtitle: "Selecciona el estilo de mapa estelar que más te guste y personalízalo. ¡Cada mapa estelar es diferente!",
+        styles_cta: "VER MÁS OPCIONES",
+        style_classic: "Clásico",
+        style_modern: "Moderno",
+        style_poster: "Póster",
+        style_romantic: "Romántico",
+
+        // why
+        why_title: "¿Por qué SKYMAP es la mejor opción?",
+        why_price: "¡Crea tu mapa estelar personalizado ahora por <strong>sólo $20.00 mxn</strong>!",
+
+        b1_title: "Fácil y rapido de crear",
+        b1_desc: "Diseña tu mapa estelar en menos de 5 minutos desde tu celular o computadora y descarga al instante.",
+        b2_title: "No son puntos y líneas al azar",
+        b2_desc: "Cada mapa estelar es astronómicamente preciso y verificable en planetarios en línea.",
+        b3_title: "Cada mapa es único",
+        b3_desc: "Cada mapa estelar es personalizado por ti, pensado para una persona especial y un momento que merece ser recordado.",
+        b4_title: "La mejor relación precio–calidad",
+        b4_desc: "Ofrecemos los mapas estelares más baratos garantizado, sin cargos ocultos ni sorpresas al finalizar tu compra.",
+        b5_title: "Un regalo ecologico y sustentable",
+        b5_desc: "Al ser un producto digital, evitas empaques plásticos y reduces el impacto ambiental sin costos adicionales.",
+        b6_title: "Un regalo único y especial",
+        b6_desc: "Ideal para aniversarios, cumpleaños, bodas o momentos irrepetibles. Un detalle emocional que nadie olvida."
+        
+        
+      },
+      en: {
+        // head
+        title: "SKYMAP | Guaranteed cheapest star maps for one dollar",
+        desc: "Create your personalized star map with SKYMAP. The exact sky from a special moment. Guaranteed cheapest star maps for one dollar. A unique and special gift.",
+        keys: "guaranteed cheapest star maps, one dollar, unique and special gift, personalized star map",
+
+        // promo
+        promo: "VALENTINE'S PROMO: YOUR SKYMAP POSTER FOR <span class='promo-strong'>JUST $1.00 UNTIL FEBRUARY 14TH</span>!",
+
+        // nav
+        nav_home: "Home",
+        nav_why: "Why us?",
+        nav_design: "Design",
+        nav_hiw: "How it works",
+        nav_reminder: "Reminder",
+        nav_opinions: "Reviews",
+        nav_faq: "FAQs",
+
+        // hero
+        hero_h1: "THE EXACT SKY",
+        hero_h2: "FROM A MOMENT THAT CHANGED YOUR LIFE",
+        hero_p: "Generate a star map of the sky exactly as it looked on a special date and place. An elegant memory, personalized and ready to print.",
+        btn_create: "CREATE NOW!",
+
+        // styles
+        styles_title: "Choose an amazing style",
+        styles_subtitle: "Pick the star map style you like most and personalize it. Every star map is different!",
+        styles_cta: "SEE MORE OPTIONS",
+        style_classic: "Classic",
+        style_modern: "Modern",
+        style_poster: "Poster",
+        style_romantic: "Romantic",
+
+        // why
+        why_title: "Why SKYMAP is the best choice",
+        why_price: "Create your personalized star map now for <strong>only $20.00 mxn</strong>!",
+
+        b1_title: "Fast & easy to create",
+        b1_desc: "Design your star map in under 5 minutes from your phone or computer and download instantly.",
+        b2_title: "Not random dots & lines",
+        b2_desc: "Each star map is astronomically accurate and verifiable in online planetariums.",
+        b3_title: "Every map is unique",
+        b3_desc: "Each star map is made by you, personalized for someone special and a moment worth remembering.",
+        b4_title: "Best price–quality",
+        b4_desc: "Guaranteed cheapest star maps, with no hidden fees or checkout surprises.",
+        b5_title: "Eco-friendly digital gift",
+        b5_desc: "As a digital product, you avoid plastic packaging and reduce environmental impact.",
+        b6_title: "A unique special gift",
+        b6_desc: "Perfect for anniversaries, birthdays, weddings, or unforgettable moments. A detail no one forgets."
+      }
+    };
+
+    function applyLang(lang){
+      const dict = i18n[lang] || i18n.es;
+
+      // update <html lang>
+      document.documentElement.lang = (lang === "en") ? "en" : "es-MX";
+
+      // update head
+      document.title = dict.title;
+      const md = document.getElementById("metaDesc");
+      const mk = document.getElementById("metaKeys");
+      if (md) md.setAttribute("content", dict.desc);
+      if (mk) mk.setAttribute("content", dict.keys);
+
+      // update all nodes with data-i18n
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (!key || dict[key] == null) return;
+
+        // promo + strings with <span> need innerHTML
+        if (key === "promo" || key === "why_price") el.innerHTML = dict[key];
+        else el.textContent = dict[key];
+      });
+    }
+
+    // Detect browser language
+    const browserLang = (navigator.language || "es").toLowerCase();
+    const lang = browserLang.startsWith("en") ? "en" : "es";
+    applyLang(lang);
+  </script>
 
 </body>
 </html>

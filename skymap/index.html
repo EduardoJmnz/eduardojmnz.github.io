@@ -17,7 +17,7 @@
   <meta name="author" content="SKYMAP" />
 
   <!-- CSS (MISMO FOLDER) -->
-  <link rel="stylesheet" href="./style.css?v=5" />
+  <link rel="stylesheet" href="./style.css?v=6" />
 </head>
 
 <body>
@@ -51,7 +51,7 @@
     <div class="nav-container">
       <div class="logo">SKYMAP</div>
 
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Navegación principal">
         <a href="#home">Home</a>
         <a href="#porque">¿Por qué nosotros?</a>
         <a href="#design">Design</a>
@@ -61,13 +61,33 @@
         <a href="#faq">FAQs</a>
       </nav>
 
+      <!-- Mobile: botón hamburguesa -->
+      <button class="hamburger" id="hamburgerBtn" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
       <!-- Icono bolsa (sin funcionalidad aún) -->
-      <div class="nav-cart" title="Carrito (próximamente)">
+      <div class="nav-cart" title="Carrito (próximamente)" aria-label="Carrito">
         <svg class="bag-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M7 8V7a5 5 0 0 1 10 0v1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
           <path d="M6 8h12l-1 13H7L6 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
         </svg>
       </div>
+    </div>
+
+    <!-- Mobile menu panel -->
+    <div class="mobile-backdrop" id="mobileBackdrop" aria-hidden="true"></div>
+
+    <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Menú">
+      <a href="#home" class="mobile-link">Home</a>
+      <a href="#porque" class="mobile-link">¿Por qué nosotros?</a>
+      <a href="#design" class="mobile-link">Design</a>
+      <a href="#how" class="mobile-link">HIW?</a>
+      <a href="#reminder" class="mobile-link">Reminder</a>
+      <a href="#opinions" class="mobile-link">Opinions</a>
+      <a href="#faq" class="mobile-link">FAQs</a>
     </div>
   </header>
 
@@ -99,62 +119,50 @@
       <div class="why2__grid">
         <article class="why2__item">
           <div class="why2__iconBox"></div>
-          <div>
-            <h3 class="why2__itemTitle">Fácil y rapido de crear</h3>
-            <p class="why2__itemDesc">
-              Diseña tu mapa estelar en menos de 5 minutos desde tu celular o computadora y descarga al instante.
-            </p>
-          </div>
+          <h3 class="why2__itemTitle">Fácil y rapido de crear</h3>
+          <p class="why2__itemDesc">
+            Diseña tu mapa estelar en menos de 5 minutos desde tu celular o computadora y descarga al instante.
+          </p>
         </article>
 
         <article class="why2__item">
           <div class="why2__iconBox"></div>
-          <div>
-            <h3 class="why2__itemTitle">No son puntos y líneas al azar</h3>
-            <p class="why2__itemDesc">
-              Cada mapa estelar es astronómicamente preciso y verificable en planetarios en línea.
-            </p>
-          </div>
+          <h3 class="why2__itemTitle">No son puntos y líneas al azar</h3>
+          <p class="why2__itemDesc">
+            Cada mapa estelar es astronómicamente preciso y verificable en planetarios en línea.
+          </p>
         </article>
 
         <article class="why2__item">
           <div class="why2__iconBox"></div>
-          <div>
-            <h3 class="why2__itemTitle">Cada mapa es único</h3>
-            <p class="why2__itemDesc">
-              Cada mapa estelar es personalizado por ti, pensado para una persona especial y un momento que merece ser recordado.
-            </p>
-          </div>
+          <h3 class="why2__itemTitle">Cada mapa es único</h3>
+          <p class="why2__itemDesc">
+            Cada mapa estelar es personalizado por ti, pensado para una persona especial y un momento que merece ser recordado.
+          </p>
         </article>
 
         <article class="why2__item">
           <div class="why2__iconBox"></div>
-          <div>
-            <h3 class="why2__itemTitle">La mejor relación precio–calidad</h3>
-            <p class="why2__itemDesc">
-              Ofrecemos los mapas estelares más baratos garantizado, sin cargos ocultos ni sorpresas al finalizar tu compra.
-            </p>
-          </div>
+          <h3 class="why2__itemTitle">La mejor relación precio–calidad</h3>
+          <p class="why2__itemDesc">
+            Ofrecemos los mapas estelares más baratos garantizado, sin cargos ocultos ni sorpresas al finalizar tu compra.
+          </p>
         </article>
 
         <article class="why2__item">
           <div class="why2__iconBox"></div>
-          <div>
-            <h3 class="why2__itemTitle">Un regalo ecologico y sustentable</h3>
-            <p class="why2__itemDesc">
-              Al ser un producto digital, evitas empaques plásticos y reduces el impacto ambiental sin costos adicionales.
-            </p>
-          </div>
+          <h3 class="why2__itemTitle">Un regalo ecologico y sustentable</h3>
+          <p class="why2__itemDesc">
+            Al ser un producto digital, evitas empaques plásticos y reduces el impacto ambiental sin costos adicionales.
+          </p>
         </article>
 
         <article class="why2__item">
           <div class="why2__iconBox"></div>
-          <div>
-            <h3 class="why2__itemTitle">Un regalo único y especial</h3>
-            <p class="why2__itemDesc">
-              Ideal para aniversarios, cumpleaños, bodas o momentos irrepetibles. Un detalle emocional que nadie olvida.
-            </p>
-          </div>
+          <h3 class="why2__itemTitle">Un regalo único y especial</h3>
+          <p class="why2__itemDesc">
+            Ideal para aniversarios, cumpleaños, bodas o momentos irrepetibles. Un detalle emocional que nadie olvida.
+          </p>
         </article>
       </div>
 
@@ -166,14 +174,45 @@
     </div>
   </section>
 
-  <!-- =========================
-       PLACEHOLDERS SIGUIENTES SECCIONES
-       ========================= -->
+  <!-- PLACEHOLDERS -->
   <section id="design"></section>
   <section id="how"></section>
   <section id="reminder"></section>
   <section id="opinions"></section>
   <section id="faq"></section>
+
+  <script>
+    const btn = document.getElementById("hamburgerBtn");
+    const menu = document.getElementById("mobileMenu");
+    const backdrop = document.getElementById("mobileBackdrop");
+
+    function openMenu(){
+      document.body.classList.add("menu-open");
+      btn.classList.add("is-open");
+      btn.setAttribute("aria-expanded", "true");
+    }
+
+    function closeMenu(){
+      document.body.classList.remove("menu-open");
+      btn.classList.remove("is-open");
+      btn.setAttribute("aria-expanded", "false");
+    }
+
+    btn.addEventListener("click", () => {
+      if (document.body.classList.contains("menu-open")) closeMenu();
+      else openMenu();
+    });
+
+    backdrop.addEventListener("click", closeMenu);
+
+    document.querySelectorAll(".mobile-link").forEach(a => {
+      a.addEventListener("click", closeMenu);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeMenu();
+    });
+  </script>
 
 </body>
 </html>

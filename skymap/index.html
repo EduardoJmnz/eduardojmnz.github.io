@@ -6,10 +6,16 @@
 
   <!-- SEO -->
   <title>SKYMAP | Mapas estelares más baratos garantizado por un dólar</title>
-  <meta name="description" content="Crea tu mapa estelar personalizado con SKYMAP. El cielo exacto de un momento especial. Mapas estelares más baratos garantizado por un dólar. Regalo único y especial." />
-  <meta name="keywords" content="mapas estelares mas baratos garantizado, por un dolar, regalo unico y especial, mapa estelar personalizado" />
+  <meta
+    name="description"
+    content="Crea tu mapa estelar personalizado con SKYMAP. El cielo exacto de un momento especial. Mapas estelares más baratos garantizado por un dólar. Regalo único y especial."
+  />
+  <meta
+    name="keywords"
+    content="mapas estelares mas baratos garantizado, por un dolar, regalo unico y especial, mapa estelar personalizado"
+  />
 
-  <link rel="stylesheet" href="./style.css?v=bgvideo" />
+  <link rel="stylesheet" href="./style.css?v=bgvideo_fixedtop" />
 </head>
 
 <body>
@@ -23,7 +29,7 @@
   <div class="bg-overlay" aria-hidden="true"></div>
 
   <!-- =========================
-       TOPBAR (PROMO + NAV)
+       TOPBAR (PROMO + NAV) - SIEMPRE FIJO
        ========================= -->
   <div class="topbar">
 
@@ -45,6 +51,7 @@
               <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
             </span>
           </div>
+
           <div class="promo-row" aria-hidden="true">
             <span class="promo-text">
               ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
@@ -68,7 +75,7 @@
       <div class="nav-container">
         <div class="logo">SKYMAP</div>
 
-        <nav class="nav-links">
+        <nav class="nav-links" aria-label="Navegación principal">
           <a href="#home">Home</a>
           <a href="#porque">¿Por qué nosotros?</a>
           <a href="#design">Design</a>
@@ -78,19 +85,24 @@
           <a href="#faq">FAQs</a>
         </nav>
 
-        <div class="nav-cart" aria-label="Carrito">
-          <svg class="bag-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M7 8V7a5 5 0 0 1 10 0v1" stroke="currentColor" stroke-width="1.8"/>
-            <path d="M6 8h12l-1 13H7L6 8Z" stroke="currentColor" stroke-width="1.8"/>
-          </svg>
-        </div>
+        <div class="nav-actions">
+          <div class="nav-cart" title="Carrito (próximamente)" aria-label="Carrito">
+            <svg class="bag-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 8V7a5 5 0 0 1 10 0v1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M6 8h12l-1 13H7L6 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </div>
 
-        <button class="hamburger" id="hamburgerBtn" aria-label="Abrir menú">
-          <span></span><span></span><span></span>
-        </button>
+          <!-- Mobile: hamburguesa A LA ESQUINA DERECHA -->
+          <button class="hamburger" id="hamburgerBtn" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobileMenu">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
       </div>
 
+      <!-- Mobile menu -->
       <div class="mobile-backdrop" id="mobileBackdrop" aria-hidden="true"></div>
+
       <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Menú">
         <a class="mobile-link" href="#home">Home</a>
         <a class="mobile-link" href="#porque">¿Por qué nosotros?</a>
@@ -105,7 +117,7 @@
   </div>
 
   <!-- =========================
-       HERO (YA SIN VIDEO DENTRO)
+       HERO
        ========================= -->
   <section id="home" class="hero">
     <div class="hero-inner">
@@ -121,7 +133,7 @@
         <a href="generator.html" class="hero-btn">¡CREAR AHORA!</a>
       </div>
 
-      <div class="hero-sample">
+      <div class="hero-sample" aria-label="Ejemplos de posters">
         <img src="./hero-posters.png" alt="Ejemplos de posters SKYMAP">
       </div>
     </div>
@@ -151,7 +163,7 @@
     </div>
   </section>
 
-  <!-- Placeholders -->
+  <!-- placeholders -->
   <section id="design" class="section-spacer"></section>
   <section id="how" class="section-spacer"></section>
   <section id="reminder" class="section-spacer"></section>
@@ -160,21 +172,29 @@
 
   <script>
     const btn = document.getElementById("hamburgerBtn");
+    const menu = document.getElementById("mobileMenu");
     const backdrop = document.getElementById("mobileBackdrop");
+    const links = document.querySelectorAll(".mobile-link");
 
-    function toggleMenu(){
-      document.body.classList.toggle("menu-open");
-      btn.classList.toggle("is-open");
+    function openMenu(){
+      document.body.classList.add("menu-open");
+      btn.classList.add("is-open");
+      btn.setAttribute("aria-expanded", "true");
     }
     function closeMenu(){
       document.body.classList.remove("menu-open");
       btn.classList.remove("is-open");
+      btn.setAttribute("aria-expanded", "false");
     }
 
-    btn.addEventListener("click", toggleMenu);
+    btn.addEventListener("click", () => {
+      if (document.body.classList.contains("menu-open")) closeMenu();
+      else openMenu();
+    });
+
     backdrop.addEventListener("click", closeMenu);
-    document.querySelectorAll(".mobile-link").forEach(a => a.addEventListener("click", closeMenu));
-    document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeMenu(); });
+    links.forEach(a => a.addEventListener("click", closeMenu));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
   </script>
 
 </body>

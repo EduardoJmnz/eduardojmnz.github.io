@@ -228,7 +228,6 @@ body.menu-open{ overflow:hidden; }
   z-index: 1000;
 }
 
-
 .mobile-menu a{
   padding: 12px 12px;
   border-radius: 12px;
@@ -438,8 +437,6 @@ body.menu-open .mobile-menu{
   }
 }
 
-/* MÓVIL */
-
 /* =========================
    STYLES (Estilos)
    ========================= */
@@ -519,7 +516,6 @@ body.menu-open .mobile-menu{
   display: inline-flex;
   margin-top: 8px;
 }
-
 
 @media (max-width: 900px){
   .styles__grid{ grid-template-columns: repeat(2, 1fr); }

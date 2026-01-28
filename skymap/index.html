@@ -76,7 +76,7 @@
         <nav class="nav-links" aria-label="Primary navigation">
           <a href="#home" data-i18n="nav_home">Home</a>
           <a href="#porque" data-i18n="nav_why">¿Por qué nosotros?</a>
-          <a href="#estilos" data-i18n="nav_design">Design</a>
+          <a href="#estilos" data-i18n="nav_styles">Estilos</a>
           <a href="#how" data-i18n="nav_hiw">HIW?</a>
           <a href="#reminder" data-i18n="nav_reminder">Reminder</a>
           <a href="#opinions" data-i18n="nav_opinions">Opinions</a>
@@ -103,7 +103,7 @@
       <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Menu">
         <a class="mobile-link" href="#home" data-i18n="nav_home">Home</a>
         <a class="mobile-link" href="#porque" data-i18n="nav_why">¿Por qué nosotros?</a>
-        <a class="mobile-link" href="#estilos" data-i18n="nav_design">Design</a>
+        <a class="mobile-link" href="#estilos" data-i18n="nav_styles">Estilos</a>
         <a class="mobile-link" href="#how" data-i18n="nav_hiw">HIW?</a>
         <a class="mobile-link" href="#reminder" data-i18n="nav_reminder">Reminder</a>
         <a class="mobile-link" href="#opinions" data-i18n="nav_opinions">Opinions</a>
@@ -137,47 +137,7 @@
     </div>
   </section>
 
-  
   <!-- =========================
-       STYLES (formerly Designs)
-       ========================= -->
-  <section id="estilos" class="styles">
-    <div class="styles__container">
-      <h2 class="styles__title" data-i18n="styles_title">Elige un increíble estilo</h2>
-      <p class="styles__subtitle" data-i18n="styles_subtitle">
-        Selecciona el estilo de mapa estelar que más te guste y personalízalo. ¡Cada mapa estelar es diferente!
-      </p>
-
-      <div class="styles__grid" aria-label="Estilos de diseño">
-        <article class="styles__card">
-          <div class="styles__thumb" role="img" aria-label="Estilo Clásico"></div>
-          <h3 class="styles__label" data-i18n="style_classic">Clásico</h3>
-        </article>
-
-        <article class="styles__card">
-          <div class="styles__thumb" role="img" aria-label="Estilo Moderno"></div>
-          <h3 class="styles__label" data-i18n="style_modern">Moderno</h3>
-        </article>
-
-        <article class="styles__card">
-          <div class="styles__thumb" role="img" aria-label="Estilo Poster"></div>
-          <h3 class="styles__label" data-i18n="style_poster">Póster</h3>
-        </article>
-
-        <article class="styles__card">
-          <div class="styles__thumb" role="img" aria-label="Estilo Romántico"></div>
-          <h3 class="styles__label" data-i18n="style_romantic">Romántico</h3>
-        </article>
-      </div>
-
-      <a href="generator.html" class="btn-primary btn-primary--small styles__cta" data-i18n="styles_cta">
-        VER MÁS OPCIONES
-      </a>
-    </div>
-  </section>
-
-
-<!-- =========================
        WHY
        ========================= -->
   <section id="porque" class="why2">
@@ -227,6 +187,42 @@
       </p>
 
       <a href="generator.html" class="btn-primary btn-primary--small" data-i18n="btn_create">¡CREAR AHORA!</a>
+    </div>
+  </section>
+
+  <!-- =========================
+       ESTILOS (ANTES: DISEÑOS)
+       ========================= -->
+  <section id="estilos" class="styles">
+    <div class="styles__container">
+      <h2 class="styles__title" data-i18n="styles_title">Elige un increíble estilo</h2>
+      <p class="styles__subtitle" data-i18n="styles_subtitle">
+        Selecciona el estilo de mapa estelar que más te guste y personalízalo. ¡Cada mapa estelar es diferente!
+      </p>
+
+      <div class="styles__grid" role="list">
+        <article class="styles__card" role="listitem">
+          <div class="styles__thumb" aria-hidden="true"></div>
+          <h3 class="styles__name" data-i18n="style_classic">Clásico</h3>
+        </article>
+
+        <article class="styles__card" role="listitem">
+          <div class="styles__thumb" aria-hidden="true"></div>
+          <h3 class="styles__name" data-i18n="style_modern">Moderno</h3>
+        </article>
+
+        <article class="styles__card" role="listitem">
+          <div class="styles__thumb" aria-hidden="true"></div>
+          <h3 class="styles__name" data-i18n="style_poster">Póster</h3>
+        </article>
+
+        <article class="styles__card" role="listitem">
+          <div class="styles__thumb" aria-hidden="true"></div>
+          <h3 class="styles__name" data-i18n="style_romantic">Romántico</h3>
+        </article>
+      </div>
+
+      <a href="generator.html" class="btn-primary" data-i18n="styles_cta">VER MÁS OPCIONES</a>
     </div>
   </section>
 
@@ -280,7 +276,7 @@
         // nav
         nav_home: "Home",
         nav_why: "¿Por qué nosotros?",
-        nav_design: "Diseño",
+        nav_styles: "Estilos",
         nav_hiw: "¿Cómo funciona?",
         nav_reminder: "Recordatorio",
         nav_opinions: "Opiniones",
@@ -292,6 +288,10 @@
         hero_p: "Genera un mapa estelar del cielo tal como se veía en una fecha y lugar especiales. Un recuerdo elegante, personalizado y listo para imprimir.",
         btn_create: "¡CREAR AHORA!",
 
+        // why
+        why_title: "¿Por qué SKYMAP es la mejor opción?",
+        why_price: "¡Crea tu mapa estelar personalizado ahora por <strong>sólo $20.00 mxn</strong>!",
+
         // styles
         styles_title: "Elige un increíble estilo",
         styles_subtitle: "Selecciona el estilo de mapa estelar que más te guste y personalízalo. ¡Cada mapa estelar es diferente!",
@@ -300,10 +300,6 @@
         style_modern: "Moderno",
         style_poster: "Póster",
         style_romantic: "Romántico",
-
-        // why
-        why_title: "¿Por qué SKYMAP es la mejor opción?",
-        why_price: "¡Crea tu mapa estelar personalizado ahora por <strong>sólo $20.00 mxn</strong>!",
 
         b1_title: "Fácil y rapido de crear",
         b1_desc: "Diseña tu mapa estelar en menos de 5 minutos desde tu celular o computadora y descarga al instante.",
@@ -330,7 +326,7 @@
         // nav
         nav_home: "Home",
         nav_why: "Why us?",
-        nav_design: "Design",
+        nav_styles: "Styles",
         nav_hiw: "How it works",
         nav_reminder: "Reminder",
         nav_opinions: "Reviews",
@@ -342,18 +338,18 @@
         hero_p: "Generate a star map of the sky exactly as it looked on a special date and place. An elegant memory, personalized and ready to print.",
         btn_create: "CREATE NOW!",
 
+        // why
+        why_title: "Why SKYMAP is the best choice",
+        why_price: "Create your personalized star map now for <strong>only $20.00 mxn</strong>!",
+
         // styles
         styles_title: "Choose an amazing style",
-        styles_subtitle: "Pick the star map style you like most and personalize it. Every star map is different!",
+        styles_subtitle: "Select the star map style you like most and personalize it. Every star map is different!",
         styles_cta: "SEE MORE OPTIONS",
         style_classic: "Classic",
         style_modern: "Modern",
         style_poster: "Poster",
         style_romantic: "Romantic",
-
-        // why
-        why_title: "Why SKYMAP is the best choice",
-        why_price: "Create your personalized star map now for <strong>only $20.00 mxn</strong>!",
 
         b1_title: "Fast & easy to create",
         b1_desc: "Design your star map in under 5 minutes from your phone or computer and download instantly.",

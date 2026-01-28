@@ -1,16 +1,11 @@
-/* =========================================================
-   SKYMAP – style.css (MOV + mobile hero order + unified buttons)
-   ========================================================= */
-
 :root{
-  --bg: #070914;
-  --bg2:#0b0f1f;
-
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.70);
 
-  --accent: #6c8cff;
-  --accent2:#7cfffa;
+  /* BOTÓN VERDE (theme) */
+  --green: #44f1a6;
+  --green2: #2dd6c9;
+  --greenInk: #061812;
 
   --shadow: 0 18px 60px rgba(0,0,0,.55);
   --max: 1200px;
@@ -32,9 +27,7 @@ body{
 a{ text-decoration:none; color:inherit; }
 body.menu-open{ overflow:hidden; }
 
-/* =========================
-   VIDEO GLOBAL FIJO (.mov)
-   ========================= */
+/* VIDEO GLOBAL */
 .bg-video{
   position: fixed;
   inset: 0;
@@ -50,13 +43,13 @@ body.menu-open{ overflow:hidden; }
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(1200px 700px at 70% -10%, rgba(108,140,255,.18), transparent 55%),
-    radial-gradient(900px 500px at 20% 0%, rgba(124,255,250,.12), transparent 60%),
-    linear-gradient(180deg, rgba(7,9,20,.72), rgba(11,15,31,.80));
+    radial-gradient(1200px 700px at 70% -10%, rgba(68,241,166,.14), transparent 55%),
+    radial-gradient(900px 500px at 20% 0%, rgba(45,214,201,.12), transparent 60%),
+    linear-gradient(180deg, rgba(7,9,20,.68), rgba(11,15,31,.82));
   z-index: -1;
 }
 
-/* overlay extra para “disimular corte” (fade muy leve) */
+/* micro fade to hide loop cut */
 .bg-fade{
   position: fixed;
   inset: 0;
@@ -65,13 +58,9 @@ body.menu-open{ overflow:hidden; }
   pointer-events: none;
   transition: background .18s ease;
 }
-.bg-fade.is-on{
-  background: rgba(0,0,0,.18);
-}
+.bg-fade.is-on{ background: rgba(0,0,0,.18); }
 
-/* =========================
-   TOPBAR FIJO (siempre visible)
-   ========================= */
+/* TOPBAR */
 .topbar{
   position: fixed;
   top: 0; left: 0;
@@ -79,9 +68,7 @@ body.menu-open{ overflow:hidden; }
   z-index: 999;
 }
 
-/* =========================
-   PROMO
-   ========================= */
+/* PROMO */
 .promo-bar{
   height: var(--promo-h);
   background: #ff7f7f;
@@ -113,9 +100,7 @@ body.menu-open{ overflow:hidden; }
 .promo-strong{ font-weight: 800; font-style: italic; }
 @keyframes marqueeX{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
 
-/* =========================
-   NAVBAR (homogéneo)
-   ========================= */
+/* NAVBAR */
 .navbar{
   height: var(--nav-h);
   display:flex;
@@ -149,7 +134,6 @@ body.menu-open{ overflow:hidden; }
   gap: 10px;
   margin: 0 auto;
 }
-
 .nav-links a{
   font-size: 13px;
   color: rgba(255,255,255,.70);
@@ -179,13 +163,11 @@ body.menu-open{ overflow:hidden; }
 .bag-icon{
   width: 22px;
   height: 22px;
-  color: var(--accent2);
-  filter: drop-shadow(0 0 12px rgba(124,255,250,.18));
+  color: var(--green);
+  filter: drop-shadow(0 0 12px rgba(68,241,166,.18));
 }
 
-/* =========================
-   HAMBURGER
-   ========================= */
+/* HAMBURGER */
 .hamburger{
   display:none;
   width: 44px;
@@ -208,14 +190,11 @@ body.menu-open{ overflow:hidden; }
   margin:6px 0;
   transition: transform .25s ease, opacity .25s ease;
 }
-
 .hamburger.is-open span:nth-child(1){ transform: translateY(8px) rotate(45deg); }
 .hamburger.is-open span:nth-child(2){ opacity:0; }
 .hamburger.is-open span:nth-child(3){ transform: translateY(-8px) rotate(-45deg); }
 
-/* =========================
-   MOBILE MENU (más homogéneo)
-   ========================= */
+/* MOBILE MENU (homogéneo) */
 .mobile-backdrop{
   position: fixed;
   inset: 0;
@@ -268,44 +247,39 @@ body.menu-open .mobile-menu{
   pointer-events: auto;
 }
 
-/* =========================
-   BOTÓN PRIMARIO (HERO + WHY)
-   ========================= */
+/* BOTÓN PRIMARIO VERDE */
 .btn-primary{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
 
   margin-top: 26px;
 
-  height: 46px;            /* más grande */
-  padding: 0 26px;         /* más grande */
+  height: 46px;
+  padding: 0 28px;
   border-radius: 14px;
 
-  background: linear-gradient(135deg, rgba(108,140,255,.95), rgba(124,255,250,.78));
-  color: #07101a;
+  background: linear-gradient(135deg, rgba(68,241,166,.96), rgba(45,214,201,.86));
+  color: var(--greenInk);
+
   font-size: 12px;
   font-weight: 900;
   letter-spacing: .6px;
 
-  box-shadow: 0 14px 48px rgba(108,140,255,.20);
+  box-shadow: 0 16px 54px rgba(68,241,166,.18);
   transition: transform .15s ease, filter .15s ease;
 }
 .btn-primary:hover{
   transform: translateY(-1px);
   filter: brightness(1.02);
 }
-
 .btn-primary--small{
   height: 44px;
-  padding: 0 26px;
+  padding: 0 28px;
   border-radius: 999px;
 }
 
-/* =========================
-   HERO (mobile: imagen primero)
-   ========================= */
+/* HERO */
 .hero{
   min-height: calc(100vh - var(--topbar-h));
   display:flex;
@@ -318,8 +292,6 @@ body.menu-open .mobile-menu{
   margin: 0 auto;
   padding: 110px 80px;
   display: grid;
-
-  /* desktop: texto izq + imagen der (como mock) */
   grid-template-columns: 1fr 460px;
   gap: 90px;
   align-items: center;
@@ -368,11 +340,9 @@ body.menu-open .mobile-menu{
   display: block;
 }
 
-/* =========================
-   WHY (opacidad 40%)
-   ========================= */
+/* WHY — opacidad 60% */
 .why2{
-  background: rgba(10,12,24,.40); /* 40% */
+  background: rgba(10,12,24,.60);
   backdrop-filter: blur(10px);
   border-top: 1px solid rgba(255,255,255,.06);
   border-bottom: 1px solid rgba(255,255,255,.06);
@@ -449,9 +419,7 @@ body.menu-open .mobile-menu{
 }
 .why2__priceLine strong{ color: #fff; }
 
-/* =========================
-   RESPONSIVE
-   ========================= */
+/* RESPONSIVE */
 @media (max-width: 1024px){
   .hero-inner{
     grid-template-columns: 1fr 380px;
@@ -476,21 +444,21 @@ body.menu-open .mobile-menu{
   .nav-container{ padding: 0 1.25rem; }
   .nav-actions{ margin-left: auto; }
 
-  /* mobile: orden imagen primero, luego texto */
+  /* Móvil: imagen primero, luego textos */
   .hero-inner{
     grid-template-columns: 1fr;
     padding: 70px 18px;
     gap: 22px;
   }
 
-  /* forzar 1 línea SIEMPRE en móvil, adaptando tamaño */
+  /* Siempre 1 línea, adaptativo */
   .hero h1{
     white-space: nowrap;
-    font-size: clamp(28px, 8.2vw, 44px);
+    font-size: clamp(26px, 8.2vw, 44px);
   }
   .hero h2{
     white-space: nowrap;
-    font-size: clamp(12px, 3.7vw, 18px);
+    font-size: clamp(11px, 3.7vw, 18px);
   }
 
   .hero p{ max-width: 520px; }

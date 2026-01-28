@@ -15,7 +15,7 @@
     content="mapas estelares mas baratos garantizado, por un dolar, regalo unico y especial, mapa estelar personalizado"
   />
 
-  <link rel="stylesheet" href="./style.css?v=bgvideo_fixedtop" />
+  <link rel="stylesheet" href="./style.css?v=mov_loop_btns_mobile" />
 </head>
 
 <body>
@@ -24,12 +24,19 @@
        VIDEO GLOBAL (FONDO FIJO)
        ========================= -->
   <video class="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="./background.mov" type="video/quicktime" />
+    <!-- Fallback recomendado por compatibilidad (opcional si lo tienes) -->
     <source src="./background.mp4" type="video/mp4" />
   </video>
+
+  <!-- Overlay general -->
   <div class="bg-overlay" aria-hidden="true"></div>
 
+  <!-- Para “suavizar” el corte del loop (crossfade ligero) -->
+  <div class="bg-fade" aria-hidden="true"></div>
+
   <!-- =========================
-       TOPBAR (PROMO + NAV) - SIEMPRE FIJO
+       TOPBAR FIJO
        ========================= -->
   <div class="topbar">
 
@@ -51,7 +58,6 @@
               <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
             </span>
           </div>
-
           <div class="promo-row" aria-hidden="true">
             <span class="promo-text">
               ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
@@ -93,7 +99,6 @@
             </svg>
           </div>
 
-          <!-- Mobile: hamburguesa A LA ESQUINA DERECHA -->
           <button class="hamburger" id="hamburgerBtn" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobileMenu">
             <span></span><span></span><span></span>
           </button>
@@ -121,6 +126,11 @@
        ========================= -->
   <section id="home" class="hero">
     <div class="hero-inner">
+      <!-- En móvil: primero la imagen -->
+      <div class="hero-sample" aria-label="Ejemplos de posters">
+        <img src="./hero-posters.png" alt="Ejemplos de posters SKYMAP">
+      </div>
+
       <div class="hero-content">
         <h1>EL CIELO EXACTO</h1>
         <h2>DE UN MOMENTO QUE CAMBIO TU VIDA</h2>
@@ -130,11 +140,7 @@
           especiales. Un recuerdo elegante, personalizado y listo para imprimir.
         </p>
 
-        <a href="generator.html" class="hero-btn">¡CREAR AHORA!</a>
-      </div>
-
-      <div class="hero-sample" aria-label="Ejemplos de posters">
-        <img src="./hero-posters.png" alt="Ejemplos de posters SKYMAP">
+        <a href="generator.html" class="btn-primary">¡CREAR AHORA!</a>
       </div>
     </div>
   </section>
@@ -159,20 +165,14 @@
         ¡Crea tu mapa estelar personalizado ahora por <strong>sólo $20.00 mxn</strong>!
       </p>
 
-      <a href="generator.html" class="why2__cta">¡CREAR AHORA!</a>
+      <!-- mismo estilo que hero -->
+      <a href="generator.html" class="btn-primary btn-primary--small">¡CREAR AHORA!</a>
     </div>
   </section>
 
-  <!-- placeholders -->
-  <section id="design" class="section-spacer"></section>
-  <section id="how" class="section-spacer"></section>
-  <section id="reminder" class="section-spacer"></section>
-  <section id="opinions" class="section-spacer"></section>
-  <section id="faq" class="section-spacer"></section>
-
   <script>
+    // Menú móvil
     const btn = document.getElementById("hamburgerBtn");
-    const menu = document.getElementById("mobileMenu");
     const backdrop = document.getElementById("mobileBackdrop");
     const links = document.querySelectorAll(".mobile-link");
 
@@ -195,6 +195,20 @@
     backdrop.addEventListener("click", closeMenu);
     links.forEach(a => a.addEventListener("click", closeMenu));
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
+
+    // Suavizar visualmente el loop del video: micro-fade cada vez que reinicia
+    // (sin cambiar el video, ayuda a "ocultar" el corte)
+    const v = document.querySelector(".bg-video");
+    const fade = document.querySelector(".bg-fade");
+    if (v && fade) {
+      v.addEventListener("timeupdate", () => {
+        // si está a punto de terminar, subimos un poco el overlay y luego lo bajamos
+        if (v.duration && (v.duration - v.currentTime) < 0.18) {
+          fade.classList.add("is-on");
+          setTimeout(() => fade.classList.remove("is-on"), 220);
+        }
+      });
+    }
   </script>
 
 </body>

@@ -6,52 +6,61 @@
 
   <!-- SEO -->
   <title>SKYMAP | Mapas estelares más baratos garantizado por un dólar</title>
-  <meta
-    name="description"
-    content="Crea tu mapa estelar personalizado: el cielo exacto de un momento especial. Mapas estelares más baratos garantizado por un dólar. Regalo único y especial."
-  />
-  <meta
-    name="keywords"
-    content="mapas estelares mas baratos garantizado, por un dolar, regalo unico y especial, mapa estelar personalizado"
-  />
-  <meta name="author" content="SKYMAP" />
+  <meta name="description" content="Crea tu mapa estelar personalizado con SKYMAP. El cielo exacto de un momento especial. Mapas estelares más baratos garantizado por un dólar. Regalo único y especial." />
+  <meta name="keywords" content="mapas estelares mas baratos garantizado, por un dolar, regalo unico y especial, mapa estelar personalizado" />
 
-  <!-- CSS (MISMO FOLDER) -->
-  <link rel="stylesheet" href="./style.css?v=6" />
+  <link rel="stylesheet" href="./style.css?v=final" />
 </head>
 
 <body>
 
-  <!-- =========================
-       PROMO BAR
-       ========================= -->
+<!-- =========================
+     TOPBAR (PROMO + NAV)
+     ========================= -->
+<div class="topbar">
+
+  <!-- PROMO BAR -->
   <div class="promo-bar">
-    <div class="promo-track" aria-hidden="true">
-      <span class="promo-text">
-        ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
-        <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
-      </span>
-
-      <span class="promo-text">
-        ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
-        <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
-      </span>
-
-      <span class="promo-text">
-        ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
-        <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
-      </span>
+    <div class="promo-viewport">
+      <div class="promo-marquee">
+        <div class="promo-row">
+          <span class="promo-text">
+            ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
+            <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
+          </span>
+          <span class="promo-text">
+            ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
+            <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
+          </span>
+          <span class="promo-text">
+            ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
+            <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
+          </span>
+        </div>
+        <div class="promo-row" aria-hidden="true">
+          <span class="promo-text">
+            ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
+            <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
+          </span>
+          <span class="promo-text">
+            ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
+            <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
+          </span>
+          <span class="promo-text">
+            ¡SAN VALENTINE'S PROMO YOUR SKYMAP POSTER
+            <span class="promo-strong">FOR JUST $1.00 UNTIL FEBRUARY 14TH!</span>
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- =========================
-       NAVBAR
-       ========================= -->
+  <!-- NAVBAR -->
   <header class="navbar">
     <div class="nav-container">
       <div class="logo">SKYMAP</div>
 
-      <nav class="nav-links" aria-label="Navegación principal">
+      <nav class="nav-links">
         <a href="#home">Home</a>
         <a href="#porque">¿Por qué nosotros?</a>
         <a href="#design">Design</a>
@@ -61,158 +70,92 @@
         <a href="#faq">FAQs</a>
       </nav>
 
-      <!-- Mobile: botón hamburguesa -->
-      <button class="hamburger" id="hamburgerBtn" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobileMenu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-
-      <!-- Icono bolsa (sin funcionalidad aún) -->
-      <div class="nav-cart" title="Carrito (próximamente)" aria-label="Carrito">
-        <svg class="bag-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M7 8V7a5 5 0 0 1 10 0v1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-          <path d="M6 8h12l-1 13H7L6 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      <div class="nav-cart" aria-label="Carrito">
+        <svg class="bag-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M7 8V7a5 5 0 0 1 10 0v1" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M6 8h12l-1 13H7L6 8Z" stroke="currentColor" stroke-width="1.8"/>
         </svg>
       </div>
+
+      <button class="hamburger" id="hamburgerBtn">
+        <span></span><span></span><span></span>
+      </button>
     </div>
 
-    <!-- Mobile menu panel -->
-    <div class="mobile-backdrop" id="mobileBackdrop" aria-hidden="true"></div>
-
-    <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Menú">
-      <a href="#home" class="mobile-link">Home</a>
-      <a href="#porque" class="mobile-link">¿Por qué nosotros?</a>
-      <a href="#design" class="mobile-link">Design</a>
-      <a href="#how" class="mobile-link">HIW?</a>
-      <a href="#reminder" class="mobile-link">Reminder</a>
-      <a href="#opinions" class="mobile-link">Opinions</a>
-      <a href="#faq" class="mobile-link">FAQs</a>
+    <div class="mobile-backdrop" id="mobileBackdrop"></div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#home">Home</a>
+      <a href="#porque">¿Por qué nosotros?</a>
+      <a href="#design">Design</a>
+      <a href="#how">HIW?</a>
+      <a href="#reminder">Reminder</a>
+      <a href="#opinions">Opinions</a>
+      <a href="#faq">FAQs</a>
     </div>
   </header>
 
-  <!-- =========================
-       HERO
-       ========================= -->
-  <section id="home" class="hero">
+</div>
+
+<!-- =========================
+     HERO
+     ========================= -->
+<section id="home" class="hero hero--video">
+  <video class="hero-video" autoplay muted loop playsinline>
+    <source src="./background.mp4" type="video/mp4" />
+  </video>
+  <div class="hero-overlay"></div>
+
+  <div class="hero-inner">
     <div class="hero-content">
       <h1>EL CIELO EXACTO</h1>
-      <h2>DE UN MOMENTO QUE CAMBIÓ TU VIDA</h2>
+      <h2>DE UN MOMENTO QUE CAMBIO TU VIDA</h2>
 
       <p>
-        Genera un mapa estelar del cielo tal como se veía en una
-        fecha y lugar especiales. Un recuerdo elegante,
-        personalizado y listo para imprimir.
+        Genera un mapa estelar del cielo tal como se veía en una fecha y lugar
+        especiales. Un recuerdo elegante, personalizado y listo para imprimir.
       </p>
 
       <a href="generator.html" class="hero-btn">¡CREAR AHORA!</a>
     </div>
-  </section>
 
-  <!-- =========================
-       WHY – ¿POR QUÉ SKYMAP?
-       ========================= -->
-  <section id="porque" class="why2">
-    <div class="why2__container">
-      <h2 class="why2__title">¿Por qué SKYMAP es la mejor opción?</h2>
-
-      <div class="why2__grid">
-        <article class="why2__item">
-          <div class="why2__iconBox"></div>
-          <h3 class="why2__itemTitle">Fácil y rapido de crear</h3>
-          <p class="why2__itemDesc">
-            Diseña tu mapa estelar en menos de 5 minutos desde tu celular o computadora y descarga al instante.
-          </p>
-        </article>
-
-        <article class="why2__item">
-          <div class="why2__iconBox"></div>
-          <h3 class="why2__itemTitle">No son puntos y líneas al azar</h3>
-          <p class="why2__itemDesc">
-            Cada mapa estelar es astronómicamente preciso y verificable en planetarios en línea.
-          </p>
-        </article>
-
-        <article class="why2__item">
-          <div class="why2__iconBox"></div>
-          <h3 class="why2__itemTitle">Cada mapa es único</h3>
-          <p class="why2__itemDesc">
-            Cada mapa estelar es personalizado por ti, pensado para una persona especial y un momento que merece ser recordado.
-          </p>
-        </article>
-
-        <article class="why2__item">
-          <div class="why2__iconBox"></div>
-          <h3 class="why2__itemTitle">La mejor relación precio–calidad</h3>
-          <p class="why2__itemDesc">
-            Ofrecemos los mapas estelares más baratos garantizado, sin cargos ocultos ni sorpresas al finalizar tu compra.
-          </p>
-        </article>
-
-        <article class="why2__item">
-          <div class="why2__iconBox"></div>
-          <h3 class="why2__itemTitle">Un regalo ecologico y sustentable</h3>
-          <p class="why2__itemDesc">
-            Al ser un producto digital, evitas empaques plásticos y reduces el impacto ambiental sin costos adicionales.
-          </p>
-        </article>
-
-        <article class="why2__item">
-          <div class="why2__iconBox"></div>
-          <h3 class="why2__itemTitle">Un regalo único y especial</h3>
-          <p class="why2__itemDesc">
-            Ideal para aniversarios, cumpleaños, bodas o momentos irrepetibles. Un detalle emocional que nadie olvida.
-          </p>
-        </article>
-      </div>
-
-      <p class="why2__priceLine">
-        ¡Crea tu mapa estelar personalizado ahora por <strong>sólo $20.00 mxn</strong>!
-      </p>
-
-      <a href="generator.html" class="why2__cta">¡CREAR AHORA!</a>
+    <div class="hero-sample">
+      <img src="./hero-posters.png" alt="Ejemplos de posters SKYMAP">
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- PLACEHOLDERS -->
-  <section id="design"></section>
-  <section id="how"></section>
-  <section id="reminder"></section>
-  <section id="opinions"></section>
-  <section id="faq"></section>
+<!-- =========================
+     WHY
+     ========================= -->
+<section id="porque" class="why2">
+  <div class="why2__container">
+    <h2 class="why2__title">¿Por qué SKYMAP es la mejor opción?</h2>
 
-  <script>
-    const btn = document.getElementById("hamburgerBtn");
-    const menu = document.getElementById("mobileMenu");
-    const backdrop = document.getElementById("mobileBackdrop");
+    <div class="why2__grid">
+      <article class="why2__item"><div class="why2__iconBox"></div><h3 class="why2__itemTitle">Fácil y rapido de crear</h3><p class="why2__itemDesc">Diseña tu mapa estelar en menos de 5 minutos desde tu celular o computadora y descarga al instante.</p></article>
+      <article class="why2__item"><div class="why2__iconBox"></div><h3 class="why2__itemTitle">No son puntos y líneas al azar</h3><p class="why2__itemDesc">Cada mapa estelar es astronómicamente preciso y verificable en planetarios en línea.</p></article>
+      <article class="why2__item"><div class="why2__iconBox"></div><h3 class="why2__itemTitle">Cada mapa es único</h3><p class="why2__itemDesc">Cada mapa estelar es personalizado por ti, pensado para una persona especial.</p></article>
+      <article class="why2__item"><div class="why2__iconBox"></div><h3 class="why2__itemTitle">Mejor relación precio–calidad</h3><p class="why2__itemDesc">Los mapas estelares más baratos garantizado, sin costos ocultos.</p></article>
+      <article class="why2__item"><div class="why2__iconBox"></div><h3 class="why2__itemTitle">Ecológico y sustentable</h3><p class="why2__itemDesc">Producto digital sin empaques plásticos ni impacto ambiental.</p></article>
+      <article class="why2__item"><div class="why2__iconBox"></div><h3 class="why2__itemTitle">Regalo único y especial</h3><p class="why2__itemDesc">Ideal para aniversarios, bodas o momentos irrepetibles.</p></article>
+    </div>
 
-    function openMenu(){
-      document.body.classList.add("menu-open");
-      btn.classList.add("is-open");
-      btn.setAttribute("aria-expanded", "true");
-    }
+    <p class="why2__priceLine">
+      ¡Crea tu mapa estelar personalizado ahora por <strong>sólo $20.00 mxn</strong>!
+    </p>
 
-    function closeMenu(){
-      document.body.classList.remove("menu-open");
-      btn.classList.remove("is-open");
-      btn.setAttribute("aria-expanded", "false");
-    }
+    <a href="generator.html" class="why2__cta">¡CREAR AHORA!</a>
+  </div>
+</section>
 
-    btn.addEventListener("click", () => {
-      if (document.body.classList.contains("menu-open")) closeMenu();
-      else openMenu();
-    });
+<script>
+  const btn = document.getElementById("hamburgerBtn");
+  const menu = document.getElementById("mobileMenu");
+  const backdrop = document.getElementById("mobileBackdrop");
 
-    backdrop.addEventListener("click", closeMenu);
-
-    document.querySelectorAll(".mobile-link").forEach(a => {
-      a.addEventListener("click", closeMenu);
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeMenu();
-    });
-  </script>
+  btn.onclick = () => document.body.classList.toggle("menu-open");
+  backdrop.onclick = () => document.body.classList.remove("menu-open");
+</script>
 
 </body>
 </html>

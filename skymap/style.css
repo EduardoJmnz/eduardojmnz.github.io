@@ -439,100 +439,129 @@ overflow: hidden;
 
 /* MÓVIL */
 
-
-/* =====================================================
-   STEPS  ←←← INICIO (mismo fondo que WHY)
-   ===================================================== */
-.steps{
-  background: rgba(10,12,24,.60);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255,255,255,.06);
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  padding: 84px 24px 96px;
+/* =========================
+   STYLES (Estilos)
+   ========================= */
+.styles{
+  padding: 92px 18px;
+  position: relative;
 }
 
-.steps__container{
-  max-width: 1100px;
+.styles::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: radial-gradient(900px 340px at 50% 10%, rgba(68,241,166,.18), transparent 60%),
+              radial-gradient(800px 320px at 50% 90%, rgba(45,214,201,.10), transparent 60%);
+  pointer-events:none;
+}
+
+.styles__container{
+  width: min(var(--max), 100%);
   margin: 0 auto;
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
-.steps__title{
-  font-size: 40px;
-  font-weight: 800;
-  color: #fff;
-}
-
-.steps__subtitle{
-  margin-top: 10px;
-  font-size: 16px;
-  color: rgba(255,255,255,.74);
-}
-
-.steps__chips{
-  margin-top: 22px;
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.steps__chip{
-  padding: 10px 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.10);
-  color: rgba(255,255,255,.86);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.steps__grid{
-  margin-top: 38px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  text-align: left;
-}
-
-.steps__card{
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 18px;
-  box-shadow: 0 18px 60px rgba(0,0,0,.25);
-  padding: 22px;
-}
-
-.steps__step{
-  font-size: 16px;
-  font-weight: 900;
-  color: #fff;
+.styles__title{
+  font-size: clamp(28px, 3.4vw, 44px);
+  letter-spacing: .4px;
   margin-bottom: 10px;
 }
 
-.steps__text{
-  font-size: 14px;
-  line-height: 1.5;
-  color: rgba(255,255,255,.78);
+.styles__subtitle{
+  color: var(--muted);
+  max-width: 720px;
+  margin: 0 auto 44px;
+  line-height: 1.55;
 }
 
-.steps__cta{
-  margin-top: 34px;
-  display: flex;
-  justify-content: center;
+.styles__grid{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 26px;
+  align-items: start;
+  margin: 0 auto 34px;
 }
 
-@media (max-width: 1024px){
-  .steps__grid{ grid-template-columns: 1fr; }
+.styles__card{
+  text-align: left;
+}
+
+.styles__thumb{
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 14px;
+  background: transparent;
+box-shadow: none;
+background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.styles__card:nth-child(1) .styles__thumb{ background-image: url("./media/e1.jpg"); }
+.styles__card:nth-child(2) .styles__thumb{ background-image: url("./media/e2.jpg"); }
+.styles__card:nth-child(3) .styles__thumb{ background-image: url("./media/e3.jpg"); }
+.styles__card:nth-child(4) .styles__thumb{ background-image: url("./media/e4.jpg"); }
+
+.styles__label{
+  margin-top: 16px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  text-align: center;
+}
+
+.styles__cta{
+  display: inline-flex;
+  margin-top: 8px;
+}
+
+
+@media (max-width: 900px){
+  .styles__grid{ grid-template-columns: repeat(2, 1fr); }
+  .nav-links{ display:none; }
+  .hamburger{ display:inline-block; }
+  .nav-container{ padding: 0 1.25rem; }
+  .nav-actions{ margin-left: auto; }
+
+  /* Móvil: imagen primero, luego textos */
+  .hero-inner{
+    grid-template-columns: 1fr;
+    padding: 70px 18px;
+    gap: 22px;
+  }
+
+  /* Siempre 1 línea, adaptativo */
+  .hero h1{
+    white-space: nowrap;
+    font-size: clamp(26px, 8.2vw, 44px);
+  }
+  .hero h2{
+    white-space: nowrap;
+    font-size: clamp(11px, 3.7vw, 18px);
+  }
+
+  .hero p{ max-width: 520px; }
+
+  .hero-sample{
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    justify-self: start;
+  }
 }
 
 @media (max-width: 640px){
-  .steps__title{ font-size: clamp(26px, 6.5vw, 40px); }
-  .steps__subtitle{ font-size: 14px; }
+  .styles__grid{ grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .why2__grid{
+    grid-template-columns: 1fr;
+    gap: 52px;
+  }
 }
-/* ===================== STEPS ←←← FIN ================= */
-/* ===================== WHY (regresar icono/bullet) ===================== */
-.why2__iconBox{
-  display: block !important;
+
+@media (max-width: 420px){
+  .styles__grid{ grid-template-columns: 1fr; }
 }

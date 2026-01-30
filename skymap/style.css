@@ -440,7 +440,6 @@ overflow: hidden;
 /* MÓVIL */
 
 
-
 /* =====================================================
    STEPS  ←←← INICIO (mismo fondo que WHY)
    ===================================================== */
@@ -503,7 +502,6 @@ overflow: hidden;
   border-radius: 18px;
   box-shadow: 0 18px 60px rgba(0,0,0,.25);
   padding: 22px;
-  min-height: 190px;
 }
 
 .steps__step{
@@ -527,7 +525,6 @@ overflow: hidden;
 
 @media (max-width: 1024px){
   .steps__grid{ grid-template-columns: 1fr; }
-  .steps__card{ min-height: auto; }
 }
 
 @media (max-width: 640px){
@@ -538,9 +535,4 @@ overflow: hidden;
 /* ===================== WHY (regresar icono/bullet) ===================== */
 .why2__iconBox{
   display: block !important;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.12);
 }

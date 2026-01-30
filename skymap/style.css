@@ -80,7 +80,7 @@ body.menu-open{ overflow:hidden; }
   display:flex;
   width:max-content;
   height:100%;
-  animation: marqueeX 18s linear infinite;
+  animation: marqueeX 28s linear infinite;
   will-change: transform;
 }
 .promo-row{
@@ -141,8 +141,8 @@ body.menu-open{ overflow:hidden; }
   border-radius: 999px;
 }
 .nav-links a:hover{
-  background: rgba(255,255,255,.05);
-  color: rgba(255,255,255,.92);
+  background: transparent;
+color: rgba(255,255,255,.92);
 }
 
 .nav-actions{
@@ -159,7 +159,8 @@ body.menu-open{ overflow:hidden; }
   cursor:pointer;
   border-radius: 12px;
 }
-.nav-cart:hover{ background: rgba(255,255,255,.05); }
+.nav-cart:hover{ background: transparent;
+}
 .bag-icon{
   width: 22px;
   height: 22px;
@@ -173,15 +174,15 @@ body.menu-open{ overflow:hidden; }
   width: 44px;
   height: 44px;
   border: 0;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.08);
-  cursor: pointer;
+  background: transparent;
+cursor: pointer;
   padding: 10px;
   border-radius: 12px;
   position: relative;
   z-index: 1001;
 }
-.hamburger:hover{ background: rgba(255,255,255,.06); }
+.hamburger:hover{ background: transparent;
+}
 
 .hamburger span{
   display:block;
@@ -228,6 +229,7 @@ body.menu-open{ overflow:hidden; }
   z-index: 1000;
 }
 
+
 .mobile-menu a{
   padding: 12px 12px;
   border-radius: 12px;
@@ -236,8 +238,8 @@ body.menu-open{ overflow:hidden; }
   border: 1px solid transparent;
 }
 .mobile-menu a:hover{
-  background: rgba(255,255,255,.06);
-  border-color: rgba(255,255,255,.08);
+  background: transparent;
+border-color: rgba(255,255,255,.08);
 }
 
 body.menu-open .mobile-backdrop{ opacity: 1; pointer-events: auto; }
@@ -328,10 +330,9 @@ body.menu-open .mobile-menu{
 .hero-sample{
   width: 460px;
   height: 460px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.10);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  background: transparent;
+box-shadow: none;
+overflow: hidden;
 }
 .hero-sample img{
   width: 100%;
@@ -383,8 +384,7 @@ body.menu-open .mobile-menu{
   width: 56px;
   height: 56px;
   border-radius: 14px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.12);
+  background: transparent;
 }
 
 .why2__itemTitle{
@@ -436,6 +436,8 @@ body.menu-open .mobile-menu{
     justify-content: center;
   }
 }
+
+/* MÓVIL */
 
 /* =========================
    STYLES (Estilos)
@@ -491,10 +493,9 @@ body.menu-open .mobile-menu{
   width: 100%;
   aspect-ratio: 3 / 4;
   border-radius: 14px;
-  background: rgba(255,255,255,.14);
-  border: 1px solid rgba(255,255,255,.16);
-  box-shadow: 0 20px 60px rgba(0,0,0,.45);
-  background-size: cover;
+  background: transparent;
+box-shadow: none;
+background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
@@ -516,119 +517,6 @@ body.menu-open .mobile-menu{
   display: inline-flex;
   margin-top: 8px;
 }
-
-
-/* =========================
-   WHAT IS? (simétrico como maqueta)
-   ========================= */
-.whatis{
-  background: rgba(10, 12, 24, .60);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255,255,255,.06);
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  padding: 84px 24px 96px;
-}
-
-.whatis__container{
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.whatis__grid{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-  align-items: stretch; /* 🔑 ambos rectángulos mismo alto */
-}
-
-/* CARD BASE (ambos iguales) */
-.whatis__col{
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 18px;
-  box-shadow: 0 18px 60px rgba(0,0,0,.25);
-
-  padding: 28px;
-  min-height: 260px; /* 🔑 asegura simetría visual */
-  
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
-/* 🔑 TÍTULOS IGUALES EN AMBOS CARDS */
-.whatis__title,
-.whatis__subtitle{
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.15;
-  color: #ffffff;
-  margin-bottom: 16px;
-}
-
-/* Texto izquierda */
-.whatis__desc{
-  font-size: 15px;
-  line-height: 1.55;
-  color: rgba(255,255,255,.74);
-  max-width: 520px;
-}
-
-/* Lista derecha */
-.whatis__list{
-  list-style: none;
-  padding: 0;
-  margin: 0;
-
-  display: grid;
-  gap: 12px;
-}
-
-.whatis__item{
-  display: grid;
-  grid-template-columns: 26px 1fr;
-  gap: 10px;
-  align-items: start;
-
-  font-size: 14px;
-  line-height: 1.45;
-  color: rgba(255,255,255,.78);
-}
-
-.whatis__emoji{
-  font-size: 16px;
-  line-height: 1.2;
-  transform: translateY(1px);
-}
-
-/* RESPONSIVE */
-@media (max-width: 1024px){
-  .whatis__grid{
-    grid-template-columns: 1fr;
-  }
-
-  .whatis__col{
-    min-height: auto;
-  }
-}
-
-@media (max-width: 900px){
-  .whatis{
-    padding: 70px 18px 86px;
-  }
-
-  .whatis__title,
-  .whatis__subtitle{
-    font-size: clamp(24px, 6vw, 32px);
-  }
-
-  .whatis__desc{
-    font-size: 14px;
-  }
-}
-/*ENDS WHAT IS*/
-
 
 
 @media (max-width: 900px){
@@ -667,9 +555,13 @@ body.menu-open .mobile-menu{
 }
 
 @media (max-width: 640px){
-  .styles__grid{ grid-template-columns: 1fr; }
+  .styles__grid{ grid-template-columns: repeat(2, 1fr); gap: 14px; }
   .why2__grid{
     grid-template-columns: 1fr;
     gap: 52px;
   }
+}
+
+@media (max-width: 420px){
+  .styles__grid{ grid-template-columns: 1fr; }
 }

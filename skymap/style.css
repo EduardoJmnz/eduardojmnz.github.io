@@ -565,3 +565,73 @@ background-size: cover;
 @media (max-width: 420px){
   .styles__grid{ grid-template-columns: 1fr; }
 }
+/* ===================== HERO IMAGEN (sin frame, sin recorte) ===================== */
+.hero-sample{
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.hero-sample img{
+  width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block;
+}
+/* ===================== HAMBURGER (móvil sin contorno) ===================== */
+.hamburger{
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.hamburger:focus,
+.hamburger:active,
+.hamburger:focus-visible{
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* ===================== ESTILOS (mobile: 2 por fila, más espacio y texto más pequeño) ===================== */
+@media (max-width: 640px){
+  .styles__grid{
+    grid-template-columns: repeat(2, 1fr) !important;
+    column-gap: 18px !important;
+    row-gap: 28px !important;
+  }
+  .styles__label{
+    font-size: 14px !important;
+    margin-top: 10px !important;
+  }
+}
+/* ===================== ESTILOS (solo imagen, sin contorno) ===================== */
+.styles__thumb{
+  border: 0 !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+/* =====================================================
+   FRASE  ←←← INICIO (mismo fondo que WHY)
+   ===================================================== */
+.phrase{
+  background: rgba(10,12,24,.60);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 54px 24px;
+}
+.phrase__container{
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+.phrase__text{
+  font-size: 22px;
+  line-height: 1.4;
+  color: rgba(255,255,255,.92);
+  font-style: italic;
+}
+@media (max-width: 640px){
+  .phrase__text{ font-size: 18px; }
+}
+/* ===================== FRASE ←←← FIN ================= */

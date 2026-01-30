@@ -17,7 +17,7 @@
 
 /* RESET */
 *{ margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing: antialiased; }
-html,body{ width:100%; height:100%; }
+html,body{ width:100%;  }
 body{
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   color: var(--text);
@@ -439,202 +439,7 @@ overflow: hidden;
 
 /* MÓVIL */
 
-/* =========================
-   STYLES (Estilos)
-   ========================= */
-.styles{
-  padding: 92px 18px;
-  position: relative;
-}
 
-.styles::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background: radial-gradient(900px 340px at 50% 10%, rgba(68,241,166,.18), transparent 60%),
-              radial-gradient(800px 320px at 50% 90%, rgba(45,214,201,.10), transparent 60%);
-  pointer-events:none;
-}
-
-.styles__container{
-  width: min(var(--max), 100%);
-  margin: 0 auto;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-
-.styles__title{
-  font-size: clamp(28px, 3.4vw, 44px);
-  letter-spacing: .4px;
-  margin-bottom: 10px;
-}
-
-.styles__subtitle{
-  color: var(--muted);
-  max-width: 720px;
-  margin: 0 auto 44px;
-  line-height: 1.55;
-}
-
-.styles__grid{
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 26px;
-  align-items: start;
-  margin: 0 auto 34px;
-}
-
-.styles__card{
-  text-align: left;
-}
-
-.styles__thumb{
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  border-radius: 14px;
-  background: transparent;
-box-shadow: none;
-background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.styles__card:nth-child(1) .styles__thumb{ background-image: url("./media/e1.jpg"); }
-.styles__card:nth-child(2) .styles__thumb{ background-image: url("./media/e2.jpg"); }
-.styles__card:nth-child(3) .styles__thumb{ background-image: url("./media/e3.jpg"); }
-.styles__card:nth-child(4) .styles__thumb{ background-image: url("./media/e4.jpg"); }
-
-.styles__label{
-  margin-top: 16px;
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: .2px;
-  text-align: center;
-}
-
-.styles__cta{
-  display: inline-flex;
-  margin-top: 8px;
-}
-
-
-@media (max-width: 900px){
-  .styles__grid{ grid-template-columns: repeat(2, 1fr); }
-  .nav-links{ display:none; }
-  .hamburger{ display:inline-block; }
-  .nav-container{ padding: 0 1.25rem; }
-  .nav-actions{ margin-left: auto; }
-
-  /* Móvil: imagen primero, luego textos */
-  .hero-inner{
-    grid-template-columns: 1fr;
-    padding: 70px 18px;
-    gap: 22px;
-  }
-
-  /* Siempre 1 línea, adaptativo */
-  .hero h1{
-    white-space: nowrap;
-    font-size: clamp(26px, 8.2vw, 44px);
-  }
-  .hero h2{
-    white-space: nowrap;
-    font-size: clamp(11px, 3.7vw, 18px);
-  }
-
-  .hero p{ max-width: 520px; }
-
-  .hero-sample{
-    width: 100%;
-    max-width: 520px;
-    height: auto;
-    aspect-ratio: 1 / 1;
-    justify-self: start;
-  }
-}
-
-@media (max-width: 640px){
-  .styles__grid{ grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .why2__grid{
-    grid-template-columns: 1fr;
-    gap: 52px;
-  }
-}
-
-@media (max-width: 420px){
-  .styles__grid{ grid-template-columns: 1fr; }
-}
-/* ===================== HERO IMAGEN (sin frame, sin recorte) ===================== */
-.hero-sample{
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-}
-.hero-sample img{
-  width: 100% !important;
-  height: auto !important;
-  object-fit: contain !important;
-  display: block;
-}
-/* ===================== HAMBURGER (móvil sin contorno) ===================== */
-.hamburger{
-  border: 0 !important;
-  outline: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-}
-.hamburger:focus,
-.hamburger:active,
-.hamburger:focus-visible{
-  outline: none !important;
-  box-shadow: none !important;
-}
-/* ===================== ESTILOS (mobile: 2 por fila, más espacio y texto más pequeño) ===================== */
-@media (max-width: 640px){
-  .styles__grid{
-    grid-template-columns: repeat(2, 1fr) !important;
-    column-gap: 18px !important;
-    row-gap: 28px !important;
-  }
-  .styles__label{
-    font-size: 14px !important;
-    margin-top: 10px !important;
-  }
-}
-/* ===================== ESTILOS (solo imagen, sin contorno) ===================== */
-.styles__thumb{
-  border: 0 !important;
-  box-shadow: none !important;
-  background-color: transparent !important;
-}
-/* =====================================================
-   FRASE  ←←← INICIO (mismo fondo que WHY)
-   ===================================================== */
-.phrase{
-  background: rgba(10,12,24,.60);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255,255,255,.06);
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  padding: 54px 24px;
-}
-.phrase__container{
-  max-width: 1100px;
-  margin: 0 auto;
-  text-align: center;
-}
-.phrase__text{
-  font-size: 22px;
-  line-height: 1.4;
-  color: rgba(255,255,255,.92);
-  font-style: italic;
-}
-@media (max-width: 640px){
-  .phrase__text{ font-size: 18px; }
-}
-/* ===================== FRASE ←←← FIN ================= */
 /* =====================================================
    STEPS  ←←← INICIO (mismo fondo que WHY)
    ===================================================== */
@@ -655,19 +460,36 @@ background-size: cover;
 
 .steps__title{
   font-size: 40px;
-  font-weight: 700;
+  font-weight: 800;
   color: #fff;
 }
 
 .steps__subtitle{
-  margin-top: 14px;
-  color: rgba(255,255,255,.72);
-  font-size: 14px;
-  line-height: 1.6;
+  margin-top: 10px;
+  font-size: 16px;
+  color: rgba(255,255,255,.74);
+}
+
+.steps__chips{
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.steps__chip{
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  color: rgba(255,255,255,.86);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .steps__grid{
-  margin-top: 44px;
+  margin-top: 38px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
@@ -678,35 +500,21 @@ background-size: cover;
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 18px;
-  padding: 22px;
   box-shadow: 0 18px 60px rgba(0,0,0,.25);
-  min-height: 200px;
+  padding: 22px;
 }
 
-.steps__badge{
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.12);
-  display: grid;
-  place-items: center;
+.steps__step{
+  font-size: 16px;
   font-weight: 900;
   color: #fff;
+  margin-bottom: 10px;
 }
 
-.steps__cardTitle{
-  margin-top: 14px;
-  font-size: 18px;
-  font-weight: 800;
-  color: #fff;
-}
-
-.steps__cardDesc{
-  margin-top: 10px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: rgba(255,255,255,.74);
+.steps__text{
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255,255,255,.78);
 }
 
 .steps__cta{
@@ -716,13 +524,28 @@ background-size: cover;
 }
 
 @media (max-width: 1024px){
-  .steps__grid{
-    grid-template-columns: 1fr;
-  }
-  .steps__card{ min-height: auto; }
+  .steps__grid{ grid-template-columns: 1fr; }
 }
 
-@media (max-width: 900px){
+@media (max-width: 640px){
   .steps__title{ font-size: clamp(26px, 6.5vw, 40px); }
+  .steps__subtitle{ font-size: 14px; }
 }
 /* ===================== STEPS ←←← FIN ================= */
+/* ===================== WHY (regresar icono/bullet) ===================== */
+.why2__iconBox{
+  display: block !important;
+}
+/* ===================== SCROLL FIX ===================== */
+/* Asegura que la página pueda hacer scroll */
+html, body{
+  height: auto !important;
+}
+body{
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+/* Bloqueo SOLO cuando menú móvil está abierto */
+body.menu-open{
+  overflow: hidden !important;
+}

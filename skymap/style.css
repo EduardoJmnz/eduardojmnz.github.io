@@ -1131,3 +1131,10 @@ button{
     font-size: 12.5px;
   }
 }
+
+/* ===================== SCROLL FIX (no rompe layout) ===================== */
+html, body{ height: auto !important; }
+body{ overflow-x: hidden !important; overflow-y: auto !important; }
+body.menu-open{ overflow: hidden !important; }
+
+.page{ display:block; }

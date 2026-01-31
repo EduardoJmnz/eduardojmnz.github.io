@@ -4,7 +4,7 @@
 :root{
   --bg:#0a0c18;
   --glass:rgba(255,255,255,.06);
-  --border:rgba(255,255,255,.10);
+  --border:rgba(255,255,255,.12);
   --text:#ffffff;
   --muted:rgba(255,255,255,.70);
 
@@ -25,7 +25,10 @@
 html,body{
   width:100%;
   height:100%;
-  font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+body{
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Inter",sans-serif;
   background:var(--bg);
   color:var(--text);
   overflow-x:hidden;
@@ -47,16 +50,17 @@ a{
 .navbar{
   position:fixed;
   top:0;
+  left:0;
   width:100%;
   z-index:1000;
-  backdrop-filter:blur(12px);
   background:rgba(10,12,24,.6);
+  backdrop-filter:blur(10px);
   border-bottom:1px solid var(--border);
 }
 
 .navbar__container{
   max-width:1200px;
-  margin:auto;
+  margin:0 auto;
   padding:16px 24px;
   display:flex;
   align-items:center;
@@ -77,24 +81,17 @@ a{
   color:#fff;
 }
 
-/* Mobile menu */
-.navbar__toggle{
-  display:none;
-  font-size:22px;
-  cursor:pointer;
-}
-
 /* =========================
    HERO
    ========================= */
 .hero{
   position:relative;
   min-height:100vh;
+  padding:140px 24px 80px;
   display:flex;
   align-items:center;
   justify-content:center;
   text-align:center;
-  padding:140px 24px 80px;
 }
 
 .hero video{
@@ -107,7 +104,7 @@ a{
 }
 
 .hero::after{
-  content:'';
+  content:"";
   position:absolute;
   inset:0;
   background:rgba(0,0,0,.55);
@@ -115,7 +112,7 @@ a{
 }
 
 .hero__content{
-  max-width:720px;
+  max-width:760px;
 }
 
 .hero__title{
@@ -151,7 +148,7 @@ a{
 
 .why__container{
   max-width:1100px;
-  margin:auto;
+  margin:0 auto;
 }
 
 .why__title{
@@ -194,14 +191,13 @@ a{
 
 .styles__grid{
   max-width:1100px;
-  margin:auto;
+  margin:0 auto;
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:18px;
 }
 
 .style__card{
-  position:relative;
   overflow:hidden;
   border-radius:18px;
   cursor:pointer;
@@ -215,76 +211,75 @@ a{
 }
 
 .style__card:hover img{
-  transform:scale(1.06);
+  transform:scale(1.05);
 }
 
 /* =========================
    STEPS
    ========================= */
 .steps{
-  background: rgba(10,12,24,.60);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  padding: 84px 24px 96px;
+  padding:84px 24px 96px;
+  background:rgba(10,12,24,.6);
+  backdrop-filter:blur(10px);
+  border-top:1px solid var(--border);
 }
 
 .steps__container{
-  max-width: 1100px;
-  margin: auto;
-  text-align: center;
+  max-width:1100px;
+  margin:0 auto;
+  text-align:center;
 }
 
 .steps__title{
-  font-size: 40px;
-  font-weight: 800;
+  font-size:40px;
+  font-weight:800;
 }
 
 .steps__subtitle{
-  margin-top: 10px;
-  font-size: 16px;
-  color: var(--muted);
+  margin-top:10px;
+  font-size:16px;
+  color:var(--muted);
 }
 
 .steps__chips{
-  margin-top: 22px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
+  margin-top:22px;
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
 }
 
 .steps__chip{
-  padding: 10px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  background: var(--glass);
-  border: 1px solid var(--border);
+  padding:10px 14px;
+  border-radius:999px;
+  font-size:13px;
+  background:var(--glass);
+  border:1px solid var(--border);
 }
 
 .steps__grid{
-  margin-top: 42px;
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 18px;
-  text-align: left;
+  margin-top:42px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+  text-align:left;
 }
 
 .steps__card{
-  background: var(--glass);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 22px;
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:22px;
 }
 
 .steps__step{
   display:inline-block;
   padding:8px 14px;
   border-radius:999px;
+  font-size:13px;
+  font-weight:800;
   background:linear-gradient(90deg,var(--green),var(--green2));
   color:var(--greenInk);
-  font-weight:800;
-  font-size:13px;
 }
 
 .steps__text{
@@ -309,15 +304,15 @@ a{
 }
 
 @media(max-width:640px){
-  .navbar__menu{
-    display:none;
-  }
-
-  .navbar__toggle{
-    display:block;
-  }
-
   .hero{
     padding-top:120px;
+  }
+
+  .hero__title{
+    font-size:30px;
+  }
+
+  .hero__subtitle{
+    font-size:16px;
   }
 }

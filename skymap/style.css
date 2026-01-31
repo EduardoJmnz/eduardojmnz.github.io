@@ -941,201 +941,111 @@ background-size: cover;
 @media (max-width: 1024px){
   .reminder__grid{ grid-template-columns: 1fr; }
 }
-/* ===================== BOTONES UNIFICADOS ===================== */
-.btn-primary,
-.btn-primary--small{
-  border-radius: 999px !important;
+
+/* =====================================================
+   OPINIONS  ←←← INICIO (fondo como WHY)
+   ===================================================== */
+.opinions{
+  background: rgba(10,12,24,.60);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 84px 24px 96px;
 }
 
-.btn-primary,
-.btn-primary--small,
-button{
-  outline: none !important;
-}
-
-.btn-primary:focus,
-.btn-primary:focus-visible,
-.btn-primary--small:focus,
-.btn-primary--small:focus-visible{
-  outline: none !important;
-  box-shadow: none !important;
-}
-/* ===================== REMINDER (COLUMNA) ===================== */
-.reminder__form{
-  display: none;
-  margin-top: 24px;
-}
-
-.reminder__form.is-open{
-  display: block;
-}
-
-.reminder__stack{
-  max-width: 520px;
+.opinions__container{
+  max-width: 1100px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  text-align: center;
 }
 
-.reminder__field{
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.opinions__title{
+  font-size: 40px;
+  font-weight: 800;
+  color: #fff;
 }
 
-.reminder__field label{
-  font-size: 13px;
-  font-weight: 700;
+.opinions__subtitle{
+  margin-top: 10px;
+  font-size: 16px;
+  color: rgba(255,255,255,.74);
 }
 
-.reminder__field input{
-  height: 44px;
-  border-radius: 12px;
-  padding: 0 14px;
+.opinions__carousel{
+  margin-top: 34px;
 }
 
-.reminder__terms{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-}
-
-.reminder__msg{
-  font-size: 13px;
-  margin-top: 6px;
-}
-
-/* ===================== BOTONES (unificar y quitar outline) ===================== */
-.btn-primary,
-.btn-primary--small{
-  border-radius: 999px !important;
-  border: 0 !important;
-  outline: none !important;
-}
-.btn-primary:focus,
-.btn-primary:active,
-.btn-primary:focus-visible{
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-/* ===================== REMINDER (form en columna + checkbox) ===================== */
-.reminder__stack{
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 18px;
-}
-.reminder__check{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: rgba(255,255,255,.80);
-}
-.reminder__check input{
-  width: 18px;
-  height: 18px;
-  accent-color: rgba(45,214,201,.9);
-}
-.reminder__toggle{
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.reminder__grid{grid-template-columns: 1fr !important;}
-
-/* ===================== REMINDER (UI como maqueta) ===================== */
-.reminder__toggle{
-  margin-top: 22px;
-}
-
-/* Panel del formulario */
-.reminder__form{
-  max-width: 640px !important;
+.opinions__viewport{
+  overflow: hidden;
   border-radius: 18px;
-  padding: 22px;
+}
+
+.opinions__track{
+  display: flex;
+  gap: 14px;
+  transition: transform .55s ease;
+  will-change: transform;
+  padding: 2px; /* evita corte de sombras */
+}
+
+.opinions__card{
+  flex: 0 0 calc((100% - 28px) / 3);
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
   box-shadow: 0 18px 60px rgba(0,0,0,.25);
+  padding: 22px;
+  text-align: left;
+  min-height: 190px;
 }
 
-/* Columna */
-.reminder__stack{
-  margin-top: 0;
-  gap: 14px;
+.opinions__cardTitle{
+  font-size: 14px;
+  font-weight: 900;
+  color: rgba(255,255,255,.95);
+  text-transform: uppercase;
+  letter-spacing: .6px;
 }
 
-/* Labels */
-.reminder__label{
-  font-size: 13px;
-  font-weight: 800;
-  color: rgba(255,255,255,.88);
-}
-
-/* Inputs */
-.reminder__input{
-  width: 100%;
-  height: 46px;
-  padding: 0 14px;
-  border-radius: 14px;
-  background: rgba(0,0,0,.22);
-  border: 1px solid rgba(90,170,170,.28);
-  color: rgba(255,255,255,.92);
-}
-
-.reminder__input::placeholder{
-  color: rgba(255,255,255,.45);
-}
-
-.reminder__input:focus{
-  outline: none;
-  border-color: rgba(90,170,170,.55);
-  box-shadow: 0 0 0 3px rgba(90,170,170,.14);
-}
-
-/* Checkbox términos */
-.reminder__check{
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.08);
+.opinions__cardText{
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.55;
   color: rgba(255,255,255,.78);
 }
 
-.reminder__check input{
-  accent-color: rgba(45,214,201,.9);
+.opinions__cardEmail{
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255,255,255,.70);
 }
 
-/* Botón Crear centrado */
-.reminder__actions{
+.opinions__cta{
+  margin-top: 34px;
   display: flex;
   justify-content: center;
-  margin-top: 4px;
 }
 
-/* Mensajes */
-.reminder__note{
-  text-align: center;
-  margin-top: 6px;
+@media (max-width: 980px){
+  .opinions__card{
+    flex-basis: calc((100% - 14px) / 2);
+  }
 }
 
 @media (max-width: 640px){
-  .reminder__form{
-    padding: 18px;
-    border-radius: 16px;
+  .opinions{
+    padding: 70px 18px 86px;
   }
-  .reminder__check{
-    font-size: 12.5px;
+  .opinions__title{
+    font-size: clamp(26px, 6.5vw, 40px);
+  }
+  .opinions__subtitle{
+    font-size: 14px;
+  }
+  .opinions__card{
+    flex-basis: 100%;
   }
 }
-
-/* ===================== STEPS (sin fondo) ===================== */
-.steps{
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 0 !important;
-}
+/* ===================== OPINIONS ←←← FIN ================= */

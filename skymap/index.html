@@ -450,5 +450,144 @@
     applyLang(lang);
   </script>
 
+<!-- =====================================================
+     REMINDER
+     ===================================================== -->
+<section id="reminder" class="reminder">
+  <div class="reminder__container">
+    <h2 class="reminder__title" data-i18n="reminder_title">¡Que no se te pase tu fecha especial!</h2>
+    <p class="reminder__subtitle" data-i18n="reminder_subtitle">
+      Regístrate para recibir un recordatorio por correo electrónico cuando esa fecha especial llegue.
+    </p>
+
+    <div class="reminder__card">
+      <button type="button" class="btn-primary btn-primary--small reminder__btn" id="reminderToggle" data-i18n="reminder_btn">
+        CREAR RECORDATORIO
+      </button>
+
+      <form class="reminder__form" id="reminderForm" novalidate>
+        <div class="reminder__grid">
+          <div class="reminder__field">
+            <label class="reminder__label" for="reminderEmail" data-i18n="reminder_email_label">Email</label>
+            <input class="reminder__input" type="email" id="reminderEmail" name="email" placeholder="tu@email.com" required />
+          </div>
+
+          <div class="reminder__field">
+            <label class="reminder__label" for="reminderName" data-i18n="reminder_name_label">Nombre del recordatorio</label>
+            <input class="reminder__input" type="text" id="reminderName" name="name" placeholder="Aniversario, cumpleaños..." required maxlength="60" />
+          </div>
+
+          <div class="reminder__field">
+            <label class="reminder__label" for="reminderDate" data-i18n="reminder_date_label">Fecha</label>
+            <input class="reminder__input" type="date" id="reminderDate" name="date" required />
+          </div>
+        </div>
+
+        <div class="reminder__actions">
+          <button type="submit" class="btn-primary btn-primary--small" data-i18n="reminder_submit">GUARDAR</button>
+        </div>
+
+        <p class="reminder__note" id="reminderMsg" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+</section>
+<!-- ===================== REMINDER FIN ================= -->
+
+<script>
+(function(){
+  const toggle = document.getElementById('reminderToggle');
+  const form = document.getElementById('reminderForm');
+  const msg = document.getElementById('reminderMsg');
+
+  if(!toggle || !form) return;
+
+  toggle.addEventListener('click', () => {
+    form.classList.toggle('is-open');
+    // auto-focus first input when opening
+    if(form.classList.contains('is-open')){
+      const email = document.getElementById('reminderEmail');
+      if(email) email.focus();
+    }
+  });
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function buildICS({ title, dateStr }){
+    // dateStr: YYYY-MM-DD
+    // Make an all-day event on that date, with a reminder at 9:00 AM local time
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const dtStart = `${y}${pad(m)}${pad(d)}T090000`;
+    const dtEnd   = `${y}${pad(m)}${pad(d)}T093000`;
+    const now = new Date();
+    const dtStamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth()+1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
+    const uid = `${now.getTime()}@skymap`;
+    return [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//SKYMAP//Reminder//ES",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      `UID:${uid}`,
+      `DTSTAMP:${dtStamp}`,
+      `DTSTART:${dtStart}`,
+      `DTEND:${dtEnd}`,
+      `SUMMARY:${title}`,
+      "DESCRIPTION:Recuerda crear tu mapa estelar en SKYMAP.",
+      "BEGIN:VALARM",
+      "TRIGGER:-PT24H",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:Recordatorio SKYMAP",
+      "END:VALARM",
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ].join("
+");
+  }
+
+  function download(filename, text){
+    const blob = new Blob([text], {type: 'text/calendar;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    msg.textContent = "";
+    const email = document.getElementById('reminderEmail').value.trim();
+    const name  = document.getElementById('reminderName').value.trim();
+    const date  = document.getElementById('reminderDate').value;
+
+    if(!email || !name || !date){
+      msg.textContent = "Por favor completa todos los campos.";
+      msg.classList.remove('is-ok');
+      msg.classList.add('is-err');
+      return;
+    }
+
+    // Save locally (front-end only)
+    const payload = { email, name, date, createdAt: new Date().toISOString() };
+    try{
+      localStorage.setItem('skymap_reminder', JSON.stringify(payload));
+    }catch(_){}
+
+    // Generate calendar file (real reminder)
+    const ics = buildICS({ title: `SKYMAP: ${name}`, dateStr: date });
+    download("skymap-recordatorio.ics", ics);
+
+    msg.textContent = "¡Listo! Guardamos tu recordatorio y descargamos un archivo para agregarlo a tu calendario.";
+    msg.classList.remove('is-err');
+    msg.classList.add('is-ok');
+  });
+})();
+</script>
+
 </body>
 </html>

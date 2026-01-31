@@ -500,20 +500,18 @@
 
 
 
+
+
 <script>
 (function(){
-  const toggle = document.getElementById('reminderToggle');
+  const toggleBtn = document.getElementById('reminderToggle');
   const form = document.getElementById('reminderForm');
   const msg = document.getElementById('reminderMsg');
 
-  if(!toggle || !form) return;
+  if(!toggleBtn || !form) return;
 
-  toggle.addEventListener('click', () => {
+  toggleBtn.addEventListener('click', () => {
     form.classList.toggle('is-open');
-    if(form.classList.contains('is-open')){
-      const email = document.getElementById('reminderEmail');
-      if(email) email.focus();
-    }
   });
 
   form.addEventListener('submit', (e) => {
@@ -524,34 +522,33 @@
     const email = document.getElementById('reminderEmail').value.trim();
     const name  = document.getElementById('reminderName').value.trim();
     const date  = document.getElementById('reminderDate').value;
+    const terms = document.getElementById('reminderTerms').checked;
 
-        const terms = document.getElementById('reminderTerms')?.checked;
-
-if(!email || !name || !date){
+    if(!email || !name || !date){
       msg.textContent = "Por favor completa todos los campos.";
       msg.classList.add('is-err');
       return;
     }
 
-    
     if(!terms){
-      msg.textContent = \"Debes aceptar los Términos y Condiciones para crear el recordatorio.\";
+      msg.textContent = "Debes aceptar los Términos y Condiciones.";
       msg.classList.add('is-err');
       return;
     }
 
-// Lógica lista para backend (Render): por ahora NO se envía, solo se prepara payload
-    const payload = { email, name, date, acceptedTerms: true, createdAt: new Date().toISOString() };
+    const payload = {
+      email,
+      name,
+      date,
+      acceptedTerms: true,
+      createdAt: new Date().toISOString()
+    };
 
-    // Guardamos localmente para que ya exista “lógica” sin backend
     try{
       localStorage.setItem('skymap_reminder', JSON.stringify(payload));
-    }catch(_){}
+    }catch(e){}
 
-    // Cuando tengas backend, aquí va el POST:
-    // fetch('/api/reminders', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
-
-    msg.textContent = "¡Listo! Tu recordatorio quedó registrado. Te avisaremos por correo cuando llegue la fecha.";
+    msg.textContent = "¡Listo! Tu recordatorio quedó registrado.";
     msg.classList.add('is-ok');
     form.reset();
     form.classList.remove('is-open');

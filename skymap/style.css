@@ -941,3 +941,108 @@ background-size: cover;
 @media (max-width: 1024px){
   .reminder__grid{ grid-template-columns: 1fr; }
 }
+/* ===================== BOTONES UNIFICADOS ===================== */
+.btn-primary,
+.btn-primary--small{
+  border-radius: 999px !important;
+}
+
+.btn-primary,
+.btn-primary--small,
+button{
+  outline: none !important;
+}
+
+.btn-primary:focus,
+.btn-primary:focus-visible,
+.btn-primary--small:focus,
+.btn-primary--small:focus-visible{
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* ===================== REMINDER (COLUMNA) ===================== */
+.reminder__form{
+  display: none;
+  margin-top: 24px;
+}
+
+.reminder__form.is-open{
+  display: block;
+}
+
+.reminder__stack{
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reminder__field{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reminder__field label{
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.reminder__field input{
+  height: 44px;
+  border-radius: 12px;
+  padding: 0 14px;
+}
+
+.reminder__terms{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.reminder__msg{
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+/* ===================== BOTONES (unificar y quitar outline) ===================== */
+.btn-primary,
+.btn-primary--small{
+  border-radius: 999px !important;
+  border: 0 !important;
+  outline: none !important;
+}
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary:focus-visible{
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ===================== REMINDER (form en columna + checkbox) ===================== */
+.reminder__stack{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+}
+.reminder__check{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(255,255,255,.80);
+}
+.reminder__check input{
+  width: 18px;
+  height: 18px;
+  accent-color: rgba(45,214,201,.9);
+}
+.reminder__toggle{
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.reminder__grid{grid-template-columns: 1fr !important;}

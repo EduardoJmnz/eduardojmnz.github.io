@@ -2,7 +2,7 @@
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.70);
 
-  /* BOTÓN VERDE (theme) */
+  /* BOTÃ“N VERDE (theme) */
   --green: #44f1a6;
   --green2: #2dd6c9;
   --greenInk: #061812;
@@ -195,7 +195,7 @@ cursor: pointer;
 .hamburger.is-open span:nth-child(2){ opacity:0; }
 .hamburger.is-open span:nth-child(3){ transform: translateY(-8px) rotate(-45deg); }
 
-/* MOBILE MENU (homogéneo) */
+/* MOBILE MENU (homogÃ©neo) */
 .mobile-backdrop{
   position: fixed;
   inset: 0;
@@ -249,7 +249,7 @@ body.menu-open .mobile-menu{
   pointer-events: auto;
 }
 
-/* BOTÓN PRIMARIO VERDE */
+/* BOTÃ“N PRIMARIO VERDE */
 .btn-primary{
   display: inline-flex;
   align-items: center;
@@ -341,7 +341,7 @@ overflow: hidden;
   display: block;
 }
 
-/* WHY — opacidad 60% */
+/* WHY â€” opacidad 60% */
 .why2{
   background: rgba(10,12,24,.60);
   backdrop-filter: blur(10px);
@@ -437,7 +437,7 @@ overflow: hidden;
   }
 }
 
-/* MÓVIL */
+/* MÃ“VIL */
 
 /* =========================
    STYLES (Estilos)
@@ -526,14 +526,14 @@ background-size: cover;
   .nav-container{ padding: 0 1.25rem; }
   .nav-actions{ margin-left: auto; }
 
-  /* Móvil: imagen primero, luego textos */
+  /* MÃ³vil: imagen primero, luego textos */
   .hero-inner{
     grid-template-columns: 1fr;
     padding: 70px 18px;
     gap: 22px;
   }
 
-  /* Siempre 1 línea, adaptativo */
+  /* Siempre 1 lÃ­nea, adaptativo */
   .hero h1{
     white-space: nowrap;
     font-size: clamp(26px, 8.2vw, 44px);
@@ -578,7 +578,7 @@ background-size: cover;
   object-fit: contain !important;
   display: block;
 }
-/* ===================== HAMBURGER (móvil sin contorno) ===================== */
+/* ===================== HAMBURGER (mÃ³vil sin contorno) ===================== */
 .hamburger{
   border: 0 !important;
   outline: none !important;
@@ -591,7 +591,7 @@ background-size: cover;
   outline: none !important;
   box-shadow: none !important;
 }
-/* ===================== ESTILOS (mobile: 2 por fila, más espacio y texto más pequeño) ===================== */
+/* ===================== ESTILOS (mobile: 2 por fila, mÃ¡s espacio y texto mÃ¡s pequeÃ±o) ===================== */
 @media (max-width: 640px){
   .styles__grid{
     grid-template-columns: repeat(2, 1fr) !important;
@@ -610,7 +610,7 @@ background-size: cover;
   background-color: transparent !important;
 }
 /* =====================================================
-   FRASE  ←←← INICIO (mismo fondo que WHY)
+   FRASE  â†â†â† INICIO (mismo fondo que WHY)
    ===================================================== */
 .phrase{
   background: rgba(10,12,24,.60);
@@ -634,10 +634,10 @@ background-size: cover;
 @media (max-width: 640px){
   .phrase__text{ font-size: 18px; }
 }
-/* ===================== FRASE ←←← FIN ================= */
+/* ===================== FRASE â†â†â† FIN ================= */
 
 /* =====================================================
-   STEPS  ←←← INICIO (mismo fondo que WHY)
+   STEPS  â†â†â† INICIO (mismo fondo que WHY)
    ===================================================== */
 .steps{
   background: rgba(10,12,24,.60);
@@ -667,7 +667,7 @@ background-size: cover;
   color: rgba(255,255,255,.74);
 }
 
-/* “chips” */
+/* â€œchipsâ€ */
 .steps__chips{
   margin-top: 22px;
   display: flex;
@@ -689,7 +689,7 @@ background-size: cover;
 }
 
 .steps__chip::before{
-  content: "✓";
+  content: "âœ“";
   position: absolute;
   left: 12px;
   top: 50%;
@@ -772,10 +772,10 @@ background-size: cover;
     padding: 9px 12px 9px 36px;
   }
 }
-/* ===================== STEPS ←←← FIN ================= */
+/* ===================== STEPS â†â†â† FIN ================= */
 
 /* =====================================================
-   REMINDER  ←←← INICIO (fondo como WHY)
+   REMINDER  â†â†â† INICIO (fondo como WHY)
    ===================================================== */
 .reminder{
   background: rgba(10,12,24,.60);
@@ -902,13 +902,13 @@ background-size: cover;
     padding: 20px;
   }
 }
-/* ===================== REMINDER ←←← FIN ================= */
+/* ===================== REMINDER â†â†â† FIN ================= */
 /* =====================================================
-   REMINDER (v2)  ←←← AJUSTES
-   - Quita el rectángulo alrededor del botón
+   REMINDER (v2)  â†â†â† AJUSTES
+   - Quita el rectÃ¡ngulo alrededor del botÃ³n
    - Form aparece como panel al desplegarse
    ===================================================== */
-.reminder__card{ display: none !important; } /* si existía de versiones previas */
+.reminder__card{ display: none !important; } /* si existÃ­a de versiones previas */
 .reminder__btn{ display: none !important; }
 
 .reminder__toggle{
@@ -943,7 +943,7 @@ background-size: cover;
 }
 
 /* =====================================================
-   OPINIONS  ←←← INICIO (fondo como WHY)
+   OPINIONS  â†â†â† INICIO (fondo como WHY)
    ===================================================== */
 .opinions{
   background: rgba(10,12,24,.60);
@@ -1048,7 +1048,7 @@ background-size: cover;
     flex-basis: 100%;
   }
 }
-/* ===================== OPINIONS ←←← FIN ================= */
+/* ===================== OPINIONS â†â†â† FIN ================= */
 /* ===================== OPINIONS (sin fondo) ===================== */
 .opinions{
   background: transparent !important;
@@ -1061,4 +1061,57 @@ background-size: cover;
   letter-spacing: 1px;
   color: rgba(255,215,90,.95);
   margin-bottom: 8px;
+}
+
+/* ===================== REMINDER (campos en columna) ===================== */
+.reminder__stack{
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+.reminder__field{
+  width: 100% !important;
+}
+
+.reminder__input,
+.reminder__field input,
+.reminder__field select,
+.reminder__field textarea{
+  width: 100% !important;
+}
+
+/* Quitar outline/blanco del botÃ³n de Reminder */
+.reminder__toggle:focus,
+.reminder__toggle:focus-visible,
+.reminder__toggle:active{
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ===================== BOTONES (unificar estilo global) ===================== */
+.btn-primary,
+.btn-primary--small,
+button.btn-primary,
+a.btn-primary{
+  border-radius: 999px !important;
+  border: 0 !important;
+  outline: none !important;
+}
+
+.btn-primary:focus,
+.btn-primary:focus-visible,
+.btn-primary:active,
+.btn-primary--small:focus,
+.btn-primary--small:focus-visible,
+.btn-primary--small:active{
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ===================== REMINDER (form mÃ¡s angosto) ===================== */
+.reminder__form{
+  max-width: 420px !important;
+  margin-left: auto;
+  margin-right: auto;
 }

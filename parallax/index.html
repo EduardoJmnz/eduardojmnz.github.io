@@ -3,32 +3,120 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>OS — Galaxy Vortex</title>
-  <style>
-    html, body { margin:0; height:100%; background:#05060c; overflow:hidden; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; }
-    #app { position:fixed; inset:0; }
-    .hint {
-      position: fixed; left: 16px; bottom: 14px; z-index: 5;
-      color: rgba(255,255,255,.6); font-size: 12px;
-      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10);
-      padding: 8px 10px; border-radius: 12px; backdrop-filter: blur(10px);
-    }
-  </style>
-
-  <!-- Import map para usar Three.js por CDN -->
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/",
-        "lil-gui": "https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.esm.js"
-      }
-    }
-  </script>
+  <title>OS — Landing</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
-  <div id="app"></div>
-  <div class="hint">Drag = orbit • Scroll = zoom</div>
-  <script type="module" src="./main.js"></script>
+  <!-- Fondo canvas (estrellas) -->
+  <canvas id="stars" aria-hidden="true"></canvas>
+
+  <!-- Capas parallax (gradientes / glow) -->
+  <div class="parallax" aria-hidden="true">
+    <div class="layer layer--nebula" data-speed="0.12"></div>
+    <div class="layer layer--glow" data-speed="0.20"></div>
+    <div class="layer layer--dust" data-speed="0.32"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="topbar">
+    <div class="brand">OS</div>
+
+    <div class="controls">
+      <label class="control">
+        <span>Galaxy Color</span>
+        <input id="accent" type="color" value="#7C5CFF" />
+      </label>
+      <a class="btn btn--ghost" href="#features">Explorar</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <main>
+    <section class="section hero" id="top">
+      <div class="container">
+        <p class="kicker">Sistema • Diseño • Automatización</p>
+        <h1>OS: un espacio para construir, iterar y lanzar.</h1>
+        <p class="lead">
+          Una landing parallax con narrativa y profundidad: capas, estrellas y secciones claras para convertir.
+        </p>
+
+        <div class="cta">
+          <a class="btn" href="#cta">Comenzar</a>
+          <a class="btn btn--ghost" href="#story">Ver historia</a>
+        </div>
+
+        <div class="scroll-hint">
+          <span>Scroll</span>
+          <div class="mouse"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STORY -->
+    <section class="section story" id="story">
+      <div class="container narrow">
+        <h2>En el inicio…</h2>
+        <p>
+          No había ruido. Solo estructura. Luego apareció el patrón:
+          capas que reaccionan, ritmo, claridad. OS convierte complejidad en flujo.
+        </p>
+      </div>
+    </section>
+
+    <section class="section story">
+      <div class="container narrow">
+        <h2>Lo que ves</h2>
+        <p>
+          No son “puntitos”. Es una interfaz emocional: profundidad + contraste + movimiento
+          para que el contenido se sienta vivo sin distraer.
+        </p>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="section features" id="features">
+      <div class="container">
+        <h2>Features</h2>
+
+        <div class="grid">
+          <article class="card">
+            <h3>Parallax limpio</h3>
+            <p>Capas con velocidades distintas. Suave, sin marear.</p>
+          </article>
+          <article class="card">
+            <h3>Fondo dinámico</h3>
+            <p>Starfield en canvas que responde al scroll y al color.</p>
+          </article>
+          <article class="card">
+            <h3>Storytelling</h3>
+            <p>Secciones cortas tipo manifiesto, perfectas para conversión.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section cta-section" id="cta">
+      <div class="container">
+        <div class="cta-box">
+          <h2>¿Listo para lanzar OS?</h2>
+          <p>Adaptamos este starter a tu branding, copy y estructura final.</p>
+          <div class="cta">
+            <a class="btn" href="#">Crear mi OS</a>
+            <a class="btn btn--ghost" href="#top">Volver arriba</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container">
+        <span>© <span id="year"></span> OS</span>
+      </div>
+    </footer>
+  </main>
+
+  <script src="main.js"></script>
 </body>
 </html>

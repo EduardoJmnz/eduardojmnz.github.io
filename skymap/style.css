@@ -1290,3 +1290,96 @@ a.btn-primary{
     font-size: 30px;
   }
 }
+
+/* =====================================================
+   FAQS  (según maqueta)
+   ===================================================== */
+.faqs{
+  padding: 96px 24px 110px;
+}
+
+.faqs__container{
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.faqs__title{
+  text-align: center;
+  font-size: 40px;
+  font-weight: 900;
+  color: rgba(255,255,255,.95);
+}
+
+.faqs__subtitle{
+  text-align: center;
+  margin-top: 10px;
+  font-size: 15px;
+  color: rgba(255,255,255,.72);
+}
+
+.faqs__list{
+  margin-top: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* item */
+.faq{
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+
+.faq summary{
+  cursor: pointer;
+  list-style: none;
+  font-weight: 800;
+  color: rgba(255,255,255,.92);
+  position: relative;
+  padding-right: 34px;
+}
+
+.faq summary::-webkit-details-marker{ display:none; }
+
+.faq summary::after{
+  content: "+";
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  color: rgba(255,255,255,.80);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.faq[open] summary::after{
+  content: "–";
+}
+
+.faq p{
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255,255,255,.75);
+}
+
+@media (max-width: 640px){
+  .faqs{
+    padding: 76px 18px 92px;
+  }
+  .faqs__title{
+    font-size: 32px;
+  }
+  .faq{
+    padding: 16px 16px;
+  }
+}

@@ -95,25 +95,33 @@
       </p>
 
       <div class="styles__grid" aria-label="Estilos de diseño">
-        <article class="styles__card">
+        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
+<article class="styles__card">
           <div class="styles__thumb" role="img" aria-label="Estilo Clásico"></div>
           <h3 class="styles__label" data-i18n="style_classic">Clásico</h3>
         </article>
+</a>
 
-        <article class="styles__card">
+        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
+<article class="styles__card">
           <div class="styles__thumb" role="img" aria-label="Estilo Moderno"></div>
           <h3 class="styles__label" data-i18n="style_modern">Moderno</h3>
         </article>
+</a>
 
-        <article class="styles__card">
+        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
+<article class="styles__card">
           <div class="styles__thumb" role="img" aria-label="Estilo Poster"></div>
           <h3 class="styles__label" data-i18n="style_poster">Póster</h3>
         </article>
+</a>
 
-        <article class="styles__card">
+        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
+<article class="styles__card">
           <div class="styles__thumb" role="img" aria-label="Estilo Romántico"></div>
           <h3 class="styles__label" data-i18n="style_romantic">Romántico</h3>
         </article>
+</a>
       </div>
 
       <a href="generator.html" class="btn-primary btn-primary--small styles__cta" data-i18n="styles_cta">
@@ -499,7 +507,7 @@
         </div>
 
         <div class="reminder__field">
-          <label class="reminder__label" for="reminderName" data-i18n="reminder_name_label">Nombre de tu recordatorio (Cumple, Aniversario, Etc.)*</label>
+          <label class="reminder__label" for="reminderName" data-i18n="reminder_name_label">Nombre de tu recordatorio*</label>
           <input class="reminder__input" type="text" id="reminderName" name="name" placeholder="Cumpleaños, aniversario..." required maxlength="60" />
         </div>
 
@@ -509,8 +517,14 @@
         </div>
       </div>
 
+      
       <div class="reminder__actions">
-        <button type="submit" class="btn-primary btn-primary--small" data-i18n="reminder_submit">Crear</button>
+        <label class="reminder__terms">
+          <input id="reminderTerms" type="checkbox" required />
+          <span data-i18n="reminder_terms">Acepto los términos y condiciones</span>
+        </label>
+
+        <button type="submit" class="btn-primary btn-primary--small" data-i18n="reminder_create_btn">Crear</button>
       </div>
 
       <p class="reminder__note" id="reminderMsg" role="status" aria-live="polite"></p>

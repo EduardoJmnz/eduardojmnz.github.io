@@ -2,7 +2,7 @@
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.70);
 
-  /* BOTÃ“N VERDE (theme) */
+  /* BOTÓN VERDE (theme) */
   --green: #44f1a6;
   --green2: #2dd6c9;
   --greenInk: #061812;
@@ -195,7 +195,7 @@ cursor: pointer;
 .hamburger.is-open span:nth-child(2){ opacity:0; }
 .hamburger.is-open span:nth-child(3){ transform: translateY(-8px) rotate(-45deg); }
 
-/* MOBILE MENU (homogÃ©neo) */
+/* MOBILE MENU (homogéneo) */
 .mobile-backdrop{
   position: fixed;
   inset: 0;
@@ -249,7 +249,7 @@ body.menu-open .mobile-menu{
   pointer-events: auto;
 }
 
-/* BOTÃ“N PRIMARIO VERDE */
+/* BOTÓN PRIMARIO VERDE */
 .btn-primary{
   display: inline-flex;
   align-items: center;
@@ -341,7 +341,7 @@ overflow: hidden;
   display: block;
 }
 
-/* WHY â€” opacidad 60% */
+/* WHY — opacidad 60% */
 .why2{
   background: rgba(10,12,24,.60);
   backdrop-filter: blur(10px);
@@ -437,7 +437,7 @@ overflow: hidden;
   }
 }
 
-/* MÃ“VIL */
+/* MÓVIL */
 
 /* =========================
    STYLES (Estilos)
@@ -526,14 +526,14 @@ background-size: cover;
   .nav-container{ padding: 0 1.25rem; }
   .nav-actions{ margin-left: auto; }
 
-  /* MÃ³vil: imagen primero, luego textos */
+  /* Móvil: imagen primero, luego textos */
   .hero-inner{
     grid-template-columns: 1fr;
     padding: 70px 18px;
     gap: 22px;
   }
 
-  /* Siempre 1 lÃ­nea, adaptativo */
+  /* Siempre 1 línea, adaptativo */
   .hero h1{
     white-space: nowrap;
     font-size: clamp(26px, 8.2vw, 44px);
@@ -578,7 +578,7 @@ background-size: cover;
   object-fit: contain !important;
   display: block;
 }
-/* ===================== HAMBURGER (mÃ³vil sin contorno) ===================== */
+/* ===================== HAMBURGER (móvil sin contorno) ===================== */
 .hamburger{
   border: 0 !important;
   outline: none !important;
@@ -591,7 +591,7 @@ background-size: cover;
   outline: none !important;
   box-shadow: none !important;
 }
-/* ===================== ESTILOS (mobile: 2 por fila, mÃ¡s espacio y texto mÃ¡s pequeÃ±o) ===================== */
+/* ===================== ESTILOS (mobile: 2 por fila, más espacio y texto más pequeño) ===================== */
 @media (max-width: 640px){
   .styles__grid{
     grid-template-columns: repeat(2, 1fr) !important;
@@ -610,7 +610,7 @@ background-size: cover;
   background-color: transparent !important;
 }
 /* =====================================================
-   FRASE  â†â†â† INICIO (mismo fondo que WHY)
+   FRASE  ←←← INICIO (mismo fondo que WHY)
    ===================================================== */
 .phrase{
   background: rgba(10,12,24,.60);
@@ -634,10 +634,10 @@ background-size: cover;
 @media (max-width: 640px){
   .phrase__text{ font-size: 18px; }
 }
-/* ===================== FRASE â†â†â† FIN ================= */
+/* ===================== FRASE ←←← FIN ================= */
 
 /* =====================================================
-   STEPS  â†â†â† INICIO (mismo fondo que WHY)
+   STEPS  ←←← INICIO (mismo fondo que WHY)
    ===================================================== */
 .steps{
   background: rgba(10,12,24,.60);
@@ -667,7 +667,7 @@ background-size: cover;
   color: rgba(255,255,255,.74);
 }
 
-/* â€œchipsâ€ */
+/* “chips” */
 .steps__chips{
   margin-top: 22px;
   display: flex;
@@ -689,7 +689,7 @@ background-size: cover;
 }
 
 .steps__chip::before{
-  content: "âœ“";
+  content: "✓";
   position: absolute;
   left: 12px;
   top: 50%;
@@ -772,10 +772,10 @@ background-size: cover;
     padding: 9px 12px 9px 36px;
   }
 }
-/* ===================== STEPS â†â†â† FIN ================= */
+/* ===================== STEPS ←←← FIN ================= */
 
 /* =====================================================
-   REMINDER  â†â†â† INICIO (fondo como WHY)
+   REMINDER  ←←← INICIO (fondo como WHY)
    ===================================================== */
 .reminder{
   background: rgba(10,12,24,.60);
@@ -902,13 +902,13 @@ background-size: cover;
     padding: 20px;
   }
 }
-/* ===================== REMINDER â†â†â† FIN ================= */
+/* ===================== REMINDER ←←← FIN ================= */
 /* =====================================================
-   REMINDER (v2)  â†â†â† AJUSTES
-   - Quita el rectÃ¡ngulo alrededor del botÃ³n
+   REMINDER (v2)  ←←← AJUSTES
+   - Quita el rectángulo alrededor del botón
    - Form aparece como panel al desplegarse
    ===================================================== */
-.reminder__card{ display: none !important; } /* si existÃ­a de versiones previas */
+.reminder__card{ display: none !important; } /* si existía de versiones previas */
 .reminder__btn{ display: none !important; }
 
 .reminder__toggle{
@@ -943,7 +943,7 @@ background-size: cover;
 }
 
 /* =====================================================
-   OPINIONS  â†â†â† INICIO (fondo como WHY)
+   OPINIONS  ←←← INICIO (fondo como WHY)
    ===================================================== */
 .opinions{
   background: rgba(10,12,24,.60);
@@ -1048,7 +1048,7 @@ background-size: cover;
     flex-basis: 100%;
   }
 }
-/* ===================== OPINIONS â†â†â† FIN ================= */
+/* ===================== OPINIONS ←←← FIN ================= */
 /* ===================== OPINIONS (sin fondo) ===================== */
 .opinions{
   background: transparent !important;
@@ -1081,7 +1081,7 @@ background-size: cover;
   width: 100% !important;
 }
 
-/* Quitar outline/blanco del botÃ³n de Reminder */
+/* Quitar outline/blanco del botón de Reminder */
 .reminder__toggle:focus,
 .reminder__toggle:focus-visible,
 .reminder__toggle:active{
@@ -1109,9 +1109,184 @@ a.btn-primary{
   box-shadow: none !important;
 }
 
-/* ===================== REMINDER (form mÃ¡s angosto) ===================== */
+/* ===================== REMINDER (form más angosto) ===================== */
 .reminder__form{
   max-width: 420px !important;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* ===================== REMINDER (inputs iguales en móvil) ===================== */
+.reminder__field input{
+  height: 46px;
+  box-sizing: border-box;
+}
+
+.reminder__field input[type="date"]{
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* iOS/Android: el date suele crecer; lo normalizamos */
+@media (max-width: 640px){
+  .reminder__field input,
+  .reminder__field input[type="date"]{
+    height: 46px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 46px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Checkbox términos */
+.reminder__terms{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.78);
+  font-size: 13px;
+}
+.reminder__terms input{
+  width: 18px;
+  height: 18px;
+  accent-color: rgba(45,214,201,.9);
+}
+
+/* ===================== STYLES (cards cliqueables) ===================== */
+.styles__link{
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+.styles__link:focus,
+.styles__link:focus-visible{
+  outline: none;
+}
+
+/* ===================== REMINDER (checkbox arriba del botón) ===================== */
+.reminder__stack{
+  align-items: center;
+}
+
+.reminder__terms{
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.reminder__stack > .btn-primary{
+  margin-top: 6px;
+}
+
+/* ===================== REMINDER (checkbox + botón visibles y en columna) ===================== */
+.reminder__stack{
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  align-items: center;
+}
+
+.reminder__terms{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.reminder__stack .btn-primary{
+  margin-top: 4px;
+}
+
+/* ===================== REMINDER (acciones centradas en columna) ===================== */
+.reminder__actions{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.reminder__terms{
+  width: 100%;
+  max-width: 420px;
+  justify-content: center;
+}
+
+/* =====================================================
+   FAQS
+   ===================================================== */
+.faqs{
+  padding: 90px 24px;
+}
+
+.faqs__container{
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.faqs__title{
+  text-align: center;
+  font-size: 38px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.faqs__subtitle{
+  text-align: center;
+  margin-top: 10px;
+  font-size: 15px;
+  color: rgba(255,255,255,.72);
+}
+
+.faqs__list{
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.faq{
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding: 18px 22px;
+}
+
+.faq summary{
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  color: rgba(255,255,255,.92);
+  position: relative;
+}
+
+.faq summary::after{
+  content: "+";
+  position: absolute;
+  right: 0;
+  font-size: 22px;
+  line-height: 1;
+  color: rgba(255,255,255,.75);
+}
+
+.faq[open] summary::after{
+  content: "–";
+}
+
+.faq p{
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255,255,255,.75);
+}
+
+@media (max-width: 640px){
+  .faqs__title{
+    font-size: 30px;
+  }
 }

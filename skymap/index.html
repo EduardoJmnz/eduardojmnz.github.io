@@ -16,6 +16,52 @@
 
   
 
+
+
+
+
+
+
+<!-- =====================================================
+     STEPS
+     ===================================================== -->
+
+
+<!-- =========================
+     OPINIONS
+     ========================= -->
+
+
+<!-- =========================
+     FAQS
+     ========================= -->
+
+<!-- ===================== FAQS FIN ================= -->
+
+
+<!-- ===================== OPINIONS FIN ================= -->
+
+
+<!-- ===================== STEPS FIN ===================== -->
+
+
+
+<!-- =========================
+       VIDEO GLOBAL (FONDO FIJO)
+       ========================= -->
+  <video class="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="./background.mov" type="video/quicktime" />
+    <!-- Fallback opcional si lo tienes -->
+    <source src="./background.mp4" type="video/mp4" />
+  </video>
+
+  <div class="bg-overlay" aria-hidden="true"></div>
+  <div class="bg-fade" aria-hidden="true"></div>
+
+  <!-- =========================
+       TOPBAR FIJO
+       ========================= -->
+
 <section id="home" class="hero">
     <div class="hero-inner">
       <!-- Móvil: primero imagen -->
@@ -34,6 +80,95 @@
 
         <a href="generator.html" class="btn-primary" data-i18n="btn_create">¡CREAR AHORA!</a>
       </div>
+    </div>
+  </section>
+
+<section id="reminder" class="reminder">
+  <div class="reminder__container">
+    <h2 class="reminder__title" data-i18n="reminder_title">¡Que no se te pase tu fecha especial!</h2>
+    <p class="reminder__subtitle" data-i18n="reminder_subtitle">
+      Regístrate para recibir un recordatorio por correo electrónico cuando esa fecha especial llegue.
+    </p>
+
+    <button type="button" class="btn-primary btn-primary--small reminder__toggle" id="reminderToggle" data-i18n="reminder_btn">
+      Crear recordatorio
+    </button>
+
+    <form class="reminder__form" id="reminderForm" novalidate>
+      <div class="reminder__stack">
+        <div class="reminder__field">
+          <label class="reminder__label" for="reminderEmail" data-i18n="reminder_email_label">Tu correo electrónico*</label>
+          <input class="reminder__input" type="email" id="reminderEmail" name="email" placeholder="tu@email.com" required />
+        </div>
+
+        <div class="reminder__field">
+          <label class="reminder__label" for="reminderName" data-i18n="reminder_name_label">Nombre de tu recordatorio*</label>
+          <input class="reminder__input" type="text" id="reminderName" name="name" placeholder="Cumpleaños, aniversario..." required maxlength="60" />
+        </div>
+
+        <div class="reminder__field">
+          <label class="reminder__label" for="reminderDate" data-i18n="reminder_date_label">Fecha del recordatorio</label>
+          <input class="reminder__input" type="date" id="reminderDate" name="date" required />
+        </div>
+      </div>
+
+      
+      <div class="reminder__actions">
+        <label class="reminder__terms">
+          <input id="reminderTerms" type="checkbox" required />
+          <span data-i18n="reminder_terms">Acepto los términos y condiciones</span>
+        </label>
+
+        <button type="submit" class="btn-primary btn-primary--small" data-i18n="reminder_create_btn">Crear</button>
+      </div>
+
+      <p class="reminder__note" id="reminderMsg" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+
+
+<section id="estilos" class="styles">
+    <div class="styles__container">
+      <h2 class="styles__title" data-i18n="styles_title">Elige un increíble estilo</h2>
+      <p class="styles__subtitle" data-i18n="styles_subtitle">
+        Selecciona el estilo de mapa estelar que más te guste y personalízalo. ¡Cada mapa estelar es diferente!
+      </p>
+
+      <div class="styles__grid" aria-label="Estilos de diseño">
+        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
+<article class="styles__card">
+          <div class="styles__thumb" role="img" aria-label="Estilo Clásico"></div>
+          <h3 class="styles__label" data-i18n="style_classic">Clásico</h3>
+        </article>
+</a>
+
+        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
+<article class="styles__card">
+          <div class="styles__thumb" role="img" aria-label="Estilo Moderno"></div>
+          <h3 class="styles__label" data-i18n="style_modern">Moderno</h3>
+        </article>
+</a>
+
+        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
+<article class="styles__card">
+          <div class="styles__thumb" role="img" aria-label="Estilo Poster"></div>
+          <h3 class="styles__label" data-i18n="style_poster">Póster</h3>
+        </article>
+</a>
+
+        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
+<article class="styles__card">
+          <div class="styles__thumb" role="img" aria-label="Estilo Romántico"></div>
+          <h3 class="styles__label" data-i18n="style_romantic">Romántico</h3>
+        </article>
+</a>
+      </div>
+
+      <a href="generator.html" class="btn-primary btn-primary--small styles__cta" data-i18n="styles_cta">
+        VER MÁS OPCIONES
+      </a>
     </div>
   </section>
 
@@ -87,52 +222,6 @@
     </div>
   </section>
 
-<section id="estilos" class="styles">
-    <div class="styles__container">
-      <h2 class="styles__title" data-i18n="styles_title">Elige un increíble estilo</h2>
-      <p class="styles__subtitle" data-i18n="styles_subtitle">
-        Selecciona el estilo de mapa estelar que más te guste y personalízalo. ¡Cada mapa estelar es diferente!
-      </p>
-
-      <div class="styles__grid" aria-label="Estilos de diseño">
-        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
-<article class="styles__card">
-          <div class="styles__thumb" role="img" aria-label="Estilo Clásico"></div>
-          <h3 class="styles__label" data-i18n="style_classic">Clásico</h3>
-        </article>
-</a>
-
-        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
-<article class="styles__card">
-          <div class="styles__thumb" role="img" aria-label="Estilo Moderno"></div>
-          <h3 class="styles__label" data-i18n="style_modern">Moderno</h3>
-        </article>
-</a>
-
-        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
-<article class="styles__card">
-          <div class="styles__thumb" role="img" aria-label="Estilo Poster"></div>
-          <h3 class="styles__label" data-i18n="style_poster">Póster</h3>
-        </article>
-</a>
-
-        <a class="styles__link" href="generator.html" aria-label="Ir al generador">
-<article class="styles__card">
-          <div class="styles__thumb" role="img" aria-label="Estilo Romántico"></div>
-          <h3 class="styles__label" data-i18n="style_romantic">Romántico</h3>
-        </article>
-</a>
-      </div>
-
-      <a href="generator.html" class="btn-primary btn-primary--small styles__cta" data-i18n="styles_cta">
-        VER MÁS OPCIONES
-      </a>
-    </div>
-  </section>
-
-<!-- =====================================================
-     STEPS
-     ===================================================== -->
 <section class="steps" id="steps">
   <div class="steps__container">
     <h2 class="steps__title">¡Diseña FACIL Y RAPIDO!</h2>
@@ -167,9 +256,6 @@
   </div>
 </section>
 
-<!-- =========================
-     OPINIONS
-     ========================= -->
 <section id="opinions" class="opinions">
   <div class="opinions__container">
     <h2 class="opinions__title" data-i18n="opinions_title">¡Más de 25k clientes satisfechos!</h2>
@@ -191,35 +277,7 @@
   </div>
 </section>
 
-<!-- =========================
-     FAQS
-     ========================= -->
 
-<!-- ===================== FAQS FIN ================= -->
-
-
-<!-- ===================== OPINIONS FIN ================= -->
-
-
-<!-- ===================== STEPS FIN ===================== -->
-
-
-
-<!-- =========================
-       VIDEO GLOBAL (FONDO FIJO)
-       ========================= -->
-  <video class="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
-    <source src="./background.mov" type="video/quicktime" />
-    <!-- Fallback opcional si lo tienes -->
-    <source src="./background.mp4" type="video/mp4" />
-  </video>
-
-  <div class="bg-overlay" aria-hidden="true"></div>
-  <div class="bg-fade" aria-hidden="true"></div>
-
-  <!-- =========================
-       TOPBAR FIJO
-       ========================= -->
   <div class="topbar">
 
     <!-- PROMO BAR -->
@@ -496,90 +554,9 @@
 <!-- =====================================================
      REMINDER
      ===================================================== -->
-<section id="reminder" class="reminder">
-  <div class="reminder__container">
-    <h2 class="reminder__title" data-i18n="reminder_title">¡Que no se te pase tu fecha especial!</h2>
-    <p class="reminder__subtitle" data-i18n="reminder_subtitle">
-      Regístrate para recibir un recordatorio por correo electrónico cuando esa fecha especial llegue.
-    </p>
 
-    <button type="button" class="btn-primary btn-primary--small reminder__toggle" id="reminderToggle" data-i18n="reminder_btn">
-      Crear recordatorio
-    </button>
 
-    <form class="reminder__form" id="reminderForm" novalidate>
-      <div class="reminder__stack">
-        <div class="reminder__field">
-          <label class="reminder__label" for="reminderEmail" data-i18n="reminder_email_label">Tu correo electrónico*</label>
-          <input class="reminder__input" type="email" id="reminderEmail" name="email" placeholder="tu@email.com" required />
-        </div>
 
-        <div class="reminder__field">
-          <label class="reminder__label" for="reminderName" data-i18n="reminder_name_label">Nombre de tu recordatorio*</label>
-          <input class="reminder__input" type="text" id="reminderName" name="name" placeholder="Cumpleaños, aniversario..." required maxlength="60" />
-        </div>
-
-        <div class="reminder__field">
-          <label class="reminder__label" for="reminderDate" data-i18n="reminder_date_label">Fecha del recordatorio</label>
-          <input class="reminder__input" type="date" id="reminderDate" name="date" required />
-        </div>
-      </div>
-
-      
-      <div class="reminder__actions">
-        <label class="reminder__terms">
-          <input id="reminderTerms" type="checkbox" required />
-          <span data-i18n="reminder_terms">Acepto los términos y condiciones</span>
-        </label>
-
-        <button type="submit" class="btn-primary btn-primary--small" data-i18n="reminder_create_btn">Crear</button>
-      </div>
-
-      <p class="reminder__note" id="reminderMsg" role="status" aria-live="polite"></p>
-    </form>
-  </div>
-</section>
-
-<section id="faq" class="faqs">
-  <div class="faqs__container">
-    <h2 class="faqs__title">FAQs</h2>
-    <p class="faqs__subtitle">
-      Nos sentimos orgullosos de poder brindar un producto de calidad que nuestros clientes aman.
-    </p>
-
-    <div class="faqs__list">
-      <details class="faq" open>
-        <summary>¿Qué es un mapa estelar?</summary>
-        <p>Es una representación exacta del cielo en una fecha y lugar específicos, mostrando la posición real de las estrellas en ese momento.</p>
-      </details>
-
-      <details class="faq">
-        <summary>¿El mapa es realmente del cielo de mi fecha y lugar?</summary>
-        <p>Sí. El mapa se genera con datos astronómicos reales según la fecha, hora y ubicación que elijas.</p>
-      </details>
-
-      <details class="faq">
-        <summary>¿Son precisos los mapas estelares?</summary>
-        <p>Totalmente. Cada mapa es astronómicamente preciso y puede verificarse en planetarios digitales.</p>
-      </details>
-
-      <details class="faq">
-        <summary>¿Puedo personalizar el texto y el estilo?</summary>
-        <p>Sí. Puedes elegir diferentes estilos, colores y agregar un mensaje personalizado.</p>
-      </details>
-
-      <details class="faq">
-        <summary>¿Qué recibo al final?</summary>
-        <p>Recibes un archivo digital en alta resolución listo para imprimir o compartir.</p>
-      </details>
-
-      <details class="faq">
-        <summary>¿Qué es el archivo PDF?</summary>
-        <p>Es un archivo de alta resolución ideal para imprimir tu mapa estelar con gran calidad.</p>
-      </details>
-    </div>
-  </div>
-</section>
 
 
 <!-- ===================== REMINDER FIN ================= -->
@@ -718,6 +695,49 @@
   start();
 })();
 </script>
+
+
+
+<section id="faq" class="faqs">
+  <div class="faqs__container">
+    <h2 class="faqs__title">FAQs</h2>
+    <p class="faqs__subtitle">
+      Nos sentimos orgullosos de poder brindar un producto de calidad que nuestros clientes aman.
+    </p>
+
+    <div class="faqs__list">
+      <details class="faq" open>
+        <summary>¿Qué es un mapa estelar?</summary>
+        <p>Es una representación exacta del cielo en una fecha y lugar específicos, mostrando la posición real de las estrellas en ese momento.</p>
+      </details>
+
+      <details class="faq">
+        <summary>¿El mapa es realmente del cielo de mi fecha y lugar?</summary>
+        <p>Sí. El mapa se genera con datos astronómicos reales según la fecha, hora y ubicación que elijas.</p>
+      </details>
+
+      <details class="faq">
+        <summary>¿Son precisos los mapas estelares?</summary>
+        <p>Totalmente. Cada mapa es astronómicamente preciso y puede verificarse en planetarios digitales.</p>
+      </details>
+
+      <details class="faq">
+        <summary>¿Puedo personalizar el texto y el estilo?</summary>
+        <p>Sí. Puedes elegir diferentes estilos, colores y agregar un mensaje personalizado.</p>
+      </details>
+
+      <details class="faq">
+        <summary>¿Qué recibo al final?</summary>
+        <p>Recibes un archivo digital en alta resolución listo para imprimir o compartir.</p>
+      </details>
+
+      <details class="faq">
+        <summary>¿Qué es el archivo PDF?</summary>
+        <p>Es un archivo de alta resolución ideal para imprimir tu mapa estelar con gran calidad.</p>
+      </details>
+    </div>
+  </div>
+</section>
 
 </body>
 </html>

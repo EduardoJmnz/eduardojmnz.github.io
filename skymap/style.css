@@ -1522,3 +1522,33 @@ a.btn-primary{
     font-size: 32px;
   }
 }
+
+/* ===================== STYLES (thumbnails correctos e1-e4) ===================== */
+.styles__grid .styles__card:nth-child(1) .styles__thumb{ background-image: url("./media/e1.jpg"); }
+.styles__grid .styles__card:nth-child(2) .styles__thumb{ background-image: url("./media/e2.jpg"); }
+.styles__grid .styles__card:nth-child(3) .styles__thumb{ background-image: url("./media/e3.jpg"); }
+.styles__grid .styles__card:nth-child(4) .styles__thumb{ background-image: url("./media/e4.jpg"); }
+/* ===================================================== */
+
+/* =====================================================
+   SECCIONES – FONDOS
+   ===================================================== */
+
+/* Fondo tipo WHY */
+.reminder,
+.why2,
+.opinions,
+.footer{
+  background: rgba(255,255,255,.05);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* Sin fondo */
+.styles,
+.steps,
+.faqs{
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

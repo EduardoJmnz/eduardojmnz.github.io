@@ -1589,3 +1589,19 @@ a.btn-primary{
    puedes descomentar:
    .why2__iconImg, .nav-cart-icon { filter: none; }
 */
+
+/* ===================== OPINIONS (fondo como WHY) ===================== */
+.opinions{
+  background: rgba(255,255,255,.05);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* ===================== STEPS (imagenes s1-s3) ===================== */
+.steps__img{
+  width: 100%;
+  margin-top: 14px;
+  border-radius: 16px;
+  display: block;
+  object-fit: cover;
+}

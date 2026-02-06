@@ -1552,3 +1552,40 @@ a.btn-primary{
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
+
+/* ===================== WHY ICONS ===================== */
+.why2__iconBox{
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.04);
+}
+
+.why2__icon{
+  width: 26px;
+  height: 26px;
+  color: rgba(68,241,166,.96);
+}
+
+/* ===================== ICONOS SVG (media/i1..i7) ===================== */
+.why2__iconImg{
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  display: block;
+}
+
+.nav-cart-icon{
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Si los SVG vienen en verde, no forzamos color aquí. Si usas currentColor dentro del SVG,
+   puedes descomentar:
+   .why2__iconImg, .nav-cart-icon { filter: none; }
+*/

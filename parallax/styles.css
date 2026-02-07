@@ -2,13 +2,13 @@
   --bg:#000;
   --panel: rgba(6, 10, 14, 0.92);
 
-  /* New theme: red → orange gradient */
-  --accentA: #ff4040;
-  --accentB: #ffb347;
+  /* Theme: red -> blue */
+  --accentA: #ff3b3b;
+  --accentB: #3b82f6;
 
-  --border: rgba(255, 140, 80, 0.22);
-  --text: rgba(255, 245, 235, 0.92);
-  --muted: rgba(255, 245, 235, 0.60);
+  --border: rgba(110, 170, 255, 0.22);
+  --text: rgba(235, 245, 255, 0.92);
+  --muted: rgba(235, 245, 255, 0.60);
 
   --danger:#ff5b5b;
   --warn:#ffd36a;
@@ -43,7 +43,7 @@ body{
   position:sticky;
   top:0;
   z-index:5;
-  padding: 14px 12px 10px; /* more bottom padding to separate from console */
+  padding: 14px 12px 18px; /* keep space from console */
   text-align:center;
   user-select:none;
   background: linear-gradient(to bottom, rgba(0,0,0,0.98), rgba(0,0,0,0.78), rgba(0,0,0,0));
@@ -60,8 +60,8 @@ body{
   font-size: clamp(9px, 1.35vw, 16px);
   line-height:1.06;
   letter-spacing:0.02em;
-  color: rgba(255, 150, 120, 0.60);
-  text-shadow: 0 0 18px rgba(255,120,80,0.10), 0 0 40px rgba(255,120,80,0.06);
+  color: rgba(170, 210, 255, 0.52);
+  text-shadow: 0 0 18px rgba(59,130,246,0.10), 0 0 40px rgba(255,59,59,0.06);
   white-space:pre;
   overflow:hidden;
   display:block;
@@ -69,18 +69,18 @@ body{
 }
 .tm{
   position:absolute;
-  right: -18px; /* more separated so it reads */
+  right: -20px;
   top: 8px;
   font-size: 11px;
   letter-spacing: 0.22em;
-  color: rgba(255,245,235,0.55);
-  text-shadow: 0 0 18px rgba(255,120,80,0.10);
+  color: rgba(235,245,255,0.55);
+  text-shadow: 0 0 18px rgba(59,130,246,0.10);
 }
 .pixel-sub{
-  margin-top: -2px; /* closer to OAXSUN */
+  margin-top: -8px; /* tighter to OAXSUN */
   font-size: 14px;
   letter-spacing: 0.42em;
-  color: rgba(255,245,235,0.60);
+  color: rgba(235,245,255,0.62);
 }
 
 /* Terminal */
@@ -92,9 +92,9 @@ body{
   border-radius:18px;
   background: var(--panel);
   box-shadow:
-    0 0 0 1px rgba(255,140,80,0.06) inset,
+    0 0 0 1px rgba(110,170,255,0.06) inset,
     0 18px 60px rgba(0,0,0,0.70),
-    0 0 40px rgba(255,120,80,0.06);
+    0 0 40px rgba(59,130,246,0.06);
   overflow:hidden;
   display:flex;
   flex-direction:column;
@@ -105,7 +105,7 @@ body{
   align-items:center;
   gap:14px;
   padding:12px 14px;
-  border-bottom:1px solid rgba(255,140,80,0.14);
+  border-bottom:1px solid rgba(110,170,255,0.14);
   background: linear-gradient(to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0));
 }
 
@@ -125,7 +125,7 @@ body{
 .status{
   font-size:12px;
   letter-spacing:0.10em;
-  color: rgba(255, 190, 120, 0.85);
+  color: rgba(160, 210, 255, 0.80);
 }
 
 .term-body{
@@ -134,11 +134,11 @@ body{
   padding:14px 16px 12px;
   overflow:auto;
   scrollbar-width:thin;
-  scrollbar-color: rgba(255,140,80,0.22) transparent;
+  scrollbar-color: rgba(110,170,255,0.22) transparent;
 }
 .term-body::-webkit-scrollbar{ width:10px; }
 .term-body::-webkit-scrollbar-thumb{
-  background: rgba(255,140,80,0.18);
+  background: rgba(110,170,255,0.18);
   border-radius:999px;
   border:2px solid transparent;
   background-clip: padding-box;
@@ -158,27 +158,67 @@ body{
 .block{
   margin:12px 0 2px;
   padding: 12px 12px;
-  border:1px solid rgba(255,140,80,0.14);
+  border:1px solid rgba(110,170,255,0.14);
   border-radius:12px;
   background: rgba(0,0,0,0.22);
 }
 
-/* Section title as ASCII (smaller = half-ish) */
+/* Section title ASCII (small) */
 .section-ascii{
   margin: 2px 0 10px;
   padding: 0;
-  font-size: 8px;           /* reduced */
+  font-size: 8px;
   line-height: 1.05;
   letter-spacing: 0.06em;
-  color: rgba(255,245,235,0.80);
-  text-shadow: 0 0 18px rgba(255,120,80,0.06);
+  color: rgba(235,245,255,0.82);
+  text-shadow: 0 0 18px rgba(59,130,246,0.06);
   white-space: pre;
   overflow-x: auto;
 }
 
+/* Fax reveal */
+.fax{ overflow:hidden; position:relative; }
+.fax::after{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(0,0,0,0));
+  transform: translateY(-110%);
+  animation: faxSweep 520ms ease-out forwards;
+  opacity: 0.35;
+  pointer-events:none;
+}
+@keyframes faxSweep{ to{ transform: translateY(110%); opacity:0; } }
+.fax-line{
+  opacity:0;
+  transform: translateY(-6px);
+  animation: faxLineIn 380ms ease-out forwards;
+}
+@keyframes faxLineIn{ to{ opacity:1; transform: translateY(0); } }
+
+/* Retro loader (console style) */
+.loader{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin: 6px 0;
+  color: rgba(235,245,255,0.86);
+}
+.loader .label{ color: rgba(235,245,255,0.82); }
+.loader .bar{
+  font-family: inherit;
+  letter-spacing: 0.06em;
+  color: rgba(235,245,255,0.70);
+  white-space: pre;
+}
+.loader .pct{
+  color: rgba(235,245,255,0.55);
+  min-width: 46px;
+  text-align:right;
+}
+
 /* Footer input bar */
 .term-footer{
-  border-top:1px solid rgba(255,140,80,0.14);
+  border-top:1px solid rgba(110,170,255,0.14);
   background: rgba(0,0,0,0.18);
   padding: 10px 16px 12px;
 }
@@ -191,7 +231,7 @@ body{
 }
 
 .prompt{
-  color: rgba(255, 185, 130, 0.92);
+  color: rgba(160,210,255,0.90);
   font-size:16px;
   user-select:none;
 }
@@ -200,7 +240,7 @@ body{
 .caret{
   width:10px;
   height:18px;
-  border-left:2px solid rgba(255, 185, 130, 0.92);
+  border-left:2px solid rgba(160,210,255,0.90);
   animation: blink 1s steps(2,end) infinite;
   flex: 0 0 auto;
 }
@@ -219,9 +259,9 @@ body{
   color:var(--text);
   font-size:16px;
   padding: 6px 0;
-  caret-color: transparent; /* hide native caret */
+  caret-color: transparent;
 }
-#cmd::placeholder{ color: rgba(255,245,235,0.42); }
+#cmd::placeholder{ color: rgba(235,245,255,0.42); }
 
 /* Dropdown */
 .suggest{
@@ -229,8 +269,8 @@ body{
   left:-10px;
   bottom:36px;
   width: min(340px, 86vw);
-  background: rgba(18, 14, 12, 0.93);
-  border:1px solid rgba(255,245,235,0.16);
+  background: rgba(18, 20, 26, 0.93);
+  border:1px solid rgba(235,245,255,0.16);
   border-radius:10px;
   box-shadow: 0 18px 50px rgba(0,0,0,0.70);
   display:none;
@@ -242,12 +282,12 @@ body{
   padding: 10px 12px;
   border-radius:8px;
   cursor:pointer;
-  color: rgba(255, 190, 140, 0.95);
+  color: rgba(235,245,255,0.90);
 }
-.suggest .item:hover{ background: rgba(255,120,80,0.12); }
+.suggest .item:hover{ background: rgba(110,170,255,0.12); }
 .suggest .item.active{
-  background: rgba(255,120,80,0.18);
-  outline: 1px solid rgba(255,140,80,0.20);
+  background: rgba(110,170,255,0.18);
+  outline: 1px solid rgba(110,170,255,0.20);
 }
 
 /* retro FX */
@@ -267,13 +307,13 @@ body{
 .vignette{
   position:absolute; inset:0;
   pointer-events:none;
-  background: radial-gradient(1100px 720px at 50% 40%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 74%, rgba(0,0,0,0.90) 100%);
+  background: radial-gradient(1100px 720px at 50% 40%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 74%, rgba(0,0,0,0.92) 100%);
 }
 
 @media (max-width: 520px){
   .terminal{ margin: 0 8px 8px; border-radius:16px; }
   .term-footer{ padding: 10px 12px 12px; }
   .pixel-title{ font-size: 8px; line-height: 1.0; }
-  .pixel-sub{ letter-spacing: 0.30em; font-size: 13px; margin-top: -2px; }
-  .tm{ top: 6px; font-size: 10px; right: -14px; }
+  .pixel-sub{ letter-spacing: 0.30em; font-size: 13px; margin-top: -8px; }
+  .tm{ top: 6px; font-size: 10px; right: -16px; }
 }

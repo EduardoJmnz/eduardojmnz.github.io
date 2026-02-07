@@ -3,6 +3,22 @@
   const input = document.getElementById("cmd");
   const suggest = document.getElementById("suggest");
 
+  // Mobile: tap ONLY on the command bar opens the menu (avoid iOS zoom on input)
+  const termInputEl = document.getElementById("termInput");
+  function termInputTapBound(){
+    if(!isTouch || !termInputEl) return;
+    termInputEl.addEventListener("pointerdown", (e)=>{
+      e.preventDefault();
+      if (busy) return;
+
+      input.blur();
+      input.value = "";
+      input.placeholder = MOBILE_HINT;
+      openSuggest([...COMMANDS]);
+    }, { passive:false });
+  }
+
+
   // === Intro flow (loader -> splash -> enter -> loader -> app) ===
   const appEl = document.getElementById("app");
   const introEl = document.getElementById("intro");
@@ -122,6 +138,8 @@
 
   // Set hint per device
   input.placeholder = isTouch ? MOBILE_HINT : DESKTOP_HINT;
+
+  termInputTapBound();
 
   if (isTouch) {
     input.setAttribute("readonly", "");
@@ -436,7 +454,9 @@ case "work":
       case "help":
         await faxPrint("help", "HELP", [
           `<span class="dim">Commands:</span>`,
-          `<span class="accent">/about</span> <span class="accent">/skymap</span> <span class="accent">/solutions</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span>`
+          `<span class="accent">/about</span> <span class="accent">/skymap</span> <span class="accent">/solutions</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span>`,
+          `<span class="dim">&nbsp;</span>`,
+          `<span class="dim">OAXSUN Technologies 2026 (c) All rights reserved.</span>`
         ]);
         break;
     }
@@ -527,19 +547,6 @@ case "work":
     input.focus();
     openSuggest([...COMMANDS]);
   }, { passive:false });
-
-  // Mobile: tap on bar opens menu; clears selection to show hint again
-  if(isTouch){
-    input.addEventListener("pointerdown", (e)=>{
-      e.preventDefault();
-      if (busy) return;
-
-      input.value = "";
-      input.placeholder = MOBILE_HINT;
-
-      openSuggest([...COMMANDS]);
-    });
-  }
 
   // Start intro loader on first visit
   (async () => {

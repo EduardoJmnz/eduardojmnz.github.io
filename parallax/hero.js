@@ -426,7 +426,6 @@ case "work":
       input.value = "";
       input.placeholder = MOBILE_HINT;
 
-      input.focus();
       openSuggest([...COMMANDS]);
     });
   }

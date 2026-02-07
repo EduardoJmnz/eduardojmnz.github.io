@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>OAXSUN Technologies</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -11,20 +11,11 @@
     <div class="scanlines" aria-hidden="true"></div>
     <div class="vignette" aria-hidden="true"></div>
 
-    <!-- Fixed brand at the very top -->
-    <header class="brand-fixed" aria-label="OAXSUN Technologies">
-      <pre class="pixel-title" aria-hidden="true">
- ██████╗  █████╗ ██╗  ██╗███████╗██╗   ██╗███╗   ██╗
-██╔═══██╗██╔══██╗╚██╗██╔╝██╔════╝██║   ██║████╗  ██║
-██║   ██║███████║ ╚███╔╝ ███████╗██║   ██║██╔██╗ ██║
-██║   ██║██╔══██║ ██╔██╗ ╚════██║██║   ██║██║╚██╗██║
-╚██████╔╝██║  ██║██╔╝ ██╗███████║╚██████╔╝██║ ╚████║
- ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝
-      </pre>
-      <div class="pixel-sub">TECHNOLOGIES</div>
+    <header class="brand-fixed" aria-label="OAXSUN TECHNOLOGIES">
+      <div class="brand-title">OAXSUN TECHNOLOGIES</div>
+      <div class="brand-sub">All rights reserved © 2026</div>
     </header>
 
-    <!-- Fullscreen terminal -->
     <section class="terminal" role="region" aria-label="Terminal">
       <div class="term-topbar">
         <div class="dots" aria-hidden="true">
@@ -39,6 +30,10 @@
       <div class="term-body" id="termBody" aria-live="polite"></div>
 
       <div class="term-footer">
+        <div class="startup-hint" id="startupHint" aria-hidden="true">
+          Start with <span class="kbd">[space]</span> or type <span class="kbd">'Menu'</span> to see commands.
+        </div>
+
         <div class="term-input">
           <span class="prompt">></span>
 
@@ -56,10 +51,6 @@
           </div>
 
           <span class="caret" aria-hidden="true"></span>
-        </div>
-
-        <div class="hint" aria-hidden="true">
-          Hint: escribe <span class="kbd">menu</span> para ver los comandos
         </div>
       </div>
     </section>

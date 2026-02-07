@@ -2,6 +2,7 @@
   const termBody = document.getElementById("termBody");
   const input = document.getElementById("cmd");
   const suggest = document.getElementById("suggest");
+  const startupHint = document.getElementById("startupHint");
 
   const COMMANDS = ["menu", "about", "process", "services", "work", "contact", "help"];
 
@@ -9,7 +10,7 @@
   let historyIndex = 0;
 
   let activeIndex = -1;
-  let currentMatches = [...COMMANDS];
+  let currentMatches = [];
   let closeTimer = null;
 
   function escapeHtml(s) {
@@ -21,9 +22,7 @@
       .replaceAll("'", "&#039;");
   }
 
-  function scrollToBottom() {
-    termBody.scrollTop = termBody.scrollHeight;
-  }
+  function scrollToBottom() { termBody.scrollTop = termBody.scrollHeight; }
 
   function line(html, cls = "line") {
     const el = document.createElement("div");
@@ -45,7 +44,12 @@
     line(`<span class="accent">></span> ${escapeHtml(cmd)}`);
   }
 
-  function renderSuggest(matches, open = true) {
+  function hideStartupHintIfTyping() {
+    const hasText = input.value.length > 0;
+    startupHint?.classList.toggle("hidden", hasText);
+  }
+
+  function openSuggest(matches) {
     currentMatches = matches;
     activeIndex = matches.length ? 0 : -1;
 
@@ -57,24 +61,19 @@
       item.setAttribute("role", "option");
       item.setAttribute("aria-selected", i === activeIndex ? "true" : "false");
       item.innerHTML = `<span>/${escapeHtml(c)}</span>`;
-
-      // IMPORTANT: click executes immediately (no Enter needed)
       item.addEventListener("pointerdown", (e) => {
-        e.preventDefault(); // prevent blur
-        executeFromDropdown(i);
+        e.preventDefault();
+        submit(c);
       });
-
       suggest.appendChild(item);
     }
 
-    if (open && matches.length) suggest.classList.add("open");
-    else suggest.classList.remove("open");
+    if (matches.length) suggest.classList.add("open");
   }
 
-  function updateSuggestFromInput() {
-    const v = input.value.trim().toLowerCase();
-    const matches = v ? COMMANDS.filter(c => c.startsWith(v)) : [...COMMANDS];
-    renderSuggest(matches, true);
+  function closeSuggestSoon() {
+    clearTimeout(closeTimer);
+    closeTimer = setTimeout(() => suggest.classList.remove("open"), 120);
   }
 
   function setActive(i) {
@@ -86,29 +85,33 @@
     });
   }
 
-  function closeSuggestSoon() {
-    clearTimeout(closeTimer);
-    closeTimer = setTimeout(() => suggest.classList.remove("open"), 120);
+  function refreshSuggest(open = true) {
+    const v = input.value.trim().toLowerCase();
+    const matches = v ? COMMANDS.filter(c => c.startsWith(v)) : [...COMMANDS];
+    if (open) openSuggest(matches);
+    else currentMatches = matches;
   }
-
-  // Boot lines
-  const bootLines = [
-    `<span class="dim">Booting OAXSUN TECHNOLOGIES...</span>`,
-    `<span class="dim">Mode: retro terminal • Commands enabled</span>`,
-    `<span class="dim">Hint: escribe</span> <span class="accent">menu</span> <span class="dim">para ver los comandos.</span>`
-  ];
 
   async function boot() {
-    for (const l of bootLines) {
-      line(l);
-      await new Promise(r => setTimeout(r, 230));
-    }
+    line(`<span class="dim">Booting OAXSUN TECHNOLOGIES...</span>`);
+    await wait(220);
+    line(`<span class="dim">Connection successfull</span>`);
+    await wait(180);
+    line(`<span class="dim">Program started.</span>`);
+    await wait(220);
+
     block(`
-      <div class="line dim">Available commands:</div>
-      <div class="line"><span class="accent">/${COMMANDS.join("</span> <span class=\"accent\">/")}</span></div>
+      <div class="line"><span class="accent">Welcome to OAXSUN Technolgies console.</span> Here you can find information about us and how we can help you.</div>
+      <div class="line dim" style="margin-top:10px;">Tips for getting started:</div>
+      <div class="line dim">- Start with <span class="accent">[space]</span> or type <span class="accent">'Menu'</span> to see commands</div>
+      <div class="line dim">- You can navigate with your keyboard as well as your mouse cursor</div>
+      <div class="line dim">- Read between lines and follow White Rabbits</div>
+      <div class="line dim" style="margin-top:10px;">Available commands:</div>
+      <div class="line"><span class="accent">/menu</span> <span class="accent">/about</span> <span class="accent">/process</span> <span class="accent">/services</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span></div>
     `);
-    input.focus();
   }
+
+  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
 
   function respond(cmdRaw) {
     const cmd = cmdRaw.trim().toLowerCase();
@@ -134,7 +137,6 @@
           <div class="line"><span class="accent">/help</span>      — lista de comandos</div>
         `);
         break;
-
       case "about":
         block(`
           <div class="line dim">ABOUT</div>
@@ -142,7 +144,6 @@
           <div class="line dim">Desarrollo web, apps y SEO técnico enfocado en performance y resultados.</div>
         `);
         break;
-
       case "process":
         block(`
           <div class="line dim">PROCESS</div>
@@ -153,7 +154,6 @@
           <div class="line">[05] Lanzamiento & crecimiento</div>
         `);
         break;
-
       case "services":
         block(`
           <div class="line dim">SERVICES</div>
@@ -162,7 +162,6 @@
           <div class="line"><span class="accent">SEO</span>  — SEO técnico + contenido + CWV</div>
         `);
         break;
-
       case "work":
         block(`
           <div class="line dim">WORK</div>
@@ -170,7 +169,6 @@
           <div class="line dim">Agrega aquí tus casos reales (1-3 bien explicados > 10 vacíos).</div>
         `);
         break;
-
       case "contact":
         block(`
           <div class="line dim">CONTACT</div>
@@ -178,13 +176,12 @@
           <div class="line dim">Podemos cambiar esto por un formulario tipo “ticket”.</div>
         `);
         break;
-
       case "help":
         block(`
           <div class="line dim">HELP</div>
           <div class="line dim">Comandos:</div>
-          <div class="line"><span class="accent">/${COMMANDS.join("</span> <span class=\"accent\">/")}</span></div>
-          <div class="line dim">Atajos: Tab autocompleta • ↑/↓ navega sugerencias • Enter ejecuta</div>
+          <div class="line"><span class="accent">/menu</span> <span class="accent">/about</span> <span class="accent">/process</span> <span class="accent">/services</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span></div>
+          <div class="line dim">Atajos: Space abre sugerencias • Tab autocompleta • ↑/↓ navega • Enter ejecuta</div>
         `);
         break;
     }
@@ -192,7 +189,7 @@
 
   function submit(valueOverride = null) {
     const raw = valueOverride ?? input.value;
-    const cmd = raw.trim();
+    const cmd = raw.trim().toLowerCase();
     if (!cmd) return;
 
     echoCommand(cmd);
@@ -201,23 +198,8 @@
 
     input.value = "";
     suggest.classList.remove("open");
+    startupHint?.classList.add("hidden");
     respond(cmd);
-  }
-
-  function executeFromDropdown(i) {
-    if (!currentMatches.length) return;
-    const cmd = currentMatches[i];
-    input.value = cmd;
-    // Execute immediately:
-    submit(cmd);
-    input.focus();
-  }
-
-  function autocompleteTab() {
-    const v = input.value.trim().toLowerCase();
-    const matches = v ? COMMANDS.filter(c => c.startsWith(v)) : [...COMMANDS];
-    if (matches.length === 1) input.value = matches[0];
-    renderSuggest(matches, true);
   }
 
   function historyNav(dir) {
@@ -225,24 +207,25 @@
     historyIndex = Math.max(0, Math.min(history.length, historyIndex + dir));
     input.value = historyIndex === history.length ? "" : history[historyIndex];
     requestAnimationFrame(() => input.setSelectionRange(input.value.length, input.value.length));
-    updateSuggestFromInput();
   }
 
-  // Events
+  // Focus opens dropdown (but no autofocus on load)
   input.addEventListener("focus", () => {
-    updateSuggestFromInput();
-    suggest.classList.add("open");
+    refreshSuggest(true);
   });
 
   input.addEventListener("blur", () => closeSuggestSoon());
-  input.addEventListener("input", () => updateSuggestFromInput());
+
+  input.addEventListener("input", () => {
+    hideStartupHintIfTyping();
+    refreshSuggest(true);
+  });
 
   input.addEventListener("keydown", (e) => {
     const isOpen = suggest.classList.contains("open") && currentMatches.length;
 
     if (e.key === "Enter") {
       e.preventDefault();
-      // If dropdown open, execute the highlighted item if the typed value is empty or prefix
       if (isOpen && activeIndex >= 0) {
         const typed = input.value.trim().toLowerCase();
         if (!typed || currentMatches[activeIndex].startsWith(typed)) {
@@ -256,7 +239,10 @@
 
     if (e.key === "Tab") {
       e.preventDefault();
-      autocompleteTab();
+      const v = input.value.trim().toLowerCase();
+      const matches = v ? COMMANDS.filter(c => c.startsWith(v)) : [...COMMANDS];
+      if (matches.length === 1) input.value = matches[0];
+      openSuggest(matches);
       return;
     }
 
@@ -280,7 +266,16 @@
     }
   });
 
-  // Click terminal focuses input
+  // Space opens dropdown (without auto-open on load)
+  document.addEventListener("keydown", (e) => {
+    if (e.code !== "Space") return;
+    if (document.activeElement === input) return;
+    e.preventDefault();
+    input.focus();
+    openSuggest([...COMMANDS]);
+  }, { passive: false });
+
+  // Click terminal focuses input (dropdown then opens via focus)
   document.addEventListener("pointerdown", (e) => {
     const t = e.target;
     if (t && t.closest(".terminal")) input.focus();

@@ -318,6 +318,8 @@ body{
 }
 
 @media (max-width: 520px){
+  #cmd{ pointer-events:none; }
+
   .terminal{ margin: 0 8px 8px; border-radius:16px;   #cmd{ font-size:16px; }
 }
   .term-footer{ padding: 10px 12px 12px;   #cmd{ font-size:16px; }
@@ -591,6 +593,8 @@ body::after{
 
 /* keep intro button comfortably tappable on mobile */
 @media (max-width: 520px){
+  #cmd{ pointer-events:none; }
+
   .intro-enter{ padding: 14px 20px; }
 }
 
@@ -638,5 +642,16 @@ body::after{
   text-shadow: 0 0 18px rgba(0,229,255,0.16);
 }
 @media (max-width: 520px){
+  #cmd{ pointer-events:none; }
+
   .tm-intro{ right: -16px; top: 8px; font-size: 10px; }
+}
+
+@media (max-width: 520px){
+  .loader-center{
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .loader-center .pct{ text-align:center; }
 }

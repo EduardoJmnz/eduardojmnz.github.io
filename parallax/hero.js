@@ -164,10 +164,15 @@
     if(disabled) input.blur();
   }
 
-  function renderBar(pct, width=18){
+  function renderBar(pct, width){
     const filled = Math.round((pct/100)*width);
     const empty = Math.max(0, width - filled);
     return "[" + "█".repeat(filled) + "░".repeat(empty) + "]";
+  }
+
+  function loaderBarWidth(){
+    // Smaller on mobile to avoid overflow
+    return isTouch ? 10 : 18;
   }
 
   function showRetroLoader(taskLabel){
@@ -177,7 +182,7 @@
       <span class="label dim">·</span>
       <span class="label">hvv</span>
       <span class="label"> ${escapeHtml(taskLabel)} </span>
-      <span class="bar">${renderBar(0)}</span>
+      <span class="bar">${renderBar(0, loaderBarWidth())}</span>
       <span class="pct dim">0%</span>
     `;
     termBody.appendChild(wrap);
@@ -202,7 +207,7 @@
     const timer = setInterval(()=>{
       i++;
       pct = Math.min(100, Math.round((i/steps)*100));
-      barEl.textContent = renderBar(pct);
+      barEl.textContent = renderBar(pct, loaderBarWidth());
       pctEl.textContent = pct + "%";
       scrollToBottom();
       if(pct >= 100) clearInterval(timer);
@@ -210,7 +215,7 @@
 
     await new Promise(r=>setTimeout(r, ms));
     clearInterval(timer);
-    barEl.textContent = renderBar(100);
+    barEl.textContent = renderBar(100, loaderBarWidth());
     pctEl.textContent = "100%";
 
     await new Promise(r=>setTimeout(r, 220));
@@ -329,7 +334,6 @@
   }
 
   function niceLabel(cmd){
-    // Capitalize first letter
     return cmd.charAt(0).toUpperCase() + cmd.slice(1);
   }
 
@@ -340,17 +344,16 @@
     const cmd = raw.trim().toLowerCase();
     if(!cmd) return;
 
+    // Replace the hint with the selected command in BOTH desktop + mobile
+    input.value = niceLabel(cmd);
+
     echoCommand(cmd);
     suggest.classList.remove("open");
 
-    // Mobile behavior: show selection in bar until next tap
-    if (isTouch) {
-      input.value = niceLabel(cmd);
-    } else {
-      input.value = "";
-    }
-
     await respond(cmd);
+
+    // Desktop clears after run (so user can type again)
+    if (!isTouch) input.value = "";
   }
 
   // Desktop: focus opens dropdown; allow typing
@@ -421,7 +424,6 @@
       e.preventDefault();
       if (busy) return;
 
-      // Clear selection so placeholder "Select a command" shows again
       input.value = "";
       input.placeholder = MOBILE_HINT;
 

@@ -11,9 +11,19 @@
     <div class="scanlines" aria-hidden="true"></div>
     <div class="vignette" aria-hidden="true"></div>
 
-    <header class="brand-fixed" aria-label="OAXSUN TECHNOLOGIES">
-      <div class="brand-title">OAXSUN TECHNOLOGIES</div>
-      <div class="brand-sub">All rights reserved © 2026</div>
+    <header class="brand-fixed" aria-label="OAXSUN Technologies">
+      <div class="brand-wrap" aria-hidden="true">
+        <pre class="pixel-title">
+ ██████╗  █████╗ ██╗  ██╗███████╗██╗   ██╗███╗   ██╗
+██╔═══██╗██╔══██╗╚██╗██╔╝██╔════╝██║   ██║████╗  ██║
+██║   ██║███████║ ╚███╔╝ ███████╗██║   ██║██╔██╗ ██║
+██║   ██║██╔══██║ ██╔██╗ ╚════██║██║   ██║██║╚██╗██║
+╚██████╔╝██║  ██║██╔╝ ██╗███████║╚██████╔╝██║ ╚████║
+ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝
+        </pre>
+        <span class="tm">TM</span>
+      </div>
+      <div class="pixel-sub">TECHNOLOGIES</div>
     </header>
 
     <section class="terminal" role="region" aria-label="Terminal">
@@ -30,12 +40,9 @@
       <div class="term-body" id="termBody" aria-live="polite"></div>
 
       <div class="term-footer">
-        <div class="startup-hint" id="startupHint" aria-hidden="true">
-          Start with <span class="kbd">[space]</span> or type <span class="kbd">'Menu'</span> to see commands.
-        </div>
-
-        <div class="term-input">
+        <div class="term-input" id="termInput">
           <span class="prompt">></span>
+          <span class="caret" aria-hidden="true"></span>
 
           <div class="input-wrap">
             <div class="suggest" id="suggest" role="listbox" aria-label="Command suggestions"></div>
@@ -46,15 +53,13 @@
               autocomplete="off"
               autocapitalize="off"
               spellcheck="false"
+              placeholder="Start with [space] or type 'Menu' to see commands."
               aria-label="Command input"
             />
           </div>
-
-          <span class="caret" aria-hidden="true"></span>
         </div>
       </div>
     </section>
-
   </main>
 
   <script src="hero.js"></script>

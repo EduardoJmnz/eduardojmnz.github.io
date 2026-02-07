@@ -3,14 +3,14 @@
   const input = document.getElementById("cmd");
   const suggest = document.getElementById("suggest");
 
-  const COMMANDS = ["menu", "about", "products", "services", "work", "contact", "help"];
+  const COMMANDS = ["about", "skymap", "solutions", "work", "contact", "help"];
 
   const isTouch =
     window.matchMedia?.("(pointer: coarse)").matches ||
     "ontouchstart" in window ||
     navigator.maxTouchPoints > 0;
 
-  const DESKTOP_HINT = "Start with [space] or type 'Menu' to see commands.";
+  const DESKTOP_HINT = "Press [space] to see commands.";
   const MOBILE_HINT = "Select a command";
 
   // Set hint per device
@@ -27,18 +27,24 @@
   let busy = false;
 
   const ASCII = {
-    MENU: `██████╗ ███████╗███╗   ██╗██╗   ██╗
-██╔══██╗██╔════╝████╗  ██║██║   ██║
-██████╔╝█████╗  ██╔██╗ ██║██║   ██║
-██╔══██╗██╔══╝  ██║╚██╗██║██║   ██║
-██║  ██║███████╗██║ ╚████║╚██████╔╝
-╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝ ╚═════╝`,
-    ABOUT: ` █████╗ ██████╗  ██████╗ ██╗   ██╗████████╗
+        ABOUT: ` █████╗ ██████╗  ██████╗ ██╗   ██╗████████╗
 ██╔══██╗██╔══██╗██╔═══██╗██║   ██║╚══██╔══╝
 ███████║██████╔╝██║   ██║██║   ██║   ██║
 ██╔══██║██╔══██╗██║   ██║██║   ██║   ██║
 ██║  ██║██████╔╝╚██████╔╝╚██████╔╝   ██║
 ╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚═════╝    ╚═╝`,
+    SKYMAP: `███████╗██╗  ██╗██╗   ██╗███╗   ███╗ █████╗ ██████╗
+██╔════╝██║ ██╔╝╚██╗ ██╔╝████╗ ████║██╔══██╗██╔══██╗
+███████╗█████╔╝  ╚████╔╝ ██╔████╔██║███████║██████╔╝
+╚════██║██╔═██╗   ╚██╔╝  ██║╚██╔╝██║██╔══██║██╔═══╝
+███████║██║  ██╗   ██║   ██║ ╚═╝ ██║██║  ██║██║
+╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝`,
+    SOLUTIONS: `███████╗ ██████╗ ██╗     ██╗   ██╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
+██╔════╝██╔═══██╗██║     ██║   ██║╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
+███████╗██║   ██║██║     ██║   ██║   ██║   ██║██║   ██║██╔██╗ ██║███████╗
+╚════██║██║   ██║██║     ██║   ██║   ██║   ██║██║   ██║██║╚██╗██║╚════██║
+███████║╚██████╔╝███████╗╚██████╔╝   ██║   ██║╚██████╔╝██║ ╚████║███████║
+╚══════╝ ╚═════╝ ╚══════╝ ╚═════╝    ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝`,
     PRODUCTS: `██████╗ ██████╗  ██████╗ ██████╗ ██╗   ██╗ ██████╗████████╗███████╗
 ██╔══██╗██╔══██╗██╔═══██╗██╔══██╗██║   ██║██╔════╝╚══██╔══╝██╔════╝
 ██████╔╝██████╔╝██║   ██║██║  ██║██║   ██║██║        ██║   ███████╗
@@ -256,8 +262,7 @@
     await wait(400);
 
     const box = blockContainer();
-    box.innerHTML = `<div class="line dim">Available commands:</div>
-      <div class="line"><span class="accent">/menu</span> <span class="accent">/about</span> <span class="accent">/products</span> <span class="accent">/services</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span></div>`;
+    box.innerHTML = `<div class="line">Welcome to <span class="accent">Oaxsun Technologies</span>. Here you can discover who we are and what we have to offer you.</div><div class="line">&nbsp;</div><div class="line dim">Available commands:</div><div class="line"><span class="accent">/about</span> <span class="accent">/skymap</span> <span class="accent">/solutions</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span></div>`;
   }
 
   function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
@@ -269,71 +274,65 @@
     if(!COMMANDS.includes(cmd)){
       await faxPrint(cmd, "ERROR", [
         `<span class="accent">Command not found:</span> <span class="dim">${escapeHtml(cmd)}</span>`,
-        `<span class="dim">Try:</span> <span class="accent">help</span> <span class="dim">or</span> <span class="accent">menu</span>`
+        `<span class="dim">Try:</span> <span class="accent">help</span> <span class="dim">or</span> <span class="accent">help</span>`
       ]);
       return;
     }
 
     switch(cmd){
-      case "menu":
-        await faxPrint("menu", "MENU", [
-          `<span class="accent">/about</span>     <span class="dim">— quiénes somos</span>`,
-          `<span class="accent">/products</span>  <span class="dim">— sky map + downloads</span>`,
-          `<span class="accent">/services</span>  <span class="dim">— web / apps / seo</span>`,
-          `<span class="accent">/work</span>      <span class="dim">— proyectos y casos</span>`,
-          `<span class="accent">/contact</span>   <span class="dim">— cotiza tu proyecto</span>`,
-          `<span class="accent">/help</span>      <span class="dim">— lista de comandos</span>`
-        ]);
-        break;
-
+      
       case "about":
         await faxPrint("about", "ABOUT", [
-          `Somos <span class="accent">OAXSUN TECHNOLOGIES</span>.`,
-          `<span class="dim">Desarrollo web, apps y SEO técnico enfocado en performance y resultados.</span>`
+          `<span class="dim">We are</span> <span class="accent">Oaxsun Technologies</span><span class="dim">, proudly founded in</span> <span class="accent">Toronto, Canada</span><span class="dim">.</span>`,
+          `<span class="accent">Mission:</span> <span class="dim">Build reliable software that helps businesses grow through speed, clarity, and measurable results.</span>`,
+          `<span class="accent">Vision:</span> <span class="dim">Become a trusted global partner for modern web, mobile, and SEO solutions—crafted with care and performance-first thinking.</span>`
         ]);
         break;
 
-      case "products":
-        await faxPrint("products", "PRODUCTS", [
-          `<span class="dim">Aquí conectaremos con</span> <span class="accent">SkyMap</span><span class="dim">.</span>`,
-          `- Genera tu mapa`,
-          `- Compra y descarga`,
-          `<span class="dim">(placeholder)</span>`
+      
+      
+      case "skymap":
+        await faxPrint("skymap", "SKYMAP", [
+          `<span class="dim">A personalized</span> <span class="accent">star map</span> <span class="dim">generated from your date, location and story.</span>`,
+          `<span class="dim">Perfect for gifts, anniversaries, milestones, and memories.</span>`,
+          `<a class="btn" href="https://eduardojmnz.github.io/skymap" target="_blank" rel="noopener noreferrer">Open SkyMap</a>`
         ]);
         break;
 
-      case "services":
-        await faxPrint("services", "SERVICES", [
-          `<span class="accent">Web</span>  <span class="dim">— landing / e-commerce / web apps</span>`,
-          `<span class="accent">Apps</span> <span class="dim">— iOS/Android + backend</span>`,
-          `<span class="accent">SEO</span>  <span class="dim">— SEO técnico + contenido + CWV</span>`
+case "solutions":
+        await faxPrint("solutions", "SOLUTIONS", [
+          `<span class="dim">We design and build end-to-end digital products—fast, scalable, and performance-first.</span>`,
+          `<span class="accent">Web Development</span> <span class="dim">— landing pages, websites, e-commerce, web apps, APIs, integrations</span>`,
+          `<span class="accent">App Development</span> <span class="dim">— iOS, Android, cross-platform, backend, dashboards</span>`,
+          `<span class="accent">SEO</span> <span class="dim">— technical SEO, Core Web Vitals, on-page, content structure, analytics</span>`
         ]);
         break;
 
-      case "work":
+case "work":
         await faxPrint("work", "WORK", [
-          `/projects`,
-          `<span class="dim">Agrega aquí tus casos reales (1-3 bien explicados &gt; 10 vacíos).</span>`
+          `<span class="dim">Selected projects and case studies.</span>`,
+          `<span class="dim">(placeholder)</span>`
         ]);
         break;
 
       case "contact":
         await faxPrint("contact", "CONTACT", [
-          `Email: <span class="accent">hello@oaxsun.com</span> <span class="dim">(placeholder)</span>`,
-          `<span class="dim">Podemos cambiar esto por un formulario tipo “ticket”.</span>`
+          `<span class="dim">Email:</span> <a class="accent-link" href="mailto:hello@oaxsun.tech">hello@oaxsun.tech</a>`,
+          `<span class="dim">Tell us what you are building and we will reply with the next steps.</span>`
         ]);
         break;
 
       case "help":
         await faxPrint("help", "HELP", [
-          `<span class="dim">Comandos:</span>`,
-          `<span class="accent">/menu</span> <span class="accent">/about</span> <span class="accent">/products</span> <span class="accent">/services</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span>`
+          `<span class="dim">Commands:</span>`,
+          `<span class="accent">/about</span> <span class="accent">/skymap</span> <span class="accent">/solutions</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span>`
         ]);
         break;
     }
   }
 
   function niceLabel(cmd){
+    if(cmd === "skymap") return "SkyMap";
     return cmd.charAt(0).toUpperCase() + cmd.slice(1);
   }
 
@@ -431,12 +430,6 @@
       openSuggest([...COMMANDS]);
     });
   }
-
-  // Click terminal focuses input (desktop)
-  document.addEventListener("pointerdown", (e)=>{
-    const t = e.target;
-    if(t && t.closest(".terminal")) input.focus();
-  });
 
   boot();
 })();

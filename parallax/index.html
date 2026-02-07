@@ -7,8 +7,37 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="console" aria-label="OAXSUN Retro Console">
+  <div class="crt-global" aria-hidden="true"></div>
+<div id="intro" class="intro" aria-label="Intro">
+    <div class="intro-loader" id="introLoader" aria-hidden="true">
+      <div class="loader loader-center">
+        <span class="label dim">·</span>
+        <span class="label">sys</span>
+        <span class="label"> initializing </span>
+        <span class="bar" id="introBar">[░░░░░░░░░░░░░░░░░░]</span>
+        <span class="pct dim" id="introPct">0%</span>
+      </div>
+    </div>
+
+    <div class="intro-splash" id="introSplash" aria-hidden="true">
+      <div class="intro-brand-wrap">
+      <pre class="intro-ascii">
+ ██████╗  █████╗ ██╗  ██╗███████╗██╗   ██╗███╗   ██╗
+██╔═══██╗██╔══██╗╚██╗██╔╝██╔════╝██║   ██║████╗  ██║
+██║   ██║███████║ ╚███╔╝ ███████╗██║   ██║██╔██╗ ██║
+██║   ██║██╔══██║ ██╔██╗ ╚════██║██║   ██║██║╚██╗██║
+╚██████╔╝██║  ██║██╔╝ ██╗███████║╚██████╔╝██║ ╚████║
+ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝
+      </pre>
+      <span class="tm-intro">TM</span>
+      </div>
+      <div class="intro-sub">TECHNOLOGIES</div>
+      <a href="#" class="btn intro-enter" id="enterBtn">Enter</a>
+    </div>
+  </div>
+  <main class="console" id="app" aria-label="OAXSUN Retro Console">
     <div class="scanlines" aria-hidden="true"></div>
+    <div class="crt-overlay" aria-hidden="true"></div>
     <div class="vignette" aria-hidden="true"></div>
 
     <header class="brand-fixed" aria-label="OAXSUN Technologies">

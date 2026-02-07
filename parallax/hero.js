@@ -3,6 +3,113 @@
   const input = document.getElementById("cmd");
   const suggest = document.getElementById("suggest");
 
+  // === Intro flow (loader -> splash -> enter -> loader -> app) ===
+  const appEl = document.getElementById("app");
+  const introEl = document.getElementById("intro");
+  const introLoader = document.getElementById("introLoader");
+  const introSplash = document.getElementById("introSplash");
+  const enterBtn = document.getElementById("enterBtn");
+  const introBar = document.getElementById("introBar");
+  const introPct = document.getElementById("introPct");
+
+  function renderIntroBar(pct, width=18){
+    const filled = Math.round((pct/100)*width);
+    const empty = Math.max(0, width - filled);
+    return "[" + "█".repeat(filled) + "░".repeat(empty) + "]";
+  }
+
+  async function runIntroLoader(label="initializing", ms=1100){
+    if(!introLoader) return;
+    // update label inside loader (3rd span is the label container)
+    const spans = introLoader.querySelectorAll(".label");
+    if(spans && spans[2]) spans[2].textContent = " " + label + " ";
+    introLoader.style.display = "grid";
+    if(introSplash) introSplash.style.display = "none";
+
+    const tick = 55;
+    const steps = Math.max(10, Math.floor(ms / tick));
+    let i = 0;
+    let pct = 0;
+
+    const width = (window.matchMedia?.("(max-width: 520px)").matches) ? 14 : 18;
+    introBar.textContent = renderIntroBar(0, width);
+    introPct.textContent = "0%";
+
+    const timer = setInterval(()=>{
+      i++;
+      pct = Math.min(100, Math.round((i/steps)*100));
+      introBar.textContent = renderIntroBar(pct, width);
+      introPct.textContent = pct + "%";
+      if(pct >= 100) clearInterval(timer);
+    }, tick);
+
+    await new Promise(r=>setTimeout(r, ms));
+    clearInterval(timer);
+    introBar.textContent = renderIntroBar(100, width);
+    introPct.textContent = "100%";
+    await new Promise(r=>setTimeout(r, 220));
+  }
+
+
+  function introParallaxBind(){
+    if(!introEl || !introSplash) return;
+    const fine = window.matchMedia?.("(pointer: fine)").matches;
+    if(!fine) return;
+
+    function onMove(e){
+      if(introEl.style.display === "none") return;
+      const rect = introSplash.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.top + rect.height/2;
+      const dx = (e.clientX - cx) / (rect.width/2);
+      const dy = (e.clientY - cy) / (rect.height/2);
+      // Bend opposite cursor (invert)
+      const rx = (-dy * 2.2);
+      const ry = (-dx * 3.0);
+      introSplash.style.setProperty("--introTX", ry.toFixed(2) + "deg");
+      introSplash.style.setProperty("--introTY", rx.toFixed(2) + "deg");
+    }
+    function onLeave(){
+      introSplash.style.setProperty("--introTX","0deg");
+      introSplash.style.setProperty("--introTY","0deg");
+    }
+
+    window.addEventListener("pointermove", onMove, { passive:true });
+    window.addEventListener("pointerleave", onLeave, { passive:true });
+  }
+
+  async function showSplash(){
+    introLoader.style.display = "none";
+    introSplash.style.display = "block";
+    introSplash.setAttribute("aria-hidden","false");
+  }
+
+  async function enterApp(){
+    await runIntroLoader("loading console", 900);
+    // Reveal app
+    introEl.style.display = "none";
+    appEl.style.opacity = "1";
+    appEl.style.pointerEvents = "auto";
+    boot();
+    // Start intro loader on first visit
+  (async () => {
+    introParallaxBind();
+    await showSplash();
+
+    // Enter button triggers the console load
+    enterBtn?.addEventListener("click", async (e)=>{
+      e.preventDefault();
+      // Disable button while loading
+      enterBtn.style.pointerEvents = "none";
+      enterBtn.style.opacity = "0.7";
+      await enterApp();
+    });
+  })();
+  }
+
+    
+
+
   const COMMANDS = ["about", "skymap", "solutions", "work", "contact", "help"];
 
   const isTouch =
@@ -186,7 +293,7 @@
     wrap.className = "loader";
     wrap.innerHTML = `
       <span class="label dim">·</span>
-      <span class="label">hvv</span>
+      <span class="label">sys</span>
       <span class="label"> ${escapeHtml(taskLabel)} </span>
       <span class="bar">${renderBar(0, loaderBarWidth())}</span>
       <span class="pct dim">0%</span>
@@ -249,6 +356,7 @@
   }
 
   async function boot(){
+    termBody.innerHTML = "";
     line(`<span class="dim">Booting OAXSUN TECHNOLOGIES...</span>`);
     await wait(900);
 
@@ -262,7 +370,7 @@
     await wait(400);
 
     const box = blockContainer();
-    box.innerHTML = `<div class="line">Welcome to <span class="accent">Oaxsun Technologies</span>. Here you can discover who we are and what we have to offer you.</div><div class="line">&nbsp;</div><div class="line dim">Available commands:</div><div class="line"><span class="accent">/about</span> <span class="accent">/skymap</span> <span class="accent">/solutions</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span></div>`;
+    box.innerHTML = `<div class="line">Welcome to <span class="accent">Oaxsun Technologies</span>. Here you can discover who we are and what we have to offer you.</div><div class="line">&nbsp;</div><div class="line dim">Available commands:</div><div class="line"><span class="accent">/about</span> <span class="accent">/skymap</span> <span class="accent">/solutions</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span></div><div class="line">&nbsp;</div><div class="line dim">Enter a command to start. . .</div>`;
   }
 
   function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
@@ -284,6 +392,9 @@
       case "about":
         await faxPrint("about", "ABOUT", [
           `<span class="dim">We are</span> <span class="accent">Oaxsun Technologies</span><span class="dim">, proudly founded in</span> <span class="accent">Toronto, Canada</span><span class="dim">.</span>`,
+          `<span class="dim">We are a software development company focused on delivering</span> <span class="accent">solutions</span><span class="dim">—not just code.</span>`,
+          `<span class="dim">From idea to launch, we help teams ship faster with clean architecture, modern UI, and performance-first engineering.</span>`,
+          `<span class="dim">We care about clarity, velocity, and measurable impact: better conversions, better retention, better search visibility.</span>`,
           `<span class="accent">Mission:</span> <span class="dim">Build reliable software that helps businesses grow through speed, clarity, and measurable results.</span>`,
           `<span class="accent">Vision:</span> <span class="dim">Become a trusted global partner for modern web, mobile, and SEO solutions—crafted with care and performance-first thinking.</span>`
         ]);
@@ -430,5 +541,18 @@ case "work":
     });
   }
 
-  boot();
+  // Start intro loader on first visit
+  (async () => {
+    introParallaxBind();
+    await showSplash();
+
+    // Enter button triggers the console load
+    enterBtn?.addEventListener("click", async (e)=>{
+      e.preventDefault();
+      // Disable button while loading
+      enterBtn.style.pointerEvents = "none";
+      enterBtn.style.opacity = "0.7";
+      await enterApp();
+    });
+  })();
 })();

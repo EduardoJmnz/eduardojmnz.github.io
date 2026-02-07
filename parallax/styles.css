@@ -28,6 +28,7 @@ body{
   overflow:hidden;
 }
 
+/* Smaller overall typography like v2 */
 .console{
   position:relative;
   height:100vh;
@@ -36,6 +37,7 @@ body{
   background:var(--bg);
   display:flex;
   flex-direction:column;
+  font-size: 13px;
 }
 
 /* Brand fixed */
@@ -43,7 +45,7 @@ body{
   position:sticky;
   top:0;
   z-index:5;
-  padding: 14px 12px 18px; /* keep space from console */
+  padding: 14px 12px 18px;
   text-align:center;
   user-select:none;
   background: linear-gradient(to bottom, rgba(0,0,0,0.98), rgba(0,0,0,0.78), rgba(0,0,0,0));
@@ -77,7 +79,7 @@ body{
   text-shadow: 0 0 18px rgba(59,130,246,0.10);
 }
 .pixel-sub{
-  margin-top: -8px; /* tighter to OAXSUN */
+  margin-top: -8px;
   font-size: 14px;
   letter-spacing: 0.42em;
   color: rgba(235,245,255,0.62);
@@ -104,7 +106,7 @@ body{
   display:flex;
   align-items:center;
   gap:14px;
-  padding:12px 14px;
+  padding:10px 14px; /* a touch smaller */
   border-bottom:1px solid rgba(110,170,255,0.14);
   background: linear-gradient(to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0));
 }
@@ -116,14 +118,14 @@ body{
 .dot.green{background:var(--ok);}
 
 .title{
-  font-size:12px;
-  letter-spacing:0.18em;
+  font-size:11px;
+  letter-spacing:0.14em;
   text-transform:uppercase;
   color:var(--muted);
   flex:1;
 }
 .status{
-  font-size:12px;
+  font-size:11px;
   letter-spacing:0.10em;
   color: rgba(160, 210, 255, 0.80);
 }
@@ -131,7 +133,7 @@ body{
 .term-body{
   flex:1;
   min-height:0;
-  padding:14px 16px 12px;
+  padding:12px 14px 12px; /* smaller */
   overflow:auto;
   scrollbar-width:thin;
   scrollbar-color: rgba(110,170,255,0.22) transparent;
@@ -156,8 +158,8 @@ body{
 }
 
 .block{
-  margin:12px 0 2px;
-  padding: 12px 12px;
+  margin:10px 0 2px;
+  padding: 10px 10px;
   border:1px solid rgba(110,170,255,0.14);
   border-radius:12px;
   background: rgba(0,0,0,0.22);
@@ -199,9 +201,11 @@ body{
 .loader{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
   margin: 6px 0;
   color: rgba(235,245,255,0.86);
+  flex-wrap: wrap;            /* allow wrap on mobile */
+  max-width: 100%;            /* prevent overflow */
 }
 .loader .label{ color: rgba(235,245,255,0.82); }
 .loader .bar{
@@ -209,6 +213,9 @@ body{
   letter-spacing: 0.06em;
   color: rgba(235,245,255,0.70);
   white-space: pre;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .loader .pct{
   color: rgba(235,245,255,0.55);
@@ -220,7 +227,7 @@ body{
 .term-footer{
   border-top:1px solid rgba(110,170,255,0.14);
   background: rgba(0,0,0,0.18);
-  padding: 10px 16px 12px;
+  padding: 10px 14px 12px;
 }
 
 .term-input{
@@ -232,14 +239,14 @@ body{
 
 .prompt{
   color: rgba(160,210,255,0.90);
-  font-size:16px;
+  font-size:14px;
   user-select:none;
 }
 
 /* Custom caret ONLY (hide native caret) */
 .caret{
   width:10px;
-  height:18px;
+  height:16px;
   border-left:2px solid rgba(160,210,255,0.90);
   animation: blink 1s steps(2,end) infinite;
   flex: 0 0 auto;
@@ -257,7 +264,7 @@ body{
   border:none;
   outline:none;
   color:var(--text);
-  font-size:16px;
+  font-size:14px;
   padding: 6px 0;
   caret-color: transparent;
 }
@@ -267,7 +274,7 @@ body{
 .suggest{
   position:absolute;
   left:-10px;
-  bottom:36px;
+  bottom:34px;
   width: min(340px, 86vw);
   background: rgba(18, 20, 26, 0.93);
   border:1px solid rgba(235,245,255,0.16);

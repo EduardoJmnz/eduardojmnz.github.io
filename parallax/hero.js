@@ -2,16 +2,74 @@
   const termBody = document.getElementById("termBody");
   const input = document.getElementById("cmd");
   const suggest = document.getElementById("suggest");
-  const startupHint = document.getElementById("startupHint");
 
-  const COMMANDS = ["menu", "about", "process", "services", "work", "contact", "help"];
+  // Order changed: products before services
+  const COMMANDS = ["menu", "about", "products", "services", "work", "contact", "help"];
 
-  const history = [];
-  let historyIndex = 0;
+  const isTouch =
+    window.matchMedia?.("(pointer: coarse)").matches ||
+    "ontouchstart" in window ||
+    navigator.maxTouchPoints > 0;
+
+  if (isTouch) {
+    input.setAttribute("readonly", "");
+    input.setAttribute("inputmode", "none");
+  }
 
   let activeIndex = -1;
   let currentMatches = [];
   let closeTimer = null;
+
+  const ASCII = {
+    MENU: `██████╗ ███████╗███╗   ██╗██╗   ██╗
+██╔══██╗██╔════╝████╗  ██║██║   ██║
+██████╔╝█████╗  ██╔██╗ ██║██║   ██║
+██╔══██╗██╔══╝  ██║╚██╗██║██║   ██║
+██║  ██║███████╗██║ ╚████║╚██████╔╝
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝ ╚═════╝`,
+    ABOUT: ` █████╗ ██████╗  ██████╗ ██╗   ██╗████████╗
+██╔══██╗██╔══██╗██╔═══██╗██║   ██║╚══██╔══╝
+███████║██████╔╝██║   ██║██║   ██║   ██║
+██╔══██║██╔══██╗██║   ██║██║   ██║   ██║
+██║  ██║██████╔╝╚██████╔╝╚██████╔╝   ██║
+╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚═════╝    ╚═╝`,
+    PRODUCTS: `██████╗ ██████╗  ██████╗ ██████╗ ██╗   ██╗ ██████╗████████╗███████╗
+██╔══██╗██╔══██╗██╔═══██╗██╔══██╗██║   ██║██╔════╝╚══██╔══╝██╔════╝
+██████╔╝██████╔╝██║   ██║██║  ██║██║   ██║██║        ██║   ███████╗
+██╔═══╝ ██╔══██╗██║   ██║██║  ██║██║   ██║██║        ██║   ╚════██║
+██║     ██║  ██║╚██████╔╝██████╔╝╚██████╔╝╚██████╗   ██║   ███████║
+╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  ╚═════╝  ╚═════╝   ╚═╝   ╚══════╝`,
+    SERVICES: `███████╗███████╗██████╗ ██╗   ██╗██╗ ██████╗███████╗███████╗
+██╔════╝██╔════╝██╔══██╗██║   ██║██║██╔════╝██╔════╝██╔════╝
+███████╗█████╗  ██████╔╝██║   ██║██║██║     █████╗  ███████╗
+╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║██║     ██╔══╝  ╚════██║
+███████║███████╗██║  ██║ ╚████╔╝ ██║╚██████╗███████╗███████║
+╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝ ╚═════╝╚══════╝╚══════╝`,
+    WORK: `██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗
+██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝
+██║ █╗ ██║██║   ██║██████╔╝█████╔╝
+██║███╗██║██║   ██║██╔══██╗██╔═██╗
+╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗
+ ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝`,
+    CONTACT: ` ██████╗ ██████╗ ███╗   ██╗████████╗ █████╗  ██████╗████████╗
+██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔══██╗██╔════╝╚══██╔══╝
+██║     ██║   ██║██╔██╗ ██║   ██║   ███████║██║        ██║
+██║     ██║   ██║██║╚██╗██║   ██║   ██╔══██║██║        ██║
+╚██████╗╚██████╔╝██║ ╚████║   ██║   ██║  ██║╚██████╗   ██║
+ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝   ╚═╝`,
+    HELP: `██╗  ██╗███████╗██╗     ██████╗
+██║  ██║██╔════╝██║     ██╔══██╗
+███████║█████╗  ██║     ██████╔╝
+██╔══██║██╔══╝  ██║     ██╔═══╝
+██║  ██║███████╗███████╗██║
+╚═╝  ╚═╝╚══════╝╚══════╝╚═╝`,
+    ERROR: `███████╗██████╗ ██████╗  ██████╗ ██████╗
+██╔════╝██╔══██╗██╔══██╗██╔═══██╗██╔══██╗
+█████╗  ██████╔╝██████╔╝██║   ██║██████╔╝
+██╔══╝  ██╔══██╗██╔══██╗██║   ██║██╔══██╗
+███████╗██║  ██║██║  ██║╚██████╔╝██║  ██║
+╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝`,
+  };
 
   function escapeHtml(s) {
     return s
@@ -22,9 +80,9 @@
       .replaceAll("'", "&#039;");
   }
 
-  function scrollToBottom() { termBody.scrollTop = termBody.scrollHeight; }
+  function scrollToBottom(){ termBody.scrollTop = termBody.scrollHeight; }
 
-  function line(html, cls = "line") {
+  function line(html, cls="line"){
     const el = document.createElement("div");
     el.className = cls;
     el.innerHTML = html;
@@ -32,7 +90,7 @@
     scrollToBottom();
   }
 
-  function block(html) {
+  function block(html){
     const el = document.createElement("div");
     el.className = "block";
     el.innerHTML = html;
@@ -40,195 +98,169 @@
     scrollToBottom();
   }
 
-  function echoCommand(cmd) {
+  function asciiTitle(name){
+    const key = name.toUpperCase();
+    const art = ASCII[key] || ASCII.ERROR;
+    return `<pre class="section-ascii">${escapeHtml(art)}</pre>`;
+  }
+
+  function echoCommand(cmd){
     line(`<span class="accent">></span> ${escapeHtml(cmd)}`);
   }
 
-  function hideStartupHintIfTyping() {
-    const hasText = input.value.length > 0;
-    startupHint?.classList.toggle("hidden", hasText);
-  }
-
-  function openSuggest(matches) {
+  function openSuggest(matches){
     currentMatches = matches;
     activeIndex = matches.length ? 0 : -1;
 
     suggest.innerHTML = "";
-    for (let i = 0; i < matches.length; i++) {
+    for(let i=0;i<matches.length;i++){
       const c = matches[i];
       const item = document.createElement("div");
-      item.className = "item" + (i === activeIndex ? " active" : "");
-      item.setAttribute("role", "option");
-      item.setAttribute("aria-selected", i === activeIndex ? "true" : "false");
+      item.className = "item" + (i===activeIndex ? " active" : "");
+      item.setAttribute("role","option");
+      item.setAttribute("aria-selected", i===activeIndex ? "true" : "false");
       item.innerHTML = `<span>/${escapeHtml(c)}</span>`;
-      item.addEventListener("pointerdown", (e) => {
+      item.addEventListener("pointerdown",(e)=>{
         e.preventDefault();
         submit(c);
       });
       suggest.appendChild(item);
     }
 
-    if (matches.length) suggest.classList.add("open");
+    if(matches.length) suggest.classList.add("open");
+    else suggest.classList.remove("open");
   }
 
-  function closeSuggestSoon() {
+  function closeSuggestSoon(){
     clearTimeout(closeTimer);
-    closeTimer = setTimeout(() => suggest.classList.remove("open"), 120);
+    closeTimer = setTimeout(()=>suggest.classList.remove("open"), 120);
   }
 
-  function setActive(i) {
-    if (!currentMatches.length) return;
+  function setActive(i){
+    if(!currentMatches.length) return;
     activeIndex = (i + currentMatches.length) % currentMatches.length;
-    [...suggest.querySelectorAll(".item")].forEach((el, idx) => {
-      el.classList.toggle("active", idx === activeIndex);
-      el.setAttribute("aria-selected", idx === activeIndex ? "true" : "false");
+    [...suggest.querySelectorAll(".item")].forEach((el,idx)=>{
+      el.classList.toggle("active", idx===activeIndex);
+      el.setAttribute("aria-selected", idx===activeIndex ? "true" : "false");
     });
   }
 
-  function refreshSuggest(open = true) {
+  function refreshSuggest(){
     const v = input.value.trim().toLowerCase();
-    const matches = v ? COMMANDS.filter(c => c.startsWith(v)) : [...COMMANDS];
-    if (open) openSuggest(matches);
-    else currentMatches = matches;
+    const matches = v ? COMMANDS.filter(c=>c.startsWith(v)) : [...COMMANDS];
+    openSuggest(matches);
   }
 
-  async function boot() {
+  async function boot(){
     line(`<span class="dim">Booting OAXSUN TECHNOLOGIES...</span>`);
     await wait(220);
     line(`<span class="dim">Connection successfull</span>`);
     await wait(180);
-    line(`<span class="dim">Program started.</span>`);
+    line(`<span class="dim">Program started</span>`);
     await wait(220);
 
-    block(`
-      <div class="line"><span class="accent">Welcome to OAXSUN Technolgies console.</span> Here you can find information about us and how we can help you.</div>
-      <div class="line dim" style="margin-top:10px;">Tips for getting started:</div>
-      <div class="line dim">- Start with <span class="accent">[space]</span> or type <span class="accent">'Menu'</span> to see commands</div>
-      <div class="line dim">- You can navigate with your keyboard as well as your mouse cursor</div>
-      <div class="line dim">- Read between lines and follow White Rabbits</div>
-      <div class="line dim" style="margin-top:10px;">Available commands:</div>
-      <div class="line"><span class="accent">/menu</span> <span class="accent">/about</span> <span class="accent">/process</span> <span class="accent">/services</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span></div>
-    `);
+    block(`<div class="line dim">Available commands:</div><div class="line"><span class="accent">/menu</span> <span class="accent">/about</span> <span class="accent">/products</span> <span class="accent">/services</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span></div>`);
   }
 
-  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+  function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
-  function respond(cmdRaw) {
+  function respond(cmdRaw){
     const cmd = cmdRaw.trim().toLowerCase();
-    if (!cmd) return;
+    if(!cmd) return;
 
-    if (!COMMANDS.includes(cmd)) {
-      block(`
+    if(!COMMANDS.includes(cmd)){
+      block(`${asciiTitle("ERROR")}
         <div class="line"><span class="accent">Command not found:</span> <span class="dim">${escapeHtml(cmd)}</span></div>
         <div class="line dim">Try: <span class="accent">help</span> or <span class="accent">menu</span></div>
       `);
       return;
     }
 
-    switch (cmd) {
+    switch(cmd){
       case "menu":
-        block(`
-          <div class="line dim">MENU</div>
+        block(`${asciiTitle("MENU")}
           <div class="line"><span class="accent">/about</span>     — quiénes somos</div>
+          <div class="line"><span class="accent">/products</span>  — sky map + downloads</div>
           <div class="line"><span class="accent">/services</span>  — web / apps / seo</div>
-          <div class="line"><span class="accent">/process</span>   — cómo trabajamos</div>
           <div class="line"><span class="accent">/work</span>      — proyectos y casos</div>
           <div class="line"><span class="accent">/contact</span>   — cotiza tu proyecto</div>
           <div class="line"><span class="accent">/help</span>      — lista de comandos</div>
         `);
         break;
+
       case "about":
-        block(`
-          <div class="line dim">ABOUT</div>
+        block(`${asciiTitle("ABOUT")}
           <div class="line">Somos <span class="accent">OAXSUN TECHNOLOGIES</span>.</div>
           <div class="line dim">Desarrollo web, apps y SEO técnico enfocado en performance y resultados.</div>
         `);
         break;
-      case "process":
-        block(`
-          <div class="line dim">PROCESS</div>
-          <div class="line">[01] Discovery & objetivos</div>
-          <div class="line">[02] UX/UI</div>
-          <div class="line">[03] Desarrollo</div>
-          <div class="line">[04] QA & performance</div>
-          <div class="line">[05] Lanzamiento & crecimiento</div>
+
+      case "products":
+        block(`${asciiTitle("PRODUCTS")}
+          <div class="line dim">Aquí conectaremos con <span class="accent">SkyMap</span>.</div>
+          <div class="line">- Genera tu mapa</div>
+          <div class="line">- Compra y descarga</div>
+          <div class="line dim">(placeholder)</div>
         `);
         break;
+
       case "services":
-        block(`
-          <div class="line dim">SERVICES</div>
+        block(`${asciiTitle("SERVICES")}
           <div class="line"><span class="accent">Web</span>  — landing / e-commerce / web apps</div>
           <div class="line"><span class="accent">Apps</span> — iOS/Android + backend</div>
           <div class="line"><span class="accent">SEO</span>  — SEO técnico + contenido + CWV</div>
         `);
         break;
+
       case "work":
-        block(`
-          <div class="line dim">WORK</div>
+        block(`${asciiTitle("WORK")}
           <div class="line">/projects</div>
           <div class="line dim">Agrega aquí tus casos reales (1-3 bien explicados > 10 vacíos).</div>
         `);
         break;
+
       case "contact":
-        block(`
-          <div class="line dim">CONTACT</div>
+        block(`${asciiTitle("CONTACT")}
           <div class="line">Email: <span class="accent">hello@oaxsun.com</span> <span class="dim">(placeholder)</span></div>
           <div class="line dim">Podemos cambiar esto por un formulario tipo “ticket”.</div>
         `);
         break;
+
       case "help":
-        block(`
-          <div class="line dim">HELP</div>
+        block(`${asciiTitle("HELP")}
           <div class="line dim">Comandos:</div>
-          <div class="line"><span class="accent">/menu</span> <span class="accent">/about</span> <span class="accent">/process</span> <span class="accent">/services</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span></div>
-          <div class="line dim">Atajos: Space abre sugerencias • Tab autocompleta • ↑/↓ navega • Enter ejecuta</div>
+          <div class="line"><span class="accent">/menu</span> <span class="accent">/about</span> <span class="accent">/products</span> <span class="accent">/services</span> <span class="accent">/work</span> <span class="accent">/contact</span> <span class="accent">/help</span></div>
         `);
         break;
     }
   }
 
-  function submit(valueOverride = null) {
+  function submit(valueOverride=null){
     const raw = valueOverride ?? input.value;
     const cmd = raw.trim().toLowerCase();
-    if (!cmd) return;
+    if(!cmd) return;
 
     echoCommand(cmd);
-    history.push(cmd);
-    historyIndex = history.length;
-
     input.value = "";
     suggest.classList.remove("open");
-    startupHint?.classList.add("hidden");
     respond(cmd);
   }
 
-  function historyNav(dir) {
-    if (!history.length) return;
-    historyIndex = Math.max(0, Math.min(history.length, historyIndex + dir));
-    input.value = historyIndex === history.length ? "" : history[historyIndex];
-    requestAnimationFrame(() => input.setSelectionRange(input.value.length, input.value.length));
-  }
+  // Desktop: focus opens dropdown; allow typing
+  input.addEventListener("focus", ()=>{ refreshSuggest(); });
+  input.addEventListener("blur", ()=>closeSuggestSoon());
+  input.addEventListener("input", ()=>{ refreshSuggest(); });
 
-  // Focus opens dropdown (but no autofocus on load)
-  input.addEventListener("focus", () => {
-    refreshSuggest(true);
-  });
+  input.addEventListener("keydown", (e)=>{
+    if(isTouch) return;
 
-  input.addEventListener("blur", () => closeSuggestSoon());
-
-  input.addEventListener("input", () => {
-    hideStartupHintIfTyping();
-    refreshSuggest(true);
-  });
-
-  input.addEventListener("keydown", (e) => {
     const isOpen = suggest.classList.contains("open") && currentMatches.length;
 
-    if (e.key === "Enter") {
+    if(e.key === "Enter"){
       e.preventDefault();
-      if (isOpen && activeIndex >= 0) {
+      if(isOpen && activeIndex >= 0){
         const typed = input.value.trim().toLowerCase();
-        if (!typed || currentMatches[activeIndex].startsWith(typed)) {
+        if(!typed || currentMatches[activeIndex].startsWith(typed)){
           submit(currentMatches[activeIndex]);
           return;
         }
@@ -237,48 +269,56 @@
       return;
     }
 
-    if (e.key === "Tab") {
+    if(e.key === "Tab"){
       e.preventDefault();
       const v = input.value.trim().toLowerCase();
-      const matches = v ? COMMANDS.filter(c => c.startsWith(v)) : [...COMMANDS];
-      if (matches.length === 1) input.value = matches[0];
+      const matches = v ? COMMANDS.filter(c=>c.startsWith(v)) : [...COMMANDS];
+      if(matches.length === 1) input.value = matches[0];
       openSuggest(matches);
       return;
     }
 
-    if (e.key === "Escape") {
+    if(e.key === "Escape"){
       suggest.classList.remove("open");
       return;
     }
 
-    if (e.key === "ArrowDown") {
+    if(e.key === "ArrowDown"){
       e.preventDefault();
-      if (isOpen) setActive(activeIndex + 1);
-      else historyNav(1);
+      if(isOpen) setActive(activeIndex + 1);
       return;
     }
 
-    if (e.key === "ArrowUp") {
+    if(e.key === "ArrowUp"){
       e.preventDefault();
-      if (isOpen) setActive(activeIndex - 1);
-      else historyNav(-1);
+      if(isOpen) setActive(activeIndex - 1);
       return;
     }
   });
 
-  // Space opens dropdown (without auto-open on load)
-  document.addEventListener("keydown", (e) => {
-    if (e.code !== "Space") return;
-    if (document.activeElement === input) return;
+  // Space opens dropdown (desktop only)
+  document.addEventListener("keydown", (e)=>{
+    if(isTouch) return;
+    if(e.code !== "Space") return;
+    if(document.activeElement === input) return;
     e.preventDefault();
     input.focus();
     openSuggest([...COMMANDS]);
-  }, { passive: false });
+  }, { passive:false });
 
-  // Click terminal focuses input (dropdown then opens via focus)
-  document.addEventListener("pointerdown", (e) => {
+  // Mobile: tap on bar opens menu; no typing
+  if(isTouch){
+    input.addEventListener("pointerdown", (e)=>{
+      e.preventDefault();
+      input.focus();
+      openSuggest([...COMMANDS]);
+    });
+  }
+
+  // Click terminal focuses input (desktop)
+  document.addEventListener("pointerdown", (e)=>{
     const t = e.target;
-    if (t && t.closest(".terminal")) input.focus();
+    if(t && t.closest(".terminal")) input.focus();
   });
 
   boot();
